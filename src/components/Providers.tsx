@@ -1,10 +1,16 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useShop, useUI } from '@/lib/store';
-import { startClock, getLenis } from '@/lib/clock';
+import { startClock, getLenis, lockScroll } from '@/lib/clock';
 import { ScrollTrigger } from '@/lib/gsap';
 import { detectTier } from '@/lib/tier';
+
+const closeOverlays = () => {
+  const ui = useUI.getState();
+  if (ui.searchOpen) ui.setSearchOpen(false);
+  if (ui.bagOpen) ui.setBagOpen(false);
+};
 
 /** Boots the shared clock, rehydrates the persisted store and picks the quality tier. */
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -15,7 +21,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     startClock();
-    Promise.resolve(useShop.persist.rehydrate()).finally(() => useUI.getState().setHydrated());
+    const done = () => useUI.getState().setHydrated();
+    // A child effect that wrote to the store has already hydrated it (see store.ts).
+    const p = useShop.persist;
+    if (!p || p.hasHydrated()) done();
+    else p.rehydrate().finally(done);
   }, []);
 
   useEffect(() => {
@@ -37,6 +47,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = lang === 'hi' ? 'hi' : 'en-IN';
   }, [lang]);
 
+  // Back / forward and route changes close the search overlay and the bag drawer, so
+  // Android Back never leaves one open (and the page locked) over the page it returns to.
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    closeOverlays();
+    // Safety net: an on/off lockScroll(true) left behind by an overlay that unmounted
+    // without its cleanup must not freeze the next page. (holdScroll() holds are released
+    // by their owners' cleanups.)
+    lockScroll(false);
+  }, [pathname]);
+  useEffect(() => {
+    window.addEventListener('popstate', closeOverlays);
+    return () => window.removeEventListener('popstate', closeOverlays);
+  }, []);
+
   // After every route change: resync Lenis with the new document and re-measure triggers.
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -53,14 +80,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
-      if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) {
+      // Not over another open dialog (bag drawer, image viewer, filter sheet).
+      const covered = () =>
+        Array.from(document.querySelectorAll('[aria-modal="true"]')).some((m) => getComputedStyle(m).visibility === 'visible');
+      if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !covered()) {
         e.preventDefault();
         useUI.getState().setSearchOpen(true);
       }
-      if (e.key === 'Escape') {
-        useUI.getState().setSearchOpen(false);
-        useUI.getState().setBagOpen(false);
-      }
+      if (e.key === 'Escape') closeOverlays();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
