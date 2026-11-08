@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Page, PageHeading } from '@/components/Page';
-import { ShopView } from '@/components/shop/ShopView';
-import { GridSkeleton } from '@/components/shop/GridSkeleton';
+import { ShopView, ShopViewStatic } from '@/components/shop/ShopView';
 
 export const metadata: Metadata = {
   title: 'Shop sarees & suits',
@@ -18,7 +17,7 @@ export default function ShopPage() {
           Sarees and suits woven, tied and dyed across India, chosen by hand in Banswara.
         </p>
       </PageHeading>
-      <Suspense fallback={<GridSkeleton />}>
+      <Suspense fallback={<ShopViewStatic />}>
         <ShopView />
       </Suspense>
     </Page>

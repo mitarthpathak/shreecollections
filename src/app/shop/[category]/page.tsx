@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { Page, PageHeading } from '@/components/Page';
-import { ShopView } from '@/components/shop/ShopView';
-import { GridSkeleton } from '@/components/shop/GridSkeleton';
+import { ShopView, ShopViewStatic } from '@/components/shop/ShopView';
 import { breadcrumbJsonLd, ld } from '@/lib/seo';
 
 const CATS = {
@@ -48,7 +47,7 @@ export default async function CategoryPage({ params }: PageProps<'/shop/[categor
       <PageHeading eyebrow="Shree Collection · Banswara" title={c.title} titleHi={c.titleHi}>
         <p className="mt-4 max-w-xl font-editorial text-xl italic text-ivory-dim">{c.line}</p>
       </PageHeading>
-      <Suspense fallback={<GridSkeleton />}>
+      <Suspense fallback={<ShopViewStatic category={c.category} />}>
         <ShopView category={c.category} />
       </Suspense>
     </Page>

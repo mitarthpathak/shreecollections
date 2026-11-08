@@ -9,6 +9,7 @@ import { onFrame, getLenis } from '@/lib/clock';
 import { Preloader } from './dom/Preloader';
 import { FilmNav } from './dom/FilmNav';
 import { Posters } from './dom/Posters';
+import { prewarmCanvases } from './canvases';
 import { Hero } from './dom/Hero';
 import { Dhaaga } from './dom/Dhaaga';
 import { Weave } from './dom/Weave';
@@ -35,15 +36,31 @@ export function Film() {
   const fontsReady = useRef(false);
   const root = useRef<HTMLDivElement>(null);
 
-  // Decide on the stage once the tier is known; start loading it during idle.
+  // Decide on the stage once the tier is known. The page loads with posters; the 3D chunk
+  // follows on the visitor's first sign of intent (or after a quiet moment), during idle,
+  // so first paint and first input never compete with three.js.
   useEffect(() => {
     if (!hydrated) return;
     film.mobile = window.matchMedia('(max-width: 767px)').matches;
     document.fonts?.ready.then(() => (fontsReady.current = true));
     if (tier === 0) return;
-    const ric = (window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 200))) as (cb: () => void) => number;
-    const id = ric(() => setLoadStage(true));
-    return () => (window.cancelIdleCallback ?? window.clearTimeout)(id);
+    let started = false;
+    const ric = (window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 120))) as (cb: () => void) => number;
+    const start = () => {
+      if (started) return;
+      started = true;
+      off();
+      prewarmCanvases();
+      ric(() => setLoadStage(true));
+    };
+    const events = ['pointermove', 'pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'] as const;
+    const off = () => events.forEach((e) => window.removeEventListener(e, start));
+    events.forEach((e) => window.addEventListener(e, start, { passive: true, once: true }));
+    const timer = window.setTimeout(start, 4000);
+    return () => {
+      off();
+      window.clearTimeout(timer);
+    };
   }, [hydrated, tier]);
 
   // Pointer for tilt / parallax; the canvas pauses while a drawer or search covers it.
@@ -122,8 +139,8 @@ export function Film() {
     // fonts + (stage chunk & shader compile, when a stage is expected)
     const f = fontsReady.current ? 1 : 0.4;
     if (!hydrated) return 0.2;
-    if (tier === 0 || prefersReducedMotion()) return f;
-    return f * 0.4 + (loadStage ? 0.2 : 0) + (stageReady ? 0.4 : 0);
+    if (tier === 0 || prefersReducedMotion() || !loadStage) return f;
+    return f * 0.5 + (stageReady ? 0.5 : 0.2);
   }, [hydrated, tier, loadStage, stageReady]);
   const progressRef = useRef(progress);
   useEffect(() => {

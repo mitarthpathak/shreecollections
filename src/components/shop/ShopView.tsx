@@ -21,10 +21,22 @@ import { useLang, useT } from '@/lib/i18n';
 import { gsap, Flip, prefersReducedMotion } from '@/lib/gsap';
 import { lockScroll } from '@/lib/clock';
 
-const list = (sp: URLSearchParams, k: string) => (sp.get(k) ? sp.get(k)!.split(',').filter(Boolean) : []);
+const list = (sp: Pick<URLSearchParams, 'get'>, k: string) => (sp.get(k) ? sp.get(k)!.split(',').filter(Boolean) : []);
 
+/** Reads the filters from the URL (needs a Suspense boundary for static rendering). */
 export function ShopView({ category }: { category?: Category }) {
   const sp = useSearchParams();
+  return <ShopGrid category={category} sp={sp} morph />;
+}
+
+/** The same grid with no filters, prerendered as the Suspense fallback so images are in the static HTML. */
+export function ShopViewStatic({ category }: { category?: Category }) {
+  return <ShopGrid category={category} sp={EMPTY} />;
+}
+
+const EMPTY = new URLSearchParams();
+
+function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pick<URLSearchParams, 'get' | 'toString'>; morph?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const lang = useLang();
@@ -214,7 +226,7 @@ export function ShopView({ category }: { category?: Category }) {
         ) : (
           <div ref={grid} className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 xl:grid-cols-4">
             {filtered.map((p, i) => (
-              <ProductCard key={p.slug} product={p} morph priority={i < 2} />
+              <ProductCard key={p.slug} product={p} morph={morph} priority={i < 2} />
             ))}
           </div>
         )}
