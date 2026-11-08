@@ -1,5 +1,5 @@
 'use client';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { geoMercator, geoPath, type GeoPermissibleObjects } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
@@ -49,6 +49,10 @@ export const RajasthanMap = forwardRef<SVGSVGElement, { className?: string; onRe
   ref,
 ) {
   const [g, setG] = useState<MapGeometry | null>(null);
+  const readyRef = useRef(onReady);
+  useEffect(() => {
+    readyRef.current = onReady;
+  }, [onReady]);
   useEffect(() => {
     let alive = true;
     loadMap().then((m) => alive && setG(m));
@@ -56,9 +60,11 @@ export const RajasthanMap = forwardRef<SVGSVGElement, { className?: string; onRe
       alive = false;
     };
   }, []);
+  // Tell the parent once the paths are in the DOM (next frame); never after unmount.
   useEffect(() => {
-    if (g) requestAnimationFrame(() => onReady?.());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!g) return;
+    const id = requestAnimationFrame(() => readyRef.current?.());
+    return () => cancelAnimationFrame(id);
   }, [g]);
 
   return (

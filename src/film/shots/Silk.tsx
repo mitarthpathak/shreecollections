@@ -12,6 +12,9 @@ import { palette } from '@/lib/palette';
 
 const W = 5.6;
 const H = 3.6;
+/** Rang Chakra sheet: darker and a little more see-through than the Weave's, so text over it stays legible. */
+const TINT_SHADE = 0.62;
+const TINT_ALPHA = 0.8;
 
 const vertex = /* glsl */ `
   uniform float uTime; uniform float uWind;
@@ -37,7 +40,7 @@ const vertex = /* glsl */ `
 const fragment = /* glsl */ `
   uniform sampler2D uTexA; uniform sampler2D uTexB;
   uniform float uMix; uniform float uAlpha; uniform float uTime;
-  uniform vec3 uTint; uniform float uTintAmt;
+  uniform vec3 uTint; uniform float uTintAmt; uniform float uShade;
   varying vec2 vUv2;
   ${SNOISE}
   void main(){
@@ -49,7 +52,7 @@ const fragment = /* glsl */ `
     float edge = 1.0 - smoothstep(0.0, 0.025, abs(n - m));
     vec3 col = n < m ? b : a;
     float l = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt);
+    col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt) * uShade;
     csm_DiffuseColor = vec4(col, uAlpha);
     csm_Emissive = vec3(1.0, 0.78, 0.35) * edge * 2.4 * step(0.001, uMix) * step(uMix, 0.999);
   }
@@ -77,8 +80,10 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       uAlpha: { value: 0 },
       uTint: { value: new THREE.Color(palette.gold300) },
       uTintAmt: { value: 0 },
+      // The Rang Chakra sheet sits behind copy and product cards: a deeper silk, not a cream card.
+      uShade: { value: mode === 'tint' ? TINT_SHADE : 1 },
     }),
-    [textures],
+    [textures, mode],
   );
   const mesh = useRef<THREE.Mesh>(null);
   const threads = useRef<THREE.InstancedMesh>(null);
@@ -116,7 +121,7 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       }
     } else {
       const c = film.u.chakra;
-      uniforms.uAlpha.value = c.show * 0.9;
+      uniforms.uAlpha.value = c.show * TINT_ALPHA;
       (uniforms.uTint.value as THREE.Color).setRGB(...c.tint);
       uniforms.uTintAmt.value = 0.55 + c.tintAmt * 0.4;
     }
