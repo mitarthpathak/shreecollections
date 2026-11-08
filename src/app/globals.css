@@ -108,7 +108,13 @@
   --vignette: rgb(60 40 20 / 0.08);
   --grain-opacity: 0.025;
   --scene-dust: var(--gold-line);
+  --scene-dust-alpha: 0.55;
   --scene-thread: var(--gold-500);
+  --scene-thread-lo: var(--gold-800);
+  --scene-head: var(--gold-500);
+  --scene-coin-rim: var(--gold-500);
+  --scene-glint: var(--gold-300);
+  --scene-shadow: var(--kajal-dim);
   --scene-bloom: 0;
   --tint-neel: var(--neel-din);
   --tint-sindoor: var(--sindoor-din);
@@ -163,7 +169,13 @@
       --vignette: rgb(0 0 0 / 0.55);
       --grain-opacity: 0.035;
       --scene-dust: var(--gold-300);
+      --scene-dust-alpha: 1;
       --scene-thread: var(--gold-300);
+      --scene-thread-lo: var(--gold-700);
+      --scene-head: var(--gold-100);
+      --scene-coin-rim: var(--gold-300);
+      --scene-glint: var(--gold-100);
+      --scene-shadow: var(--raat);
       --scene-bloom: 1;
       --tint-neel: var(--neel-raat);
       --tint-sindoor: var(--sindoor-raat);
@@ -205,7 +217,13 @@
   --vignette: rgb(0 0 0 / 0.55);
   --grain-opacity: 0.035;
   --scene-dust: var(--gold-300);
+  --scene-dust-alpha: 1;
   --scene-thread: var(--gold-300);
+  --scene-thread-lo: var(--gold-700);
+  --scene-head: var(--gold-100);
+  --scene-coin-rim: var(--gold-300);
+  --scene-glint: var(--gold-100);
+  --scene-shadow: var(--raat);
   --scene-bloom: 1;
   --tint-neel: var(--neel-raat);
   --tint-sindoor: var(--sindoor-raat);
@@ -671,7 +689,7 @@ html[data-chapter-active='knot'] [data-poster='knot'] {
   opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
-  [data-poster] {
+  [data-poster-render] {
     filter: brightness(0.5);
   }
 }

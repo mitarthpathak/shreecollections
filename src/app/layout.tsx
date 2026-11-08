@@ -4,6 +4,7 @@ import './globals.css';
 import { fontVars } from '@/lib/fonts';
 import { brand } from '@/brand.config';
 import { Providers } from '@/components/Providers';
+import { Themes } from '@/components/Theme';
 import { Header } from '@/components/Header';
 import { TabBar } from '@/components/TabBar';
 import { Footer } from '@/components/Footer';
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <Link href="/shop" className="sr-only z-[200] rounded-full bg-cta-bg px-4 py-3 text-cta-text focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           Skip to shop
         </Link>
+        <Themes>
         <Providers>
           <Header />
           {children}
@@ -67,6 +69,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           <Cursor />
           <RouteCurtain />
         </Providers>
+        </Themes>
         <div className="grain" aria-hidden />
         <div className="vignette" aria-hidden />
         <script type="application/ld+json" dangerouslySetInnerHTML={ld(storeJsonLd())} />

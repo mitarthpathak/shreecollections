@@ -6,8 +6,13 @@ import { film } from '../state';
 import { useShader } from '../useShader';
 import { rail } from '../rail';
 import { rng } from '../rng';
+import { sceneTheme } from '../sceneTheme';
 
-/** A slow field of gold dust along the whole rail; streaks brighter with scroll velocity. */
+/**
+ * A slow field of gold dust along the whole rail; streaks brighter with scroll velocity.
+ * Raat: glowing (additive). Kagaz: sparse "zari dust" in --scene-dust at low opacity. The blend is
+ * premultiplied, so alpha 0 adds light and alpha 1 paints over: the two ease into each other.
+ */
 export function Dust({ count }: { count: number }) {
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -28,17 +33,23 @@ export function Dust({ count }: { count: number }) {
     g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
     return g;
   }, [count]);
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uVel: { value: 0 }, uPx: { value: 1 } }), []);
+  const uniforms = useMemo(
+    () => ({ uTime: { value: 0 }, uVel: { value: 0 }, uPx: { value: 1 }, uColor: { value: new THREE.Vector3() }, uAlpha: { value: 1 }, uLight: { value: 0 } }),
+    [],
+  );
   const material = useShader(
     {
     uniforms: uniforms,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.CustomBlending,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneMinusSrcAlphaFactor,
     vertexShader: /* glsl */ `
           uniform float uTime; uniform float uVel; uniform float uPx;
-          attribute float aSeed; varying float vA;
+          attribute float aSeed; varying float vA; varying float vSeed;
           void main(){
+            vSeed = aSeed;
             vec3 p = position;
             p.y += sin(uTime * 0.2 + aSeed * 40.0) * 0.25;
             p.x += cos(uTime * 0.15 + aSeed * 30.0) * 0.2;
@@ -49,12 +60,14 @@ export function Dust({ count }: { count: number }) {
             gl_Position = projectionMatrix * mv;
           }`,
     fragmentShader: /* glsl */ `
-          varying float vA;
+          uniform vec3 uColor; uniform float uAlpha; uniform float uLight;
+          varying float vA; varying float vSeed;
           void main(){
+            if (vSeed > mix(1.0, 0.3, uLight)) discard; // sparse in the light theme
             float d = length(gl_PointCoord - 0.5);
             if (d > 0.5) discard;
-            float a = smoothstep(0.5, 0.0, d) * vA;
-            gl_FragColor = vec4(vec3(1.0, 0.84, 0.5) * a, a);
+            float a = smoothstep(0.5, 0.0, d) * vA * uAlpha;
+            gl_FragColor = vec4(uColor * a, a * uLight);
           }`,
     },
   );
@@ -63,6 +76,9 @@ export function Dust({ count }: { count: number }) {
     uniforms.uTime.value += dt;
     uniforms.uVel.value = THREE.MathUtils.damp(uniforms.uVel.value, Math.min(1, Math.abs(film.velocity) / 2500), 6, dt);
     uniforms.uPx.value = s.gl.getPixelRatio();
+    uniforms.uColor.value.copy(sceneTheme.dust);
+    uniforms.uAlpha.value = sceneTheme.dustAlpha;
+    uniforms.uLight.value = sceneTheme.light;
   });
 
   if (!count) return null;

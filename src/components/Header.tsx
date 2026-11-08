@@ -10,6 +10,7 @@ import { gsap, ScrollTrigger, prefersReducedMotion } from '@/lib/gsap';
 import { lockScroll } from '@/lib/clock';
 import { setAmbience, SOUND_AVAILABLE } from '@/lib/sound';
 import { brand } from '@/brand.config';
+import { ThemeChoice, ThemeToggle } from './Theme';
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
@@ -188,6 +189,7 @@ export function Header() {
 
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <LangToggle className="mr-1" />
+            <ThemeToggle />
             {SOUND_AVAILABLE && <SoundToggle className="hidden md:grid" />}
             <button type="button" className={`${icon} grid`} aria-label={t('search')} aria-keyshortcuts="/" onClick={() => setSearchOpen(true)}>
               <IconSearch />
@@ -354,6 +356,7 @@ function SiteMenu({ open, onClose, opener }: { open: boolean; onClose: () => voi
               <span className="label text-gold-text">{t('language')}</span>
               <LangToggle />
             </div>
+            <ThemeChoice className="justify-between [&>legend]:hidden" />
             {SOUND_AVAILABLE && (
               <div className="flex items-center justify-between gap-3">
                 <span className="label text-gold-text">{t('sound')}</span>

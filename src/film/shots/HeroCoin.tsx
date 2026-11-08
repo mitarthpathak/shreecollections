@@ -3,11 +3,13 @@ import * as THREE from 'three';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import CustomShaderMaterial from 'three-custom-shader-material';
+import type CustomShaderMaterialImpl from 'three-custom-shader-material/vanilla';
 import { easing } from 'maath';
 import { film } from '../state';
 import { heroCoinPlacement, type CoinPlacement } from '../rail';
-import { badgeTexture } from '../textures';
+import { badgeTexture, glowTexture } from '../textures';
 import { getThemeColor } from '@/lib/theme';
+import { sceneTheme } from '../sceneTheme';
 
 /** Identity colour: the emissive map shows as painted (not a design colour). */
 const AS_PAINTED = new THREE.Color(1, 1, 1);
@@ -19,6 +21,9 @@ const AS_PAINTED = new THREE.Color(1, 1, 1);
  *
  * Its size and place come from the hero layout (film.coin): the slot above the copy on
  * portrait screens, right of it on landscape ones — recomputed when either changes.
+ *
+ * On Kagaz (light) the rim is a deeper gold and a soft warm shadow sits behind the coin, so it
+ * doesn't wash out on ivory; both follow the theme in place (sceneTheme).
  */
 export function HeroCoin({ onReady }: { onReady?: () => void }) {
   const group = useRef<THREE.Group>(null);
@@ -43,12 +48,23 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
     ].map(([x, y]) => new THREE.Vector2(x, y));
     return new THREE.LatheGeometry(prof, 128);
   }, []);
-  const rimUniforms = useMemo(() => ({ uTime: { value: 0 }, uGlint: { value: 1 } }), []);
+  const rimUniforms = useMemo(() => ({ uTime: { value: 0 }, uGlint: { value: 1 }, uGlintColor: { value: new THREE.Color() }, uLight: { value: 0 } }), []);
+  const rimMat = useRef<CustomShaderMaterialImpl<typeof THREE.MeshPhysicalMaterial>>(null);
+  const shadowMat = useRef<THREE.MeshBasicMaterial>(null);
+  const shadowTex = useMemo(() => glowTexture(), []);
+  useEffect(() => () => shadowTex.dispose(), [shadowTex]);
 
   useFrame((s, dt) => {
     const g = group.current, sp = spin.current;
     if (!g || !sp) return;
     rimUniforms.uTime.value += dt;
+    rimUniforms.uGlintColor.value.copy(sceneTheme.glint);
+    rimUniforms.uLight.value = sceneTheme.light;
+    (rimMat.current as unknown as THREE.MeshPhysicalMaterial | null)?.color.copy(sceneTheme.coinRim);
+    if (shadowMat.current) {
+      shadowMat.current.color.copy(sceneTheme.shadow);
+      shadowMat.current.opacity = 0.32 * sceneTheme.light;
+    }
     const { width, height } = s.size;
     const key = `${film.coin.x}|${film.coin.y}|${film.coin.r}|${width}|${height}|${film.mobile}`;
     if (key !== placed.key) {
@@ -71,19 +87,25 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
 
   return (
     <group ref={group} name="hero-coin">
+      {/* soft warm shadow behind the coin (Kagaz only; opacity 0 in Raat) */}
+      <mesh position={[0.08, -0.16, -0.4]} renderOrder={-1}>
+        <planeGeometry args={[3.6, 3.6]} />
+        <meshBasicMaterial ref={shadowMat} map={shadowTex} transparent opacity={0} depthWrite={false} toneMapped={false} />
+      </mesh>
       <group ref={spin}>
         {/* rim: bevelled metal with a glint that travels around it */}
         <mesh geometry={rimGeo} rotation={[Math.PI / 2, 0, 0]}>
           <CustomShaderMaterial
+            ref={rimMat}
             baseMaterial={THREE.MeshPhysicalMaterial}
             uniforms={rimUniforms}
             vertexShader={/* glsl */ `varying vec3 vPos; void main(){ vPos = position; }`}
             fragmentShader={/* glsl */ `
-              uniform float uTime; uniform float uGlint; varying vec3 vPos;
+              uniform float uTime; uniform float uGlint; uniform vec3 uGlintColor; uniform float uLight; varying vec3 vPos;
               void main(){
                 float a = atan(vPos.z, vPos.x);
                 float g = pow(max(0.0, cos(a - uTime * 0.9)), 60.0) * uGlint;
-                csm_Emissive = vec3(1.0, 0.86, 0.55) * g * 1.6;
+                csm_Emissive = uGlintColor * g * mix(1.6, 0.9, uLight);
               }`}
             color={getThemeColor('--gold-300')}
             metalness={1}

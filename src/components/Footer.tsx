@@ -4,6 +4,8 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { brand } from '@/brand.config';
 import { BadgeMark } from './BadgeMark';
+import { LangToggle } from './Header';
+import { ThemeChoice } from './Theme';
 import { Todo } from './Todo';
 import { IconInstagram, IconWhatsApp } from './icons';
 import { useLang, useT } from '@/lib/i18n';
@@ -80,6 +82,10 @@ export function FooterContent() {
       </div>
       <div className="md:col-span-2">
         <div className="hairline mb-8 opacity-60" />
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:justify-start">
+          <LangToggle />
+          <ThemeChoice />
+        </div>
         <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
           <p className="text-xs text-fg-muted">© {new Date().getFullYear()} {brand.name}, {brand.location.city}</p>
           <p className="text-gold-glint font-display text-xl tracking-[0.18em]">

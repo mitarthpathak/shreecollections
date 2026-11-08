@@ -22,6 +22,8 @@ import { glowTexture } from './textures';
 import { TIER_SETTINGS } from '@/lib/tier';
 import { useUI, type Tier } from '@/lib/store';
 import { getThemeColor } from '@/lib/theme';
+import type { BloomEffect } from 'postprocessing';
+import { onThemeChange, readSceneTheme, sceneTheme, stepSceneTheme } from './sceneTheme';
 
 /** How far the knot sits in front of the camera at the end of the film (see shots/Knot). */
 const KNOT_DEPTH = 6.5;
@@ -77,6 +79,27 @@ function useCoinLayoutKey() {
   }, []);
   return key;
 }
+
+/**
+ * Follows the theme: clear colour, fog and bloom ease to the active theme's values in place
+ * (the renderer and scenes are never recreated). Mounted first, so shots read eased values.
+ */
+function ThemeDriver({ bloom }: { bloom: React.RefObject<BloomEffect | null> }) {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    readSceneTheme();
+    return onThemeChange(readSceneTheme);
+  }, []);
+  useFrame((_, dt) => {
+    stepSceneTheme(dt);
+    gl.setClearColor(sceneTheme.bg, 1);
+    if (scene.fog) (scene.fog as THREE.Fog).color.copy(sceneTheme.bg);
+    if (bloom.current) bloom.current.intensity = BLOOM * sceneTheme.bloom;
+  });
+  return null;
+}
+
+const BLOOM = 0.7;
 
 function ExposeForDebug() {
   const state = useThree();
@@ -146,6 +169,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
   // Film remounts the stage when film.mobile flips (rotation), so these are read once per mount.
   const lookbook3D = tier >= 2 && !film.mobile;
   const threadKey = useCoinLayoutKey();
+  const bloom = useRef<BloomEffect | null>(null);
 
   return (
     <Canvas
@@ -162,6 +186,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
       aria-hidden
       style={{ pointerEvents: 'none' }}
     >
+      <ThemeDriver bloom={bloom} />
       <TickerDriver active={() => !film.covered} />
       <PerformanceMonitor
         flipflops={3}
@@ -220,7 +245,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
 
       {s.post && (
         <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur luminanceThreshold={0.85} luminanceSmoothing={0.2} intensity={0.7} radius={0.7} />
+          <Bloom ref={bloom} mipmapBlur luminanceThreshold={0.85} luminanceSmoothing={0.2} intensity={BLOOM} radius={0.7} />
         </EffectComposer>
       )}
       <Ready onReady={onReady} />

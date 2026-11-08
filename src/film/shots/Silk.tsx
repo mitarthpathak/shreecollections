@@ -9,6 +9,7 @@ import { SNOISE } from '../glsl';
 import { fabricTexture } from '../textures';
 import { WEAVE_FABRICS } from '../fabrics';
 import { getThemeColor } from '@/lib/theme';
+import { sceneTheme } from '../sceneTheme';
 
 const W = 5.6;
 const H = 3.6;
@@ -37,7 +38,7 @@ const vertex = /* glsl */ `
 const fragment = /* glsl */ `
   uniform sampler2D uTexA; uniform sampler2D uTexB;
   uniform float uMix; uniform float uAlpha; uniform float uTime;
-  uniform vec3 uTint; uniform float uTintAmt;
+  uniform vec3 uTint; uniform float uTintAmt; uniform vec3 uEdge;
   varying vec2 vUv2;
   ${SNOISE}
   void main(){
@@ -51,7 +52,7 @@ const fragment = /* glsl */ `
     float l = dot(col, vec3(0.299, 0.587, 0.114));
     col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt);
     csm_DiffuseColor = vec4(col, uAlpha);
-    csm_Emissive = vec3(1.0, 0.78, 0.35) * edge * 2.4 * step(0.001, uMix) * step(uMix, 0.999);
+    csm_Emissive = uEdge * edge * 2.4 * step(0.001, uMix) * step(uMix, 0.999);
   }
 `;
 
@@ -77,6 +78,7 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       uAlpha: { value: 0 },
       uTint: { value: new THREE.Color(getThemeColor('--gold-300')) },
       uTintAmt: { value: 0 },
+      uEdge: { value: new THREE.Color() },
     }),
     [textures],
   );
@@ -87,6 +89,13 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
 
   useFrame((s, dt) => {
     uniforms.uTime.value += dt;
+    (uniforms.uEdge.value as THREE.Color).copy(sceneTheme.glint);
+    const tm = threads.current?.material as THREE.MeshBasicMaterial | undefined;
+    if (tm) {
+      // gold light on Raat; a printed gold line on Kagaz (additive gold vanishes on ivory)
+      tm.blending = sceneTheme.light > 0.5 ? THREE.NormalBlending : THREE.AdditiveBlending;
+      tm.color.copy(sceneTheme.coinRim);
+    }
     if (mode === 'weave') {
       const { fabric, sheet, assemble } = film.u.weave;
       const a = Math.min(textures.length - 1, Math.floor(fabric));
