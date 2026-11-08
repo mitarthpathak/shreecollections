@@ -229,7 +229,6 @@ export function BagDrawer() {
         aria-modal="true"
         aria-label={t('bag')}
         tabIndex={-1}
-        style={{ transform: 'translateX(100%)' }}
         className="absolute inset-y-0 right-0 flex w-full max-w-[440px] flex-col bg-lacquer shadow-[-30px_0_80px_-20px_rgba(0,0,0,.8)] outline-none"
       >
         <div className="flex items-center justify-between border-b border-gold-700/40 px-5 py-4">

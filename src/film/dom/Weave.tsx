@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
-import { WEAVE_FABRICS } from '../textures';
+import { WEAVE_FABRICS } from '../fabrics';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
 import { useT } from '@/lib/i18n';

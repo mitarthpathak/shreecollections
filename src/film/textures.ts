@@ -7,6 +7,8 @@ import * as THREE from 'three';
 import { line, lineRadial, curveCardinalClosed, curveCatmullRomClosed, curveBasis } from 'd3-shape';
 import { brand } from '@/brand.config';
 import { palette } from '@/lib/palette';
+import type { FabricKind } from './fabrics';
+export { WEAVE_FABRICS } from './fabrics';
 
 const make = (w: number, h: number) => {
   const c = document.createElement('canvas');
@@ -45,16 +47,6 @@ function rosette(r: number, petals: number) {
   return lineRadial().curve(curveCardinalClosed.tension(0.2))(pts) ?? '';
 }
 
-export type FabricKind = 'Banarasi' | 'Chanderi' | 'Georgette' | 'Cotton' | 'Bandhani' | 'Leheriya';
-
-export const WEAVE_FABRICS: { kind: FabricKind; base: string; hi: string; line: string }[] = [
-  { kind: 'Banarasi', base: '#7A0F24', hi: 'बनारसी', line: 'Zari woven into silk on the ghats of Varanasi.' },
-  { kind: 'Chanderi', base: '#E9DFC7', hi: 'चंदेरी', line: 'Light as moonlight, with gold coins scattered through.' },
-  { kind: 'Georgette', base: '#B4536B', hi: 'जॉर्जेट', line: 'A fall that follows every step.' },
-  { kind: 'Cotton', base: '#22305E', hi: 'कॉटन', line: 'Block-printed, sun-dried, softer every wash.' },
-  { kind: 'Bandhani', base: '#A3112A', hi: 'बांधनी', line: 'Ten thousand knots, tied by hand.' },
-  { kind: 'Leheriya', base: '#2F7D52', hi: 'लहरिया', line: 'The ripple of a monsoon river, dyed in.' },
-];
 
 export function fabricCanvas(kind: FabricKind, base: string, size = 512) {
   const [c, ctx] = make(size, size);

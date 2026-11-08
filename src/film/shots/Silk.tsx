@@ -6,7 +6,8 @@ import CustomShaderMaterial from 'three-custom-shader-material';
 import { film } from '../state';
 import { anchor } from '../rail';
 import { SNOISE } from '../glsl';
-import { WEAVE_FABRICS, fabricTexture } from '../textures';
+import { fabricTexture } from '../textures';
+import { WEAVE_FABRICS } from '../fabrics';
 import { palette } from '@/lib/palette';
 
 const W = 5.6;

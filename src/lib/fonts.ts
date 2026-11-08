@@ -13,7 +13,7 @@ export const cinzel = Cinzel({
 
 export const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500'],
   style: ['normal', 'italic'],
   variable: '--font-cormorant',
   display: 'swap',
@@ -31,7 +31,7 @@ export const manrope = Manrope({
 export const tiro = Tiro_Devanagari_Hindi({
   subsets: ['devanagari'],
   weight: '400',
-  style: ['normal', 'italic'],
+  style: 'normal',
   variable: '--font-tiro',
   display: 'swap',
   preload: true,
@@ -39,7 +39,7 @@ export const tiro = Tiro_Devanagari_Hindi({
 
 export const mukta = Mukta({
   subsets: ['devanagari'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '600'],
   variable: '--font-mukta',
   display: 'swap',
   preload: false,

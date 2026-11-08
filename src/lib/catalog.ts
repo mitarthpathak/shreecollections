@@ -2,42 +2,19 @@
  * Thin data layer. Components only ever import from here, so the JSON source can be
  * swapped for Shopify Storefront, Supabase or Sanity by rewriting this file alone.
  */
-import { z } from 'zod';
 import raw from '../../data/products.json';
+import { FABRICS, OCCASIONS, BADGES } from './catalog.constants';
+import type { Product } from './catalog.schema';
 
-export const FABRICS = ['Banarasi', 'Chanderi', 'Georgette', 'Cotton', 'Bandhani', 'Leheriya', 'Silk', 'Other'] as const;
-export const OCCASIONS = ['festive', 'wedding', 'party', 'daily', 'office'] as const;
-export const BADGES = ['new', 'bestseller', 'limited'] as const;
-
-export const ProductSchema = z.object({
-  id: z.string(),
-  slug: z.string().regex(/^[a-z0-9-]+$/),
-  name: z.string(),
-  nameHi: z.string(),
-  category: z.enum(['saree', 'suit']),
-  subcategory: z.string(),
-  fabric: z.enum(FABRICS),
-  colorFamily: z.string(),
-  colorHex: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  occasion: z.array(z.enum(OCCASIONS)).min(1),
-  price: z.number().int().positive(),
-  mrp: z.number().int().positive().optional(),
-  images: z.array(z.string()).min(1),
-  fabricTexture: z.string().optional(),
-  sizes: z.array(z.string()).optional(),
-  stitched: z.boolean(),
-  inStock: z.boolean(),
-  badges: z.array(z.enum(BADGES)).optional(),
-  description: z.string(),
-  care: z.array(z.string()),
-});
-
-export type Product = z.infer<typeof ProductSchema>;
+export { FABRICS, OCCASIONS, BADGES };
+export type { Product };
 export type Category = Product['category'];
 export type Fabric = (typeof FABRICS)[number];
 export type Occasion = (typeof OCCASIONS)[number];
 
-const products: Product[] = z.array(ProductSchema).parse(raw);
+// Validated with Zod at build time (src/lib/catalog.server.ts, imported by the root layout),
+// so the schema never ships to the browser.
+const products = raw as Product[];
 
 export const getAllProducts = () => products;
 export const getProduct = (slug: string) => products.find((p) => p.slug === slug);

@@ -7,11 +7,13 @@ import { Providers } from '@/components/Providers';
 import { Header } from '@/components/Header';
 import { TabBar } from '@/components/TabBar';
 import { Footer } from '@/components/Footer';
-import { BagDrawer } from '@/components/BagDrawer';
-import { SearchOverlay } from '@/components/SearchOverlay';
+import { LazySearch, LazyBag } from '@/components/LazySearch';
 import { Cursor } from '@/components/Cursor';
 import { RouteCurtain } from '@/components/RouteCurtain';
 import { storeJsonLd, ld } from '@/lib/seo';
+import { validateCatalog } from '@/lib/catalog.server';
+
+validateCatalog();
 
 export const metadata: Metadata = {
   metadataBase: new URL(brand.siteUrl),
@@ -56,8 +58,8 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           {children}
           <Footer />
           <TabBar />
-          <BagDrawer />
-          <SearchOverlay />
+          <LazyBag />
+          <LazySearch />
           <Cursor />
           <RouteCurtain />
         </Providers>
