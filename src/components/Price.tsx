@@ -14,7 +14,7 @@ export function Price({ price, mrp, size = 'md' }: { price: number; mrp?: number
           <s className="text-[0.8em] text-ivory-dim tabular-nums" aria-label={`${t('mrp')} ${formatINR(mrp!)}`}>
             {formatINR(mrp!)}
           </s>
-          <span className="text-[0.75em] font-semibold text-pitambar">
+          <span className="text-[length:max(0.75em,11px)] font-semibold text-pitambar">
             {off}% {t('off')}
           </span>
         </>

@@ -6,6 +6,9 @@ import { getAllProducts, getProduct, completeTheLook, FABRIC_HI, OCCASION_LABEL,
 import { useShop, useUI } from '@/lib/store';
 import { useLang, useT } from '@/lib/i18n';
 import { threadToBag } from '@/lib/fx';
+import { formatINR } from '@/lib/format';
+import { getLenis } from '@/lib/clock';
+import { prefersReducedMotion } from '@/lib/gsap';
 import { buildWhatsAppOrder } from '@/lib/whatsapp';
 import { ZoomGallery } from './ZoomGallery';
 import { Price } from '../Price';
@@ -42,11 +45,40 @@ export function ProductView({ slug }: { slug: string }) {
   const [feel, setFeel] = useState(false);
   const [pin, setPin] = useState('');
   const [pinMsg, setPinMsg] = useState('');
+  const [added, setAdded] = useState(false);
+  const [barOn, setBarOn] = useState(false);
   const addBtn = useRef<HTMLButtonElement>(null);
+  const barBtn = useRef<HTMLButtonElement>(null);
+  const addedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     pushViewed(slug);
   }, [slug, pushViewed]);
+
+  // Below lg the buy box scrolls away: a compact bar (above the TabBar) takes over while the
+  // main "Add to bag" is off-screen, and steps aside for the footer.
+  useEffect(() => {
+    const btn = addBtn.current;
+    if (!btn) return;
+    const footer = document.querySelector('[data-site-footer]');
+    let btnSeen = true;
+    let footerSeen = false;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.target === btn) btnSeen = e.isIntersecting;
+          else footerSeen = e.isIntersecting;
+        }
+        setBarOn(!btnSeen && !footerSeen);
+      },
+      // Ignore the strip under the fixed header and the TabBar + bar at the bottom.
+      { rootMargin: '-64px 0px -128px 0px' },
+    );
+    io.observe(btn);
+    if (footer) io.observe(footer);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => () => clearTimeout(addedTimer.current), []);
 
   const variants = useMemo(
     () => getAllProducts().filter((q) => q.category === p.category && q.subcategory === p.subcategory),
@@ -60,17 +92,28 @@ export function ProductView({ slug }: { slug: string }) {
   const name = lang === 'hi' ? p.nameHi : p.name;
   const sized = Boolean(p.sizes?.length);
 
-  const addToBag = () => {
-    if (sized && !size) {
-      setNeedSize(true);
-      document.getElementById('sizes')?.focus();
-      return;
-    }
+  const showSizes = () => {
+    setNeedSize(true);
+    const el = document.getElementById('sizes');
+    if (!el) return;
+    const lenis = getLenis();
+    const offset = -(window.innerHeight / 2 - el.offsetHeight / 2);
+    if (lenis) lenis.scrollTo(el, { offset, duration: prefersReducedMotion() ? 0 : 0.9 });
+    else el.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    (el.querySelector<HTMLElement>('[role=radio]') ?? el).focus({ preventScroll: true });
+  };
+
+  const addToBag = (from?: Element | null) => {
+    if (sized && !size) return showSizes();
     add(p.slug, size, qty);
-    threadToBag(document.querySelector('[data-hero-media]') ?? addBtn.current);
+    threadToBag(from ?? document.querySelector('[data-hero-media]') ?? addBtn.current);
+    setAdded(true);
+    clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setAdded(false), 1600);
   };
 
   const waHref = buildWhatsAppOrder([{ product: p, size, qty }], customer);
+  const showBar = barOn && p.inStock;
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 md:px-8">
@@ -99,7 +142,7 @@ export function ProductView({ slug }: { slug: string }) {
           {lang === 'en' && <p lang="hi" className="font-hindi-display mt-1 text-lg text-ivory-dim">{p.nameHi}</p>}
           <div className="mt-5">
             <Price price={p.price} mrp={p.mrp} size="lg" />
-            <p className="mt-1 text-xs text-ivory-dim">Inclusive of all taxes</p>
+            <p className="mt-1 text-xs text-ivory-dim">{t('inclTaxes')}</p>
           </div>
 
           <p className="mt-6 max-w-prose font-editorial text-xl leading-relaxed text-ivory/90">{p.description}</p>
@@ -134,7 +177,7 @@ export function ProductView({ slug }: { slug: string }) {
                   </button>
                 ))}
               </div>
-              {needSize && <p className="mt-2 text-sm text-sindoor" role="alert">{lang === 'hi' ? 'पहले साइज़ चुनें।' : 'Choose a size first.'}</p>}
+              {needSize && <p className="mt-2 text-sm text-sindoor" role="alert">{t('chooseSizeFirst')}</p>}
             </fieldset>
           ) : p.category === 'suit' ? (
             <p className="mt-7 inline-flex rounded-full bg-mor/20 px-3 py-1.5 text-xs text-ivory ring-1 ring-mor/60">
@@ -149,8 +192,8 @@ export function ProductView({ slug }: { slug: string }) {
               <span className="w-6 text-center tabular-nums" aria-live="polite">{qty}</span>
               <button type="button" className="grid h-12 w-12 place-items-center disabled:opacity-30" disabled={qty >= 10} onClick={() => setQty(qty + 1)} aria-label="+1"><IconPlus size={18} /></button>
             </div>
-            <button ref={addBtn} type="button" onClick={addToBag} disabled={!p.inStock} className="btn btn-gold flex-1" data-magnetic data-cursor="Add">
-              {p.inStock ? t('addToBag') : t('outOfStock')}
+            <button ref={addBtn} type="button" onClick={() => addToBag()} disabled={!p.inStock} className="btn btn-gold flex-1" data-magnetic data-cursor="Add">
+              {!p.inStock ? t('outOfStock') : added ? t('added') : t('addToBag')}
             </button>
             <WishlistButton slug={p.slug} className="!h-12 !w-12 ring-1 ring-gold-500/40" size={22} />
           </div>
@@ -183,7 +226,8 @@ export function ProductView({ slug }: { slug: string }) {
               onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               inputMode="numeric"
               placeholder={`${t('delivery')} — ${t('pincode')}`}
-              className="min-h-11 flex-1 rounded-full bg-lacquer px-4 text-sm ring-1 ring-gold-500/30 placeholder:text-ivory-dim/50 focus:ring-gold-300"
+              autoComplete="postal-code"
+              className="min-h-11 min-w-0 flex-1 rounded-full bg-lacquer px-4 text-base ring-1 ring-gold-500/30 placeholder:text-ivory-dim/50 focus:ring-gold-300 md:text-sm"
             />
             <button type="submit" className="chip">{t('check')}</button>
           </form>
@@ -218,7 +262,7 @@ export function ProductView({ slug }: { slug: string }) {
               </button>
               {feel && (
                 <div className="mt-4">
-                  <FabricViewer src={p.fabricTexture} label={lang === 'hi' ? 'खींचकर लहर बनाइए' : 'Drag across the cloth to ripple it'} />
+                  <FabricViewer src={p.fabricTexture} label={lang === 'hi' ? 'छूकर या खींचकर लहर बनाइए' : 'Touch or drag across the cloth to ripple it'} />
                 </div>
               )}
             </div>
@@ -241,6 +285,32 @@ export function ProductView({ slug }: { slug: string }) {
           </div>
         </section>
       )}
+
+      {/* Sticky add-to-bag (below lg), above the TabBar and the safe area. */}
+      <div
+        aria-hidden={!showBar}
+        inert={!showBar}
+        data-on={showBar}
+        className="fixed inset-x-0 bottom-[calc(var(--tabbar-h)+var(--safe-b))] z-40 translate-y-full opacity-0 transition-[transform,opacity] duration-300 [transition-timing-function:var(--ease-out-expo)] data-[on=true]:translate-y-0 data-[on=true]:opacity-100 md:bottom-0 lg:hidden"
+      >
+        <div className="glass flex items-center gap-3 border-t border-gold-700/40 py-2 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:pb-[calc(0.5rem+var(--safe-b))]">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm leading-snug text-ivory" lang={lang === 'hi' ? 'hi' : undefined}>{name}</p>
+            <p className="text-sm font-semibold tabular-nums leading-snug text-gold-100">
+              {formatINR(p.price)}
+              {size && <span className="font-normal text-ivory-dim"> · {t('size')} {size}</span>}
+            </p>
+          </div>
+          <button
+            ref={barBtn}
+            type="button"
+            onClick={() => addToBag(barBtn.current)}
+            className="btn btn-gold shrink-0 !min-h-11 !px-5"
+          >
+            {sized && !size ? t('chooseSize') : added ? t('added') : t('addToBag')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

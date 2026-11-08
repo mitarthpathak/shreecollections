@@ -23,13 +23,13 @@ export function FooterContent() {
   ];
 
   return (
-    <div className="mx-auto grid max-w-[1600px] gap-12 px-4 py-16 md:grid-cols-[1.3fr_2fr] md:px-8">
-      <div className="space-y-6">
+    <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-12 px-4 py-16 md:grid-cols-[1.3fr_2fr] md:px-8">
+      <div className="min-w-0 space-y-6">
         <div className="flex items-center gap-4">
           <BadgeMark size={64} />
-          <div>
+          <div className="min-w-0">
             <p className="font-display text-lg tracking-[0.2em] text-gold-300">{brand.name.toUpperCase()}</p>
-            <p className="label text-[0.62rem] text-ivory-dim">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
+            <p className="label text-[0.7rem] text-ivory-dim">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
           </div>
         </div>
         <form
@@ -47,7 +47,7 @@ export function FooterContent() {
               onChange={(e) => setName(e.target.value)}
               placeholder={t('yourName')}
               autoComplete="name"
-              className="min-h-11 flex-1 rounded-full bg-lacquer px-4 text-sm text-ivory ring-1 ring-gold-500/30 placeholder:text-ivory-dim/50 focus:ring-gold-300"
+              className="min-h-11 min-w-0 flex-1 rounded-full bg-lacquer px-4 text-base text-ivory ring-1 ring-gold-500/30 placeholder:text-ivory-dim/50 focus:ring-gold-300 md:text-sm"
             />
             <button type="submit" className="btn btn-ghost !px-4" data-magnetic aria-label={t('subscribe')}>
               <IconWhatsApp size={18} />
@@ -59,7 +59,7 @@ export function FooterContent() {
           <IconInstagram size={20} /> @{brand.instagram.handle}
         </a>
       </div>
-      <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-2 gap-8 sm:grid-cols-3">
         {cols.map((c) => (
           <nav key={c.h} aria-label={c.h}>
             <p className="label mb-4 text-gold-500">{c.h}</p>
@@ -95,7 +95,7 @@ export function Footer() {
   const pathname = usePathname();
   if (pathname === '/') return null; // the film ends with its own knot + footer
   return (
-    <footer className="relative border-t border-gold-700/30 bg-lacquer/40 pb-tabbar">
+    <footer data-site-footer className="relative border-t border-gold-700/30 bg-lacquer/40 pb-tabbar">
       <FooterContent />
     </footer>
   );

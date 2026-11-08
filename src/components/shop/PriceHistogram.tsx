@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { scaleLog, scaleLinear } from 'd3-scale';
 import { bin, max as d3max } from 'd3-array';
-import { brushX, type D3BrushEvent } from 'd3-brush';
+import { brushX, type BrushBehavior, type D3BrushEvent } from 'd3-brush';
 import { select } from 'd3-selection';
 import { formatINR } from '@/lib/format';
 
@@ -40,9 +40,18 @@ export function PriceHistogram({
   }, [prices]);
   const y = useMemo(() => scaleLinear().domain([0, d3max(bins, (b) => b.length) ?? 1]).range([H - 4, 10]), [bins]);
   const brushG = useRef<SVGGElement>(null);
+  const brushRef = useRef<BrushBehavior<unknown> | null>(null);
   const touch = useSyncExternalStore(subscribeCoarse, () => window.matchMedia('(pointer: coarse)').matches, () => false);
   const [lo, hi] = value ?? DOMAIN;
-
+  // The panel renders twice (desktop sidebar + mobile sheet); a shared gradient id would
+  // resolve to the copy inside display:none and leave the bars unpainted.
+  const gradId = `hist-gold-${useId().replace(/[^\w-]/g, '')}`;
+  // The brush is bound once, so it must always call the latest onChange: an old closure
+  // would rebuild the URL from stale search params and drop the other filters.
+  const onChangeRef = useRef(onChange);
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+  });
 
   // d3-brush lives in a <g> React never re-renders.
   useEffect(() => {
@@ -51,24 +60,32 @@ export function PriceHistogram({
     const brush = brushX<unknown>()
       .extent([[PAD, 4], [W - PAD, H]])
       .on('end', (e: D3BrushEvent<unknown>) => {
-        if (!e.sourceEvent) return;
+        if (!e.sourceEvent) return; // programmatic moves (below) don't report back
         const s = e.selection as [number, number] | null;
-        if (!s) return onChange(null);
+        if (!s) return onChangeRef.current(null);
         const a = Math.round(x.invert(s[0]) / 100) * 100;
         const b = Math.round(x.invert(s[1]) / 100) * 100;
-        onChange([a, b]);
+        onChangeRef.current(a <= DOMAIN[0] && b >= DOMAIN[1] ? null : [a, b]);
       });
     g.call(brush);
     g.selectAll('.selection').attr('fill', 'rgba(233,196,106,0.12)').attr('stroke', '#E9C46A').attr('rx', 4);
     g.selectAll('.handle').attr('fill', '#E9C46A').attr('rx', 2);
-    if (value) g.call(brush.move, [x(value[0]), x(value[1])]);
+    brushRef.current = brush;
     return () => {
+      brushRef.current = null;
       g.on('.brush', null);
       g.selectAll('*').remove();
     };
-    // value is applied once on mount; later moves come from the brush itself.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [touch, x]);
+
+  // Keep the brush in step with the URL: "Clear all", back/forward, the other panel's brush.
+  const v0 = value?.[0];
+  const v1 = value?.[1];
+  useEffect(() => {
+    const brush = brushRef.current;
+    if (touch || !brush || !brushG.current) return;
+    select(brushG.current).call(brush.move, v0 != null && v1 != null ? [x(v0), x(v1)] : null);
+  }, [touch, x, v0, v1]);
 
   const toPos = (v: number) => ((Math.log(v) - Math.log(DOMAIN[0])) / (Math.log(DOMAIN[1]) - Math.log(DOMAIN[0]))) * 1000;
   const fromPos = (p: number) => Math.round(Math.exp(Math.log(DOMAIN[0]) + (p / 1000) * (Math.log(DOMAIN[1]) - Math.log(DOMAIN[0]))) / 100) * 100;
@@ -115,12 +132,12 @@ export function PriceHistogram({
               width={Math.max(0, x1 - x0 - 2)}
               height={H - 4 - y(b.length)}
               rx={2}
-              fill={on ? 'url(#hist-gold)' : 'rgba(201,150,46,0.18)'}
+              fill={on ? `url(#${gradId})` : 'rgba(201,150,46,0.18)'}
             />
           );
         })}
         <defs>
-          <linearGradient id="hist-gold" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#FFF1C1" />
             <stop offset="1" stopColor="#8A6418" />
           </linearGradient>
