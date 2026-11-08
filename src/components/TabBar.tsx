@@ -6,7 +6,7 @@ import { Count } from './Header';
 import { useShop, useUI, bagCount } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 
-/** Mobile bottom tab bar: 56px tall plus the safe area. */
+/** Mobile bottom tab bar: 56px tall plus the safe area (bottom, and the notch side in landscape). */
 export function TabBar() {
   const pathname = usePathname();
   const t = useT();
@@ -15,12 +15,12 @@ export function TabBar() {
   const setSearchOpen = useUI((s) => s.setSearchOpen);
   const setBagOpen = useUI((s) => s.setBagOpen);
   const item =
-    'relative flex min-h-[var(--tabbar-h)] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] tracking-wide text-ivory-dim aria-[current=page]:text-gold-300';
+    'relative flex min-h-[var(--tabbar-h)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] leading-tight tracking-wide text-ivory-dim aria-[current=page]:text-gold-300';
 
   return (
     <nav
       aria-label="Tabs"
-      className="glass fixed inset-x-0 bottom-0 z-50 flex border-t border-gold-700/40 pb-[var(--safe-b)] md:hidden"
+      className="glass fixed inset-x-0 bottom-0 z-50 flex border-t border-gold-700/40 pb-[var(--safe-b)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)] md:hidden"
     >
       <Link href="/" className={item} aria-current={pathname === '/' ? 'page' : undefined}>
         <IconHome size={22} />

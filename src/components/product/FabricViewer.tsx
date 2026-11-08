@@ -3,7 +3,7 @@ import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Environment, Lightformer, useTexture } from '@react-three/drei';
 import CustomShaderMaterial from 'three-custom-shader-material';
 import * as THREE from 'three';
-import { useMemo, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { TickerDriver } from '@/film/TickerDriver';
 import { palette } from '@/lib/palette';
 
@@ -96,17 +96,31 @@ function Cloth({ src }: { src: string }) {
 }
 
 export default function FabricViewer({ src, label }: { src: string; label: string }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const onScreen = useRef(true);
+
+  // Only render while the cloth is on screen (and the tab is visible).
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => void (onScreen.current = e.isIntersecting), { rootMargin: '80px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const active = useCallback(() => onScreen.current && !document.hidden, []);
+
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-[radial-gradient(circle_at_50%_40%,#2a1d12,#07060A_70%)]" data-cursor="Drag">
+    <div ref={wrap} className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-[radial-gradient(circle_at_50%_40%,#2a1d12,#07060A_70%)]" data-cursor="Drag">
       <Canvas
         frameloop="never"
         dpr={[1, 1.5]}
         camera={{ position: [0, 0, 2.6], fov: 40 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         aria-hidden
-        style={{ touchAction: 'none' }}
+        // Vertical swipes scroll the page; taps and sideways drags ripple the cloth.
+        style={{ touchAction: 'pan-y pinch-zoom' }}
       >
-        <TickerDriver />
+        <TickerDriver active={active} />
         <ambientLight intensity={0.35} />
         <directionalLight position={[2, 3, 4]} intensity={2.2} color="#FFE7B0" />
         <pointLight position={[-2.5, -1, 2]} color={palette.mor} intensity={6} />
