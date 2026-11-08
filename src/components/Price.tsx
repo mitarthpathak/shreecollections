@@ -8,7 +8,7 @@ export function Price({ price, mrp, size = 'md' }: { price: number; mrp?: number
   const cls = size === 'lg' ? 'text-2xl' : size === 'sm' ? 'text-sm' : 'text-base';
   return (
     <p className={`flex flex-wrap items-baseline gap-x-2 ${cls}`}>
-      <span className="font-medium text-gold-text tabular-nums">{formatINR(price)}</span>
+      <span className="font-medium text-fg tabular-nums">{formatINR(price)}</span>
       {off > 0 && (
         <>
           <s className="text-[length:max(0.8em,12px)] text-fg-muted tabular-nums" aria-label={`${t('mrp')} ${formatINR(mrp!)}`}>

@@ -208,7 +208,7 @@ export function ZoomGallery({ images, alt, slug }: { images: string[]; alt: stri
       </div>
       <div className="relative">
         <ViewTransition name={`img-${slug}`} share="morph" default="none">
-          <div ref={strip} className="no-scrollbar flex aspect-[3/4] snap-x snap-mandatory overflow-x-auto rounded-[18px] bg-surface" data-lenis-prevent>
+          <div ref={strip} className="no-scrollbar flex aspect-[4/5] snap-x snap-mandatory overflow-x-auto rounded-lg bg-surface" data-lenis-prevent>
             {images.map((src, i) => (
               <button key={src} type="button" data-i={i} data-cursor="View" onClick={openViewer} className="relative h-full w-full shrink-0 snap-center" aria-label={`Open image ${i + 1} fullscreen`}>
                 <Image src={src} alt={i === 0 ? alt : `${alt}, view ${i + 1}`} fill priority={i === 0} sizes="(min-width: 1024px) 45vw, 100vw" quality={80} className="object-cover" />

@@ -1,4 +1,5 @@
 import { brand } from '@/brand.config';
+import { productMedia } from '@/lib/catalog';
 import type { Product } from './catalog';
 
 export const absUrl = (path = '/') => new URL(path, brand.siteUrl).toString();
@@ -40,7 +41,7 @@ export function productJsonLd(p: Product) {
     name: p.name,
     alternateName: p.nameHi,
     sku: p.id,
-    image: p.images.map((i) => absUrl(i)),
+    image: productMedia(p).map((i) => absUrl(i)),
     description: p.description,
     category: p.category === 'saree' ? 'Sarees' : 'Suits',
     material: p.fabric,

@@ -52,11 +52,11 @@ export function MiniChakra({
             role="checkbox"
             aria-checked={selected.includes(c)}
             onClick={() => onToggle(c)}
-            className="chip !min-h-9 !px-2.5 !text-xs"
+            className="chip !px-3 !text-xs"
           >
-            <span className="h-3 w-3 rounded-full ring-1 ring-field-line" style={{ background: COLOR_FAMILIES[c]?.hex }} />
+            <span className="h-3.5 w-3.5 rounded-full ring-1 ring-field-line" style={{ background: COLOR_FAMILIES[c]?.hex }} />
             <span lang={lang === 'hi' ? 'hi' : undefined}>{lang === 'hi' ? COLOR_FAMILIES[c]?.hi : c}</span>
-            <span className="opacity-60">{n}</span>
+            <span className="text-fg-muted">{n}</span>
           </button>
         ))}
       </div>

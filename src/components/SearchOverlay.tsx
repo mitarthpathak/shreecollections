@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Fuse from 'fuse.js';
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useShop, useUI } from '@/lib/store';
-import { getAllProducts, FABRIC_HI, COLOR_FAMILIES } from '@/lib/catalog';
+import { getAllProducts, FABRIC_HI, COLOR_FAMILIES, productMedia } from '@/lib/catalog';
 import { useLang, useT } from '@/lib/i18n';
 import { formatINR } from '@/lib/format';
 import { gsap } from '@/lib/gsap';
@@ -129,7 +129,7 @@ export function SearchOverlay() {
             {results.map((p) => (
               <li key={p.slug}>
                 <Link href={`/product/${p.slug}`} onClick={close} className="group block">
-                  <Image src={p.images[0]} alt={p.name} width={300} height={400} sizes="(min-width:1024px) 220px, 45vw" className="aspect-[3/4] w-full rounded-xl object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+                  <Image src={productMedia(p)[0]} alt={p.name} width={300} height={400} sizes="(min-width:1024px) 220px, 45vw" className="aspect-[3/4] w-full rounded-xl object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
                   <p className="mt-2 text-sm text-fg group-hover:text-gold-text" lang={lang === 'hi' ? 'hi' : undefined}>{lang === 'hi' ? p.nameHi : p.name}</p>
                   <p className="text-xs text-gold-text tabular-nums">{formatINR(p.price)}</p>
                 </Link>

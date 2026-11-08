@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useShop, useUI } from '@/lib/store';
-import { getProduct, type Product } from '@/lib/catalog';
+import { getProduct, type Product, productMedia } from '@/lib/catalog';
 import { formatINR } from '@/lib/format';
 import { useLang, useT } from '@/lib/i18n';
 import { buildWhatsAppOrder } from '@/lib/whatsapp';
@@ -101,7 +101,7 @@ export function BagContents({ variant = 'drawer' }: { variant?: 'drawer' | 'page
         {lines.map((l) => (
           <li key={l.slug + (l.size ?? '')} className="panel flex gap-4 rounded-2xl p-3">
             <Link href={`/product/${l.slug}`} onClick={() => setBagOpen(false)} className="shrink-0">
-              <Image src={l.product.images[0]} alt={l.product.name} width={84} height={112} className="h-28 w-[84px] rounded-xl object-cover" />
+              <Image src={productMedia(l.product)[0]} alt={l.product.name} width={84} height={112} className="h-28 w-[84px] rounded-xl object-cover" />
             </Link>
             <div className="flex min-w-0 flex-1 flex-col">
               <p className="truncate font-editorial text-lg font-medium leading-snug text-fg" lang={lang === 'hi' ? 'hi' : undefined}>

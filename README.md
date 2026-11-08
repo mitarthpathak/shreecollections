@@ -30,7 +30,7 @@ is still missing.
 | Owner story | `ownerStory` |
 | Shipping, returns and privacy policies | `policies.*` |
 | Production domain | `NEXT_PUBLIC_SITE_URL` |
-| Real product photos | `public/products/<slug>/1.webp` … (see below) |
+| Real product photos | `public/products/<slug>/photo-*.webp` + `photos` in the data (see below) |
 | Optional sound | `public/audio/` (see its README) |
 
 Until the WhatsApp number is set, "Order on WhatsApp" opens WhatsApp's contact picker with
@@ -66,11 +66,13 @@ directly. Each product:
 The JSON is validated with Zod on every build (`src/lib/catalog.server.ts`); a typo fails
 the build with a readable message instead of shipping a broken page.
 
-**Photos.** Drop real photos (3:4, at least 1200 px tall, WebP or AVIF) over the placeholders
-in `public/products/<slug>/` with the same names. `next/image` serves the right size and
-format to each device. The current images are procedural placeholders (textile pattern,
-drape shading, gold frame) from `npm run assets` — **that command overwrites
-`public/products/` and `public/lookbook/`**, so don't run it after adding real photos.
+**Photos.** Add real photos (4:5, 1600 × 2000 px) as `public/products/<slug>/photo-1.webp` …
+and list them in the product's `photos` array; see [`docs/photo-guide.md`](docs/photo-guide.md).
+Products without `photos` keep the drawn placeholders; `next/image` serves the right size and
+format to each device. The placeholders (textile pattern and drape on an ivory wall, 4:5) come
+from `npm run assets` — **that command overwrites `1.webp`–`3.webp` and `fabric.webp` in
+`public/products/` and the files in `public/lookbook/`** (`npm run assets -- --products-only`
+leaves the lookbook alone). It never touches `photo-*.webp`.
 
 **Lookbook.** Curated images in `public/lookbook/look-1.webp` … `look-8.webp`. Instagram is a
 link only: no embed, no scraping.

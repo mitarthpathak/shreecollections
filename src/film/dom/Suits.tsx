@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
-import { getByCategory, type Product } from '@/lib/catalog';
+import { getByCategory, type Product, productMedia } from '@/lib/catalog';
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { useLang, useT } from '@/lib/i18n';
 import { Price } from '@/components/Price';
@@ -36,7 +36,7 @@ function ArchCard({ p }: { p: Product }) {
     <Link href={`/product/${p.slug}`} data-arch className="group block" data-cursor="View">
       <div className="relative">
         <div data-arch-img className="relative aspect-[3/4] overflow-hidden" style={{ clipPath: archPolygon(1) }}>
-          <Image src={p.images[0]} alt={`${p.name} — ${p.subcategory}`} fill sizes="(min-width: 768px) 40vw, 90vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+          <Image src={productMedia(p)[0]} alt={`${p.name} — ${p.subcategory}`} fill sizes="(min-width: 768px) 40vw, 90vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
         </div>
         <svg viewBox="0 0 100 133" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
           <polygon

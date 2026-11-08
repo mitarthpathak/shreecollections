@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
-import { getByCategory, type Product } from '@/lib/catalog';
+import { getByCategory, type Product, productMedia } from '@/lib/catalog';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
 import { useLang, useT } from '@/lib/i18n';
@@ -42,7 +42,7 @@ function Slide({ p, i }: { p: Product; i: number }) {
           <div ref={media} className="relative aspect-[3/4] overflow-hidden rounded-[18px] ring-1 ring-gold-line/50">
             <Image
               data-parallax
-              src={p.images[0]}
+              src={productMedia(p)[0]}
               alt={`${p.name} — ${p.fabric} saree`}
               fill
               sizes="(min-width: 768px) 34vw, 95vw"

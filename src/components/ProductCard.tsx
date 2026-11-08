@@ -1,11 +1,11 @@
 'use client';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState, ViewTransition } from 'react';
 import type { Product } from '@/lib/catalog';
 import { FABRIC_HI } from '@/lib/catalog';
 import { Price } from './Price';
 import { WishlistButton } from './WishlistButton';
+import { ProductImage } from './ProductImage';
 import { IconClose, IconPlus } from './icons';
 import { useShop } from '@/lib/store';
 import { useLang, useT } from '@/lib/i18n';
@@ -49,9 +49,7 @@ export function ProductCard({
   const plus = useRef<HTMLButtonElement>(null);
   const refocus = useRef(false);
   const [picking, setPicking] = useState(false);
-  const [slide, setSlide] = useState(0);
   const name = lang === 'hi' ? p.nameHi : p.name;
-  const shots = p.images.slice(0, 2);
 
   const quickAdd = (size?: string) => {
     add(p.slug, size);
@@ -85,40 +83,12 @@ export function ProductCard({
     };
   }, [picking]);
 
-  const img = (
-    <div
-      ref={media}
-      onScroll={(e) => {
-        const el = e.currentTarget;
-        const i = el.clientWidth ? Math.round(el.scrollLeft / el.clientWidth) : 0;
-        if (i !== slide) setSlide(i);
-      }}
-      className="no-scrollbar relative flex aspect-[3/4] snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-[14px] bg-surface [@media(hover:hover)]:overflow-hidden"
-    >
-      {shots.map((src, i) => (
-        <Image
-          key={src}
-          src={src}
-          alt={i === 0 ? `${p.name} — ${p.fabric} ${p.category}` : `${p.name}, fabric detail`}
-          width={600}
-          height={800}
-          sizes={sizes}
-          priority={priority && i === 0}
-          quality={75}
-          className={`h-full w-full shrink-0 snap-center object-cover transition-[opacity,transform] duration-700 [transition-timing-function:var(--ease-out-expo)] ${
-            i === 1
-              ? '[@media(hover:hover)]:absolute [@media(hover:hover)]:inset-0 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100'
-              : '[@media(hover:hover)]:group-hover:scale-[1.04]'
-          }`}
-        />
-      ))}
-    </div>
-  );
+  const img = <ProductImage ref={media} product={p} sizes={sizes} priority={priority} />;
 
   return (
     <article className="group relative" data-flip-id={p.slug}>
       <div className="relative">
-        <Link href={`/product/${p.slug}`} data-cursor="View" className="block rounded-[14px]" aria-label={name}>
+        <Link href={`/product/${p.slug}`} data-cursor="View" className="block rounded-lg" aria-label={name}>
           {morph ? (
             <ViewTransition name={`img-${p.slug}`} share="morph" default="none">
               {img}
@@ -131,18 +101,6 @@ export function ProductCard({
           <BadgeList badges={p.badges} />
         </div>
         <WishlistButton slug={p.slug} className="absolute right-2 top-2" />
-        {/* swipe hint dots (touch only): the current image is the long gold one */}
-        {shots.length > 1 && (
-          <div aria-hidden className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 [@media(hover:hover)]:hidden">
-            {shots.map((src, i) => (
-              <span
-                key={src}
-                data-on={i === slide}
-                className="h-1 w-1.5 rounded-full bg-fg-muted/40 transition-all duration-300 data-[on=true]:w-3 data-[on=true]:bg-gold-text"
-              />
-            ))}
-          </div>
-        )}
         {p.inStock && (
           <div className="absolute inset-x-2 bottom-2 flex justify-end [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
             {picking && p.sizes ? (
@@ -191,11 +149,16 @@ export function ProductCard({
           {p.subcategory !== p.fabric && ` · ${p.subcategory}`}
           {p.category === 'suit' && !p.stitched && ` · ${t('unstitched')}`}
         </p>
-        <h3 className="font-editorial text-xl font-medium leading-snug text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
+        <h3 className={`text-xl leading-snug text-fg ${lang === 'hi' ? 'font-hindi-display' : 'font-editorial font-medium'}`} lang={lang === 'hi' ? 'hi' : undefined}>
           <Link href={`/product/${p.slug}`} className="hover:text-gold-text">
             {name}
           </Link>
         </h3>
+        {lang === 'hi' ? (
+          <p className="font-editorial text-base font-medium leading-snug text-fg-muted">{p.name}</p>
+        ) : (
+          <p lang="hi" className="font-hindi-display text-sm leading-snug text-fg-muted">{p.nameHi}</p>
+        )}
         <Price price={p.price} mrp={p.mrp} size="sm" />
         {!p.inStock && <p className="text-xs text-danger">{t('outOfStock')}</p>}
       </div>

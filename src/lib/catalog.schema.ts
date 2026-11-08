@@ -14,7 +14,10 @@ export const ProductSchema = z.object({
   occasion: z.array(z.enum(OCCASIONS)).min(1),
   price: z.number().int().positive(),
   mrp: z.number().int().positive().optional(),
+  /** Drawn placeholder art (always present; the fallback). */
   images: z.array(z.string()).min(1),
+  /** Real photographs, 4:5 (see docs/photo-guide.md). When present they replace `images`. */
+  photos: z.array(z.string()).min(1).optional(),
   fabricTexture: z.string().optional(),
   sizes: z.array(z.string()).optional(),
   stitched: z.boolean(),
