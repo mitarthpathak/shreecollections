@@ -169,7 +169,7 @@ export function BagContents({ variant = 'drawer' }: { variant?: 'drawer' | 'page
           <IconWhatsApp size={18} /> {t('checkoutWhatsApp')}
         </a>
         {!brand.contact.whatsapp && (
-          <p className="text-[11px] text-ivory-dim/80">
+          <p className="text-[11px] text-ivory-dim">
             <span className="todo">TODO(brand): WhatsApp number</span> — until it is set, WhatsApp asks which chat to send to.
           </p>
         )}

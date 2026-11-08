@@ -190,7 +190,8 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
         </div>
       </aside>
 
-      <section aria-label="Products">
+      <section aria-labelledby="products-h">
+        <h2 id="products-h" className="sr-only">Products</h2>
         <div className="mb-6 flex items-center justify-between gap-3">
           <p className="text-sm text-ivory-dim" aria-live="polite">
             <span className="text-gold-100 tabular-nums">{filtered.length}</span> {t('results')}

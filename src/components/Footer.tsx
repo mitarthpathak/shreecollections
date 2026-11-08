@@ -49,7 +49,7 @@ export function FooterContent() {
               autoComplete="name"
               className="min-h-11 flex-1 rounded-full bg-lacquer px-4 text-sm text-ivory ring-1 ring-gold-500/30 placeholder:text-ivory-dim/50 focus:ring-gold-300"
             />
-            <button type="submit" className="btn btn-ghost !px-4" data-magnetic>
+            <button type="submit" className="btn btn-ghost !px-4" data-magnetic aria-label={t('subscribe')}>
               <IconWhatsApp size={18} />
               <span className="hidden sm:inline">{t('subscribe')}</span>
             </button>
@@ -81,7 +81,7 @@ export function FooterContent() {
       <div className="md:col-span-2">
         <div className="hairline mb-8 opacity-60" />
         <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
-          <p className="text-xs text-ivory-dim/70">© {new Date().getFullYear()} {brand.name}, {brand.location.city}</p>
+          <p className="text-xs text-ivory-dim">© {new Date().getFullYear()} {brand.name}, {brand.location.city}</p>
           <p className="text-gold-glint font-display text-xl tracking-[0.18em]">
             {brand.signOff} · <span lang="hi" className="font-hindi-display">{brand.signOffHi}</span>
           </p>

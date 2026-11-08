@@ -11,7 +11,7 @@ export function Price({ price, mrp, size = 'md' }: { price: number; mrp?: number
       <span className="font-semibold text-gold-100 tabular-nums">{formatINR(price)}</span>
       {off > 0 && (
         <>
-          <s className="text-[0.8em] text-ivory-dim/70 tabular-nums" aria-label={`${t('mrp')} ${formatINR(mrp!)}`}>
+          <s className="text-[0.8em] text-ivory-dim tabular-nums" aria-label={`${t('mrp')} ${formatINR(mrp!)}`}>
             {formatINR(mrp!)}
           </s>
           <span className="text-[0.75em] font-semibold text-pitambar">

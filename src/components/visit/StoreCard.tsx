@@ -5,17 +5,18 @@ import { IconInstagram, IconPhone, IconPin, IconWhatsApp } from '../icons';
 import { useLang, useT } from '@/lib/i18n';
 import { buildWhatsAppEnquiry } from '@/lib/whatsapp';
 
-export function StoreCard({ className = '' }: { className?: string }) {
+export function StoreCard({ className = '', headingLevel = 3 }: { className?: string; headingLevel?: 2 | 3 }) {
+  const H = headingLevel === 2 ? 'h2' : 'h3';
   const t = useT();
   const lang = useLang();
   return (
     <div className={`panel rounded-3xl p-6 md:p-8 ${className}`}>
       <p className="label text-gold-500">{lang === 'hi' ? 'दुकान' : 'The store'}</p>
-      <h3 className="mt-2 font-display text-3xl text-gold">{brand.name}</h3>
+      <H className="mt-2 font-display text-3xl text-gold">{brand.name}</H>
       <p className="mt-1 text-sm text-ivory-dim">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
       <dl className="mt-6 space-y-4 text-sm">
         <div>
-          <dt className="label mb-1 text-[0.62rem] text-gold-500">{lang === 'hi' ? 'पता' : 'Address'}</dt>
+          <dt className="label mb-1 text-gold-500">{lang === 'hi' ? 'पता' : 'Address'}</dt>
           <dd>
             {brand.location.streetAddress ?? <Todo label="street address" />}
             <br />
@@ -23,7 +24,7 @@ export function StoreCard({ className = '' }: { className?: string }) {
           </dd>
         </div>
         <div>
-          <dt className="label mb-1 text-[0.62rem] text-gold-500">{lang === 'hi' ? 'समय' : 'Hours'}</dt>
+          <dt className="label mb-1 text-gold-500">{lang === 'hi' ? 'समय' : 'Hours'}</dt>
           <dd>
             {brand.hours ? (
               <ul>{brand.hours.map((h) => <li key={h.days}>{lang === 'hi' ? h.daysHi : h.days}: {h.open}–{h.close}</li>)}</ul>
@@ -49,7 +50,7 @@ export function StoreCard({ className = '' }: { className?: string }) {
           <IconInstagram size={18} /> @{brand.instagram.handle}
         </a>
       </div>
-      {!brand.contact.phone && <p className="mt-2 text-[11px] text-ivory-dim/70"><Todo label="phone & WhatsApp number" /></p>}
+      {!brand.contact.phone && <p className="mt-2 text-[11px] text-ivory-dim"><Todo label="phone & WhatsApp number" /></p>}
     </div>
   );
 }

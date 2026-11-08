@@ -30,7 +30,7 @@ export function Visit() {
       <div className="sticky top-0 mx-auto grid min-h-svh max-w-[1500px] items-center gap-8 px-5 py-[12svh] md:grid-cols-[1.15fr_1fr] md:px-12">
         <figure>
           <RajasthanMap ref={svg} onReady={ready} className="mx-auto w-full max-w-[600px]" />
-          <figcaption className="mt-2 text-center text-[10px] text-ivory-dim/60">{MAP_CREDIT}</figcaption>
+          <figcaption className="mt-2 text-center text-xs text-ivory-dim">{MAP_CREDIT}</figcaption>
         </figure>
         <div>
           <h2 className="font-display text-[clamp(2.2rem,5.5vw,5.5rem)] leading-[0.98] text-gold">{brand.copy.visit.en}</h2>
