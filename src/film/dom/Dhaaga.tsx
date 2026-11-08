@@ -45,9 +45,9 @@ function Mandala() {
     <svg viewBox="-320 -320 640 640" className="h-[min(92vw,86svh)] w-[min(92vw,86svh)]" aria-hidden>
       <defs>
         <linearGradient id="mandala-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FFF1C1" />
-          <stop offset="0.5" stopColor="#E9C46A" />
-          <stop offset="1" stopColor="#8A6418" />
+          <stop offset="0" style={{ stopColor: 'var(--metal-hi)' }} />
+          <stop offset="0.5" style={{ stopColor: 'var(--metal)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--metal-lo)' }} />
         </linearGradient>
       </defs>
       {paths.map((p, i) => (
@@ -97,7 +97,7 @@ export function Dhaaga() {
             </span>
           ))}
         </h2>
-        <p lang="hi" className="font-hindi-display mx-auto mt-8 w-full max-w-[1600px] text-[length:clamp(1.3rem,min(3vw,6svh),2.6rem)] text-ivory/85 short:mt-3">
+        <p lang="hi" className="font-hindi-display mx-auto mt-8 w-full max-w-[1600px] text-[length:clamp(1.3rem,min(3vw,6svh),2.6rem)] text-fg/85 short:mt-3">
           {brand.copy.thread.hi}
         </p>
       </div>

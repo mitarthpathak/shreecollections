@@ -35,7 +35,7 @@ export function VisitView() {
     <div className="mx-auto grid max-w-[1400px] items-center gap-10 px-4 pb-20 md:px-8 lg:grid-cols-[1.2fr_1fr]">
       <figure>
         <RajasthanMap ref={svg} onReady={ready} className="mx-auto w-full max-w-[640px]" />
-        <figcaption className="mt-3 text-center text-xs leading-relaxed text-ivory-dim">{MAP_CREDIT}</figcaption>
+        <figcaption className="mt-3 text-center text-xs leading-relaxed text-fg-muted">{MAP_CREDIT}</figcaption>
       </figure>
       <StoreCard headingLevel={2} />
     </div>

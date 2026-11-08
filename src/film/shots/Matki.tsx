@@ -6,7 +6,7 @@ import { film } from '../state';
 import { anchor } from '../rail';
 import { matkiTexture } from '../textures';
 import { rng } from '../rng';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
 
 /**
  * Makhan Chor Picks: a procedural matki (LatheGeometry) tilts; gold coins and drops pour out
@@ -75,20 +75,20 @@ export function Matki({ coins = 48 }: { coins?: number }) {
     <group>
       <group ref={pot} position={film.mobile ? [base.x + 0.75, base.y + 1.75, base.z] : [base.x - 2.7, base.y + 0.55, base.z]}>
         <mesh geometry={geo}>
-          <meshPhysicalMaterial map={tex} roughness={0.75} clearcoat={0.3} clearcoatRoughness={0.6} side={THREE.DoubleSide} color="#ffffff" />
+          <meshPhysicalMaterial map={tex} roughness={0.75} clearcoat={0.3} clearcoatRoughness={0.6} side={THREE.DoubleSide} />
         </mesh>
         <mesh position={[0, 0.9, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[0.36, 32]} />
-          <meshStandardMaterial color="#F3EAD8" roughness={0.9} emissive="#3a2a10" />
+          <meshStandardMaterial color={getThemeColor('--ivory')} roughness={0.9} emissive={getThemeColor('--pigment-clay-glow')} />
         </mesh>
       </group>
       <instancedMesh ref={coinMesh} args={[undefined, undefined, coins]} frustumCulled={false}>
         <cylinderGeometry args={[0.07, 0.07, 0.012, 20]} />
-        <meshPhysicalMaterial color={palette.gold300} metalness={1} roughness={0.22} clearcoat={1} />
+        <meshPhysicalMaterial color={getThemeColor('--gold-300')} metalness={1} roughness={0.22} clearcoat={1} />
       </instancedMesh>
       <instancedMesh ref={dropMesh} args={[undefined, undefined, drops]} frustumCulled={false}>
         <sphereGeometry args={[0.035, 12, 10]} />
-        <meshPhysicalMaterial color={palette.gold100} metalness={1} roughness={0.1} />
+        <meshPhysicalMaterial color={getThemeColor('--gold-100')} metalness={1} roughness={0.1} />
       </instancedMesh>
     </group>
   );

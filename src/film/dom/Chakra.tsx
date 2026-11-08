@@ -9,7 +9,7 @@ import { Section, ranges } from './Section';
 import { getAllProducts, COLOR_FAMILIES, type Category } from '@/lib/catalog';
 import { gsap, Flip, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
-import { hexToRgb01 } from '@/lib/palette';
+import { hexToRgb01, themeRGB01 } from '@/lib/theme';
 import { useLang, useT } from '@/lib/i18n';
 import { ProductCard } from '@/components/ProductCard';
 
@@ -37,8 +37,8 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
     const gInner = rot.append('g');
     const gOuter = rot.append('g');
     const center = svg.append('g').attr('pointer-events', 'none');
-    const cTitle = center.append('text').attr('text-anchor', 'middle').attr('dy', -4).attr('fill', '#E9C46A').attr('font-size', 22).style('font-family', 'var(--font-cinzel)').style('letter-spacing', '3px');
-    const cSub = center.append('text').attr('text-anchor', 'middle').attr('dy', 22).attr('fill', '#C9BFAB').attr('font-size', 13);
+    const cTitle = center.append('text').attr('text-anchor', 'middle').attr('dy', -4).style('fill', 'var(--gold-text)').attr('font-size', 22).style('font-family', 'var(--font-cinzel)').style('letter-spacing', '3px');
+    const cSub = center.append('text').attr('text-anchor', 'middle').attr('dy', 22).style('fill', 'var(--text-muted)').attr('font-size', 13);
     const products = getAllProducts();
     let cat: Category | null = null;
     let color: string | null = null;
@@ -60,7 +60,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
       const inner: Seg[] = (['saree', 'suit'] as Category[]).map((k) => ({
         key: k,
         value: products.filter((x) => x.category === k).length,
-        color: k === 'saree' ? '#8A1F2E' : '#14505A',
+        color: k === 'saree' ? 'var(--pigment-saree)' : 'var(--pigment-suit)',
         label: k === 'saree' ? (L === 'hi' ? 'साड़ियाँ' : 'SAREES') : L === 'hi' ? 'सूट' : 'SUITS',
       }));
       const counts = new Map<string, number>();
@@ -79,7 +79,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
         .attr('aria-label', (d) => d.data.label)
         .attr('aria-pressed', (d) => String(cat === d.data.key))
         .attr('fill', (d) => d.data.color)
-        .attr('stroke', (d) => (cat === d.data.key ? '#FFF1C1' : '#07060A'))
+        .style('stroke', (d) => (cat === d.data.key ? 'var(--text)' : 'var(--bg)'))
         .attr('stroke-width', 1.5)
         .attr('opacity', (d) => (cat && cat !== d.data.key ? 0.45 : 1))
         .style('cursor', 'pointer')
@@ -92,7 +92,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
       il.join('text')
         .attr('text-anchor', 'middle')
         .attr('dy', 4)
-        .attr('fill', '#F3EAD8')
+        .style('fill', 'var(--ivory)')
         .attr('font-size', 11)
         .attr('pointer-events', 'none')
         .style('letter-spacing', '2px')
@@ -109,7 +109,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
         .attr('aria-label', (d) => `${d.data.label}: ${d.data.value}`)
         .attr('aria-pressed', (d) => String(color === d.data.key))
         .attr('fill', (d) => d.data.color)
-        .attr('stroke', (d) => (color === d.data.key ? '#FFF1C1' : '#07060A'))
+        .style('stroke', (d) => (color === d.data.key ? 'var(--text)' : 'var(--bg)'))
         .attr('stroke-width', (d) => (color === d.data.key ? 2 : 1))
         .attr('opacity', (d) => (color && color !== d.data.key ? 0.4 : 1))
         .style('cursor', 'pointer')
@@ -205,7 +205,7 @@ export function Chakra() {
       setSel({ cat, color });
       const hex = color ? COLOR_FAMILIES[color].hex : null;
       document.documentElement.style.setProperty('--accent', hex ?? 'var(--gold-300)');
-      const [r, g, b] = hexToRgb01(hex ?? '#E9C46A');
+      const [r, g, b] = hex ? hexToRgb01(hex) : themeRGB01('--gold-300');
       gsap.to(film.u.chakra.tint, { 0: r, 1: g, 2: b, duration: 0.9, ease: 'silk' });
       gsap.to(film.u.chakra, { tintAmt: hex ? 0.85 : 0, duration: 0.9, ease: 'silk' });
     },
@@ -243,10 +243,10 @@ export function Chakra() {
     <Section index={6} ref={root} label="Rang Chakra: find your colour" className="!h-auto min-h-[var(--m)] md:min-h-[var(--d)]">
       <div className="mx-auto grid max-w-[1600px] items-center gap-10 px-5 py-[16svh] md:grid-cols-[1fr_1.1fr] md:px-12">
         <header data-chakra-head>
-          <p className="label mb-3 text-gold-500">Rang Chakra</p>
+          <p className="label mb-3 text-gold-text">Rang Chakra</p>
           <h2 className="font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{t('findColour')}</h2>
-          <p lang="hi" className="font-hindi-display mt-2 text-xl text-ivory/80 md:text-2xl">अपना रंग चुनें</p>
-          <p className="mt-6 max-w-md text-ivory-dim">
+          <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">अपना रंग चुनें</p>
+          <p className="mt-6 max-w-md text-fg-muted">
             {lang === 'hi'
               ? 'भीतरी घेरा: साड़ी या सूट। बाहरी घेरा: रंग। फ़ोन पर पहिया घुमाइए, टैप करके चुनिए।'
               : 'Inner ring: sarees or suits. Outer ring: colours, sized by how many pieces we have. On a phone, spin the wheel and tap to choose.'}
@@ -258,10 +258,10 @@ export function Chakra() {
       </div>
       <div className="mx-auto max-w-[1600px] px-5 pb-[14svh] md:px-12">
         <div className="mb-5 flex items-baseline justify-between">
-          <p className="text-sm text-ivory-dim" aria-live="polite">
+          <p className="text-sm text-fg-muted" aria-live="polite">
             <span className="text-[color:var(--accent)]">●</span> {items.length} {t('results')}
           </p>
-          <Link href={`/shop${sel.cat ? (sel.cat === 'saree' ? '/sarees' : '/suits') : ''}${sel.color ? `?color=${sel.color}` : ''}`} className="text-sm text-gold-300 underline underline-offset-4">
+          <Link href={`/shop${sel.cat ? (sel.cat === 'saree' ? '/sarees' : '/suits') : ''}${sel.color ? `?color=${sel.color}` : ''}`} className="text-sm text-gold-text underline underline-offset-4">
             {t('viewAll')} →
           </Link>
         </div>

@@ -23,7 +23,7 @@ export function Mor() {
   return (
     <Section index={4} ref={root} label="Mor pankh" className="overflow-x-clip">
       <div className="pointer-events-none fixed inset-0 z-20 grid place-items-center [[data-chapter-active]:not([data-chapter-active=mor])_&]:invisible">
-        <p data-mor-label className="label text-gold-300 opacity-0 motion-reduce:opacity-100">
+        <p data-mor-label className="label text-gold-text opacity-0 motion-reduce:opacity-100">
           Mor Pankh · <span lang="hi">मोरपंख</span>
         </p>
         <div
@@ -33,8 +33,8 @@ export function Mor() {
           style={{
             clipPath: 'circle(0% at 50% 55%)',
             background:
-              'radial-gradient(ellipse 34% 44% at 50% 55%, rgba(16,24,74,.95) 0%, rgba(22,58,120,.9) 20%, rgba(14,124,123,.75) 38%, rgba(70,110,40,.45) 52%, rgba(201,150,46,.35) 60%, rgba(7,6,10,0) 74%), #07060A',
-            maskImage: 'radial-gradient(circle at 50% 55%, #000 55%, transparent 80%)',
+              'radial-gradient(ellipse 34% 44% at 50% 55%, color-mix(in srgb, var(--pigment-peacock-ink) 95%, transparent) 0%, color-mix(in srgb, var(--pigment-peacock-blue) 90%, transparent) 20%, color-mix(in srgb, var(--mor) 75%, transparent) 38%, color-mix(in srgb, var(--pigment-peacock-olive) 45%, transparent) 52%, color-mix(in srgb, var(--gold-500) 35%, transparent) 60%, transparent 74%), var(--chapter-bg)',
+            maskImage: 'radial-gradient(circle at 50% 55%, var(--text) 55%, transparent 80%)',
           }}
         />
       </div>

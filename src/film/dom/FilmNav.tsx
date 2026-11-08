@@ -37,8 +37,8 @@ export function FilmNav() {
 
   return (
     <div ref={wrap}>
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[55] h-[2px] bg-gold-700/20" aria-hidden>
-        <div ref={bar} className="h-full origin-left bg-gradient-to-r from-gold-700 via-gold-300 to-gold-100 shadow-[0_0_10px_rgba(233,196,106,.7)]" style={{ transform: 'scaleX(0)' }} />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[55] h-[2px] bg-gold-line/20" aria-hidden>
+        <div ref={bar} className="h-full origin-left bg-gradient-to-r from-gold-line via-gold-text to-gold-text shadow-[0_0_10px_color-mix(in_srgb,var(--metal)_70%,transparent)]" style={{ transform: 'scaleX(0)' }} />
       </div>
       {/*
         Ticks hang 10px from the top edge: above the header's controls (which start 10px down),
@@ -57,8 +57,8 @@ export function FilmNav() {
                 className="group/tick pointer-events-auto relative flex h-2.5 w-5 -translate-x-1/2 justify-center rounded-b-sm focus-visible:outline-offset-0"
                 aria-label={lang === 'hi' ? c.labelHi : c.label}
               >
-                <span className="mt-0.5 block h-1.5 w-px bg-gold-500 transition-all group-hover/tick:h-2 group-hover/tick:bg-gold-100 group-data-[on]/tick:h-2 group-data-[on]/tick:bg-gold-100" />
-                <span className="label pointer-events-none absolute left-1/2 top-3.5 -translate-x-1/2 whitespace-nowrap rounded-full bg-raat/90 px-2.5 py-1 text-[0.6rem] text-gold-300 opacity-0 shadow-[inset_0_0_0_1px_rgb(201_150_46/0.35)] transition-opacity group-hover/tick:opacity-100 group-focus-visible/tick:opacity-100">
+                <span className="mt-0.5 block h-1.5 w-px bg-gold-line transition-all group-hover/tick:h-2 group-hover/tick:bg-gold-text group-data-[on]/tick:h-2 group-data-[on]/tick:bg-gold-text" />
+                <span className="label pointer-events-none absolute left-1/2 top-3.5 -translate-x-1/2 whitespace-nowrap rounded-full bg-bg/90 px-2.5 py-1 text-[0.6rem] text-gold-text opacity-0 shadow-[inset_0_0_0_1px_var(--divider)] transition-opacity group-hover/tick:opacity-100 group-focus-visible/tick:opacity-100">
                   {lang === 'hi' ? c.labelHi : c.label}
                 </span>
               </button>
@@ -68,14 +68,14 @@ export function FilmNav() {
       </nav>
       <div aria-hidden className="pointer-events-none fixed right-[calc(0.5rem+var(--safe-r))] top-1/2 z-[55] flex -translate-y-1/2 flex-col gap-1.5 md:hidden">
         {CHAPTERS.map((c, i) => (
-          <span key={c.id} data-dot data-i={i} className="block h-1.5 w-1.5 rounded-full bg-ivory/25 transition-all data-[on]:h-4 data-[on]:bg-gold-300" />
+          <span key={c.id} data-dot data-i={i} className="block h-1.5 w-1.5 rounded-full bg-fg-muted/25 transition-all data-[on]:h-4 data-[on]:bg-gold-text" />
         ))}
       </div>
       {/* Phones have Shop in the tab bar, so this floats only from md up (and not over the hero). */}
       <Link
         href="/shop"
         data-film-fab
-        className="btn btn-gold fixed bottom-[calc(1.5rem+var(--safe-b))] right-[calc(1.5rem+var(--safe-r))] z-[56] hidden !min-h-12 !px-5 shadow-[0_10px_40px_-10px_rgba(233,196,106,.7)] md:inline-flex"
+        className="btn btn-gold fixed bottom-[calc(1.5rem+var(--safe-b))] right-[calc(1.5rem+var(--safe-r))] z-[56] hidden !min-h-12 !px-5 shadow-[0_10px_40px_-10px_var(--shadow)] md:inline-flex"
         data-magnetic
       >
         {t('shop')}

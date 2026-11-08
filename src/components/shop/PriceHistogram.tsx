@@ -68,8 +68,8 @@ export function PriceHistogram({
         onChangeRef.current(a <= DOMAIN[0] && b >= DOMAIN[1] ? null : [a, b]);
       });
     g.call(brush);
-    g.selectAll('.selection').attr('fill', 'rgba(233,196,106,0.12)').attr('stroke', '#E9C46A').attr('rx', 4);
-    g.selectAll('.handle').attr('fill', '#E9C46A').attr('rx', 2);
+    g.selectAll('.selection').style('fill', 'color-mix(in srgb, var(--gold-line) 15%, transparent)').style('stroke', 'var(--gold-text)').attr('rx', 4);
+    g.selectAll('.handle').style('fill', 'var(--gold-text)').attr('rx', 2);
     brushRef.current = brush;
     return () => {
       brushRef.current = null;
@@ -92,9 +92,9 @@ export function PriceHistogram({
 
   return (
     <div>
-      <div className="mb-2 flex items-baseline justify-between text-xs text-ivory-dim">
+      <div className="mb-2 flex items-baseline justify-between text-xs text-fg-muted">
         <span>{label}</span>
-        <span className="tabular-nums text-gold-100" aria-live="polite">
+        <span className="tabular-nums text-gold-text" aria-live="polite">
           {value ? `${formatINR(lo)} – ${formatINR(hi)}` : `${formatINR(Math.min(...prices))} – ${formatINR(Math.max(...prices))}`}
         </span>
       </div>
@@ -132,19 +132,19 @@ export function PriceHistogram({
               width={Math.max(0, x1 - x0 - 2)}
               height={H - 4 - y(b.length)}
               rx={2}
-              fill={on ? `url(#${gradId})` : 'rgba(201,150,46,0.18)'}
+              style={{ fill: on ? `url(#${gradId})` : 'color-mix(in srgb, var(--gold-line) 22%, transparent)' }}
             />
           );
         })}
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#FFF1C1" />
-            <stop offset="1" stopColor="#8A6418" />
+            <stop offset="0" style={{ stopColor: 'var(--metal-hi)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--metal-lo)' }} />
           </linearGradient>
         </defs>
-        <line x1={PAD} x2={W - PAD} y1={H - 4} y2={H - 4} stroke="#8A6418" />
+        <line x1={PAD} x2={W - PAD} y1={H - 4} y2={H - 4} style={{ stroke: 'var(--metal-lo)' }} />
         {TICKS.map((t) => (
-          <text key={t} x={x(t)} y={H + 12} textAnchor="middle" fontSize="9" fill="#C9BFAB">
+          <text key={t} x={x(t)} y={H + 12} textAnchor="middle" fontSize="9" style={{ fill: 'var(--text-muted)' }} >
             {short(t)}
           </text>
         ))}

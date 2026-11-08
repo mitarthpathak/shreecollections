@@ -41,9 +41,9 @@ export function Lookbook({ wall3D }: { wall3D: boolean }) {
     <Section index={8} ref={root} label="Lookbook" className="max-md:!h-auto">
       <div className="sticky top-0 flex h-svh flex-col justify-end pb-16 max-md:static max-md:h-auto max-md:py-[14svh] md:short:pb-4">
         <div className="mx-auto w-full max-w-[1600px] px-safe md:px-safe-12">
-          <p className="label mb-3 text-gold-500 short:mb-1">{t('lookbook')}</p>
+          <p className="label mb-3 text-gold-text short:mb-1">{t('lookbook')}</p>
           <h2 className="font-display text-[length:clamp(2.6rem,min(7vw,13svh),7rem)] leading-[0.95] text-gold">Lookbook</h2>
-          <p className="mt-2 max-w-md text-ivory-dim md:short:hidden">Curated from our store in {brand.location.city}. More every week on Instagram.</p>
+          <p className="mt-2 max-w-md text-fg-muted md:short:hidden">Curated from our store in {brand.location.city}. More every week on Instagram.</p>
         </div>
         {/* flat reel: phones, lower tiers, reduced motion */}
         <div className={`no-scrollbar mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-safe md:px-safe-12 short:mt-3 ${wall3D ? 'md:hidden' : ''}`} data-cursor="Drag">

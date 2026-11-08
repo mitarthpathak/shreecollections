@@ -13,7 +13,7 @@ export default function ShopPage() {
   return (
     <Page>
       <PageHeading eyebrow="Shree Collection · Banswara" title="The Collection" titleHi="पूरा कलेक्शन">
-        <p className="mt-4 max-w-xl font-editorial text-xl italic text-ivory-dim">
+        <p className="mt-4 max-w-xl font-editorial text-xl italic text-fg-muted">
           Sarees and suits woven, tied and dyed across India, chosen by hand in Banswara.
         </p>
       </PageHeading>

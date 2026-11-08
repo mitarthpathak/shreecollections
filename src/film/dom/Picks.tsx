@@ -30,9 +30,9 @@ export function Picks() {
     <Section index={7} ref={root} label="Makhan Chor Picks: bestsellers" className="!h-auto min-h-[var(--m)] md:min-h-[var(--d)]">
       <div className="mx-auto max-w-[1600px] px-5 py-[18svh] md:px-12">
         <header className="mb-12 max-w-4xl md:ml-auto md:text-right">
-          <p className="label mb-3 text-gold-500">Makhan Chor Picks · {t('bestseller')}</p>
+          <p className="label mb-3 text-gold-text">Makhan Chor Picks · {t('bestseller')}</p>
           <h2 className="font-display text-[clamp(2.2rem,5.5vw,5.5rem)] leading-[0.98] text-gold">{brand.copy.bestsellers.en}</h2>
-          <p lang="hi" className="font-hindi-display mt-3 text-xl text-ivory/80 md:text-2xl">{brand.copy.bestsellers.hi}</p>
+          <p lang="hi" className="font-hindi-display mt-3 text-xl text-fg/80 md:text-2xl">{brand.copy.bestsellers.hi}</p>
         </header>
         <div data-picks-grid className="grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 md:grid-cols-4">
           {items.map((p) => (

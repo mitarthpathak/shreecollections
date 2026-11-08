@@ -50,7 +50,7 @@ export default async function PolicyPage({ params }: PageProps<'/policies/[slug]
       <div className="mx-auto max-w-3xl space-y-5 px-4 pb-20 md:px-8">
         {!p.body && <Todo label={`${p.title.toLowerCase()} policy`} />}
         {body.map((para) => (
-          <p key={para} className="text-lg leading-relaxed text-ivory/90">{para}</p>
+          <p key={para} className="text-lg leading-relaxed text-fg/90">{para}</p>
         ))}
       </div>
     </Page>

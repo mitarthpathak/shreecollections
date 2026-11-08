@@ -20,7 +20,7 @@ export function BadgeList({ badges }: { badges?: Product['badges'] }) {
         <li
           key={b}
           className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.12em] ${
-            b === 'bestseller' ? 'bg-sindoor text-ivory' : b === 'limited' ? 'bg-raat/80 text-gold-100 ring-1 ring-gold-500' : 'bg-gold-300 text-raat'
+            b === 'bestseller' ? 'bg-badge-bg text-badge-text' : 'bg-surface-2 text-fg'
           }`}
         >
           {t(b)}
@@ -93,7 +93,7 @@ export function ProductCard({
         const i = el.clientWidth ? Math.round(el.scrollLeft / el.clientWidth) : 0;
         if (i !== slide) setSlide(i);
       }}
-      className="no-scrollbar relative flex aspect-[3/4] snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-[14px] bg-lacquer [@media(hover:hover)]:overflow-hidden"
+      className="no-scrollbar relative flex aspect-[3/4] snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-[14px] bg-surface [@media(hover:hover)]:overflow-hidden"
     >
       {shots.map((src, i) => (
         <Image
@@ -138,7 +138,7 @@ export function ProductCard({
               <span
                 key={src}
                 data-on={i === slide}
-                className="h-1 w-1.5 rounded-full bg-ivory/40 transition-all duration-300 data-[on=true]:w-3 data-[on=true]:bg-gold-300/80"
+                className="h-1 w-1.5 rounded-full bg-fg-muted/40 transition-all duration-300 data-[on=true]:w-3 data-[on=true]:bg-gold-text"
               />
             ))}
           </div>
@@ -152,7 +152,7 @@ export function ProductCard({
                     key={s}
                     type="button"
                     onClick={() => quickAdd(s)}
-                    className="min-h-11 min-w-11 rounded-full text-xs text-ivory ring-1 ring-gold-500/40 hover:bg-gold-300 hover:text-raat"
+                    className="min-h-11 min-w-11 rounded-full text-xs text-fg ring-1 ring-field-line hover:bg-cta-bg hover:text-cta-text"
                   >
                     {s}
                   </button>
@@ -163,7 +163,7 @@ export function ProductCard({
                     refocus.current = true;
                     setPicking(false);
                   }}
-                  className="grid min-h-11 min-w-11 place-items-center rounded-full text-ivory-dim hover:text-gold-100"
+                  className="grid min-h-11 min-w-11 place-items-center rounded-full text-fg-muted hover:text-gold-text"
                   aria-label={t('close')}
                 >
                   <IconClose size={16} />
@@ -175,7 +175,7 @@ export function ProductCard({
                 type="button"
                 data-cursor="Add"
                 onClick={() => (p.sizes ? setPicking(true) : quickAdd())}
-                className="glass flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-100 ring-1 ring-gold-500/50 hover:bg-gold-300 hover:text-raat"
+                className="glass flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-text ring-1 ring-field-line hover:bg-cta-bg hover:text-cta-text"
                 aria-label={`${t('quickAdd')}: ${name}`}
               >
                 <IconPlus size={16} />
@@ -186,18 +186,18 @@ export function ProductCard({
         )}
       </div>
       <div className="mt-3 space-y-1 px-0.5">
-        <p className="label text-[0.7rem] text-gold-500">
+        <p className="label text-[0.7rem] text-gold-text">
           {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric}
           {p.subcategory !== p.fabric && ` · ${p.subcategory}`}
           {p.category === 'suit' && !p.stitched && ` · ${t('unstitched')}`}
         </p>
-        <h3 className="text-[0.95rem] leading-snug text-ivory" lang={lang === 'hi' ? 'hi' : undefined}>
-          <Link href={`/product/${p.slug}`} className="hover:text-gold-100">
+        <h3 className="text-[0.95rem] leading-snug text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
+          <Link href={`/product/${p.slug}`} className="hover:text-gold-text">
             {name}
           </Link>
         </h3>
         <Price price={p.price} mrp={p.mrp} size="sm" />
-        {!p.inStock && <p className="text-xs text-sindoor">{t('outOfStock')}</p>}
+        {!p.inStock && <p className="text-xs text-danger">{t('outOfStock')}</p>}
       </div>
     </article>
   );

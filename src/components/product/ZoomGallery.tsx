@@ -200,7 +200,7 @@ export function ZoomGallery({ images, alt, slug }: { images: string[]; alt: stri
             onClick={() => go(i)}
             aria-label={`Image ${i + 1}`}
             aria-current={active === i}
-            className="overflow-hidden rounded-xl ring-1 ring-gold-700/50 transition-shadow aria-[current=true]:ring-2 aria-[current=true]:ring-gold-300"
+            className="overflow-hidden rounded-xl ring-1 ring-gold-line/50 transition-shadow aria-[current=true]:ring-2 aria-[current=true]:ring-gold-text"
           >
             <Image src={src} alt="" width={84} height={112} className="h-28 w-[84px] object-cover" />
           </button>
@@ -208,7 +208,7 @@ export function ZoomGallery({ images, alt, slug }: { images: string[]; alt: stri
       </div>
       <div className="relative">
         <ViewTransition name={`img-${slug}`} share="morph" default="none">
-          <div ref={strip} className="no-scrollbar flex aspect-[3/4] snap-x snap-mandatory overflow-x-auto rounded-[18px] bg-lacquer" data-lenis-prevent>
+          <div ref={strip} className="no-scrollbar flex aspect-[3/4] snap-x snap-mandatory overflow-x-auto rounded-[18px] bg-surface" data-lenis-prevent>
             {images.map((src, i) => (
               <button key={src} type="button" data-i={i} data-cursor="View" onClick={openViewer} className="relative h-full w-full shrink-0 snap-center" aria-label={`Open image ${i + 1} fullscreen`}>
                 <Image src={src} alt={i === 0 ? alt : `${alt}, view ${i + 1}`} fill priority={i === 0} sizes="(min-width: 1024px) 45vw, 100vw" quality={80} className="object-cover" />
@@ -216,12 +216,12 @@ export function ZoomGallery({ images, alt, slug }: { images: string[]; alt: stri
             ))}
           </div>
         </ViewTransition>
-        <button type="button" onClick={openViewer} className="glass absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-gold-100" aria-label="Fullscreen">
+        <button type="button" onClick={openViewer} className="glass absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-gold-text" aria-label="Fullscreen">
           <IconExpand size={18} />
         </button>
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 md:hidden" aria-hidden>
           {images.map((_, i) => (
-            <span key={i} className={`h-1 rounded-full transition-all ${active === i ? 'w-5 bg-gold-300' : 'w-1.5 bg-ivory/40'}`} />
+            <span key={i} className={`h-1 rounded-full transition-all ${active === i ? 'w-5 bg-gold-text' : 'w-1.5 bg-fg-muted/40'}`} />
           ))}
         </div>
       </div>
@@ -233,7 +233,7 @@ export function ZoomGallery({ images, alt, slug }: { images: string[]; alt: stri
         aria-modal="true"
         aria-label="Image viewer"
         aria-hidden={!full}
-        className="fixed inset-0 z-[80] bg-raat outline-none"
+        className="fixed inset-0 z-[80] bg-bg outline-none"
         style={{ visibility: 'hidden', opacity: 0 }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') step(1);
@@ -244,7 +244,7 @@ export function ZoomGallery({ images, alt, slug }: { images: string[]; alt: stri
         <button
           type="button"
           onClick={close}
-          className="glass absolute right-[calc(1rem+env(safe-area-inset-right,0px))] top-[calc(1rem+env(safe-area-inset-top,0px))] grid h-12 w-12 place-items-center rounded-full text-gold-100"
+          className="glass absolute right-[calc(1rem+env(safe-area-inset-right,0px))] top-[calc(1rem+env(safe-area-inset-top,0px))] grid h-12 w-12 place-items-center rounded-full text-gold-text"
           aria-label="Close"
         >
           <IconClose />
@@ -257,7 +257,7 @@ export function ZoomGallery({ images, alt, slug }: { images: string[]; alt: stri
               onClick={() => show(i, i > active ? 1 : -1)}
               aria-label={`Image ${i + 1} of ${images.length}`}
               aria-current={active === i}
-              className={`h-11 w-11 rounded-full text-xs ${active === i ? 'bg-gold-300 text-raat' : 'glass text-ivory'}`}
+              className={`h-11 w-11 rounded-full text-xs ${active === i ? 'bg-cta-bg text-cta-text' : 'glass text-fg'}`}
             >
               {i + 1}
             </button>

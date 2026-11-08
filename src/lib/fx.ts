@@ -46,11 +46,11 @@ export function threadToBag(from: Element | null) {
   const svg = document.createElementNS(SVGNS, 'svg');
   svg.setAttribute('aria-hidden', 'true');
   svg.style.cssText = 'position:fixed;inset:0;width:100vw;height:100lvh;pointer-events:none;z-index:90;overflow:visible';
-  svg.innerHTML = `<defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A6418"/><stop offset=".5" stop-color="#FFF1C1"/><stop offset="1" stop-color="#E9C46A"/></linearGradient></defs>`;
+  svg.innerHTML = `<defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--metal-lo)"/><stop offset=".5" style="stop-color:var(--metal-hi)"/><stop offset="1" style="stop-color:var(--metal)"/></linearGradient></defs>`;
   const glow = document.createElementNS(SVGNS, 'path');
   glow.setAttribute('d', d);
   glow.setAttribute('fill', 'none');
-  glow.setAttribute('stroke', 'rgba(233,196,106,.35)');
+  glow.style.stroke = 'color-mix(in srgb, var(--metal) 35%, transparent)';
   glow.setAttribute('stroke-width', '7');
   glow.setAttribute('stroke-linecap', 'round');
   const path = document.createElementNS(SVGNS, 'path');
@@ -81,7 +81,7 @@ export function goldBurst(from: Element) {
   for (let i = 0; i < 12; i++) {
     const s = document.createElement('span');
     const size = 2 + Math.random() * 3;
-    s.style.cssText = `position:absolute;left:0;top:0;width:${size}px;height:${size}px;border-radius:50%;background:${i % 3 ? '#E9C46A' : '#FFF1C1'};box-shadow:0 0 6px #E9C46A`;
+    s.style.cssText = `position:absolute;left:0;top:0;width:${size}px;height:${size}px;border-radius:50%;background:${i % 3 ? 'var(--metal)' : 'var(--metal-hi)'};box-shadow:0 0 6px var(--metal)`;
     layer.appendChild(s);
     dots.push(s);
   }

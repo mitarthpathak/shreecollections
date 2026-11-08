@@ -1,7 +1,14 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { gsap, prefersReducedMotion } from '@/lib/gsap';
+import { themeRGBA } from '@/lib/theme';
 import { holdScroll } from '@/lib/clock';
+
+/** The page background with zero alpha, so the fade never passes through grey. */
+const clearBg = () => {
+  const [r, g, b] = themeRGBA('--bg');
+  return `rgba(${r},${g},${b},0)`;
+};
 
 const MIN = 1500;
 const MAX = 2500;
@@ -60,7 +67,7 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
           .to('[data-pre-matki], [data-pre-shri]', { opacity: 0, duration: 0.3 }, '<0.1')
           // the ring scales up and becomes the hero coin's rim
           .to(ring, { scale: 7, transformOrigin: '50% 50%', opacity: 0, duration: 1.1, ease: 'power3.inOut' }, '<')
-          .to(el, { backgroundColor: 'rgba(7,6,10,0)', duration: 0.8, ease: 'power2.out' }, '<0.25')
+          .to(el, { backgroundColor: clearBg(), duration: 0.8, ease: 'power2.out' }, '<0.25')
           .call(onDone, [], '<0.15');
       }
     };
@@ -85,13 +92,13 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
   };
 
   return (
-    <div ref={root} className="fixed inset-0 z-[110] grid place-items-center bg-raat" role="status" aria-label="Loading Shree Collection">
+    <div ref={root} className="fixed inset-0 z-[110] grid place-items-center bg-bg" role="status" aria-label="Loading Shree Collection">
       <svg viewBox="0 0 200 200" className="w-[min(56vw,300px)] overflow-visible" aria-hidden>
         <defs>
           <linearGradient id="pre-gold" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#FFF1C1" />
-            <stop offset="0.45" stopColor="#E9C46A" />
-            <stop offset="1" stopColor="#8A6418" />
+            <stop offset="0" style={{ stopColor: 'var(--metal-hi)' }} />
+            <stop offset="0.45" style={{ stopColor: 'var(--metal)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--metal-lo)' }} />
           </linearGradient>
           <clipPath id="pre-matki">
             <path d="M78 70 C 52 84, 50 132, 78 148 C 92 156, 108 156, 122 148 C 150 132, 148 84, 122 70 Z" />
@@ -99,8 +106,8 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
         </defs>
         <circle data-ring cx="100" cy="100" r="92" fill="none" stroke="url(#pre-gold)" strokeWidth="2" transform="rotate(-90 100 100)" />
         <g data-pre-matki>
-          <path d="M78 70 C 52 84, 50 132, 78 148 C 92 156, 108 156, 122 148 C 150 132, 148 84, 122 70 Z" fill="none" stroke="#8A6418" strokeWidth="1.2" />
-          <path d="M80 70 h40 M84 64 h32" stroke="#8A6418" strokeWidth="1.2" />
+          <path d="M78 70 C 52 84, 50 132, 78 148 C 92 156, 108 156, 122 148 C 150 132, 148 84, 122 70 Z" fill="none" strokeWidth="1.2" style={{ stroke: 'var(--metal-lo)' }} />
+          <path d="M80 70 h40 M84 64 h32" strokeWidth="1.2" style={{ stroke: 'var(--metal-lo)' }} />
           <g clipPath="url(#pre-matki)">
             <rect data-fill x="40" y="100" width="120" height="120" fill="url(#pre-gold)" />
           </g>
@@ -109,7 +116,7 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
           श्री
         </text>
       </svg>
-      <button type="button" onClick={skip} className="absolute bottom-[calc(2rem+var(--safe-b))] min-h-11 rounded-full px-4 text-xs uppercase tracking-[0.25em] text-ivory-dim hover:text-gold-100">
+      <button type="button" onClick={skip} className="absolute bottom-[calc(2rem+var(--safe-b))] min-h-11 rounded-full px-4 text-xs uppercase tracking-[0.25em] text-fg-muted hover:text-gold-text">
         Skip intro
       </button>
     </div>

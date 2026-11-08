@@ -8,7 +8,7 @@ import { anchor } from '../rail';
 import { SNOISE } from '../glsl';
 import { fabricTexture } from '../textures';
 import { WEAVE_FABRICS } from '../fabrics';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
 
 const W = 5.6;
 const H = 3.6;
@@ -62,7 +62,7 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
     () =>
       mode === 'weave'
         ? WEAVE_FABRICS.map((f) => fabricTexture(f.kind, f.base, 512, 1))
-        : [fabricTexture('Chanderi', '#EDE6D6', 512, 1)],
+        : [fabricTexture('Chanderi', getThemeColor('--pigment-chanderi'), 512, 1)],
     [mode],
   );
   useEffect(() => () => textures.forEach((t) => t.dispose()), [textures]);
@@ -75,7 +75,7 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       uTexB: { value: textures[Math.min(1, textures.length - 1)] },
       uMix: { value: 0 },
       uAlpha: { value: 0 },
-      uTint: { value: new THREE.Color(palette.gold300) },
+      uTint: { value: new THREE.Color(getThemeColor('--gold-300')) },
       uTintAmt: { value: 0 },
     }),
     [textures],
@@ -141,16 +141,15 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
           roughness={0.42}
           sheen={1}
           sheenRoughness={0.3}
-          sheenColor={palette.gold100}
+          sheenColor={getThemeColor('--gold-100')}
           anisotropy={0.6}
-          emissive="#000000"
           depthWrite={false}
         />
       </mesh>
       {mode === 'weave' && (
         <instancedMesh ref={threads} args={[undefined, undefined, N * 2]} frustumCulled={false}>
           <boxGeometry args={[0.006, 1, 0.006]} />
-          <meshBasicMaterial color={palette.gold500} transparent blending={THREE.AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color={getThemeColor('--gold-500')} transparent blending={THREE.AdditiveBlending} depthWrite={false} />
         </instancedMesh>
       )}
     </group>

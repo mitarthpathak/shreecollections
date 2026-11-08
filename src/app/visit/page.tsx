@@ -13,7 +13,7 @@ export default function VisitPage() {
   return (
     <Page>
       <PageHeading eyebrow="Banswara · Rajasthan" title="Visit Us" titleHi={brand.copy.visit.hi}>
-        <p className="mt-4 max-w-xl font-editorial text-xl italic text-ivory-dim">{brand.copy.visit.en}</p>
+        <p className="mt-4 max-w-xl font-editorial text-xl italic text-fg-muted">{brand.copy.visit.en}</p>
       </PageHeading>
       <VisitView />
     </Page>

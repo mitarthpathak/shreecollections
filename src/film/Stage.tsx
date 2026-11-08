@@ -21,7 +21,7 @@ import { Knot } from './shots/Knot';
 import { glowTexture } from './textures';
 import { TIER_SETTINGS } from '@/lib/tier';
 import { useUI, type Tier } from '@/lib/store';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
 
 /** How far the knot sits in front of the camera at the end of the film (see shots/Knot). */
 const KNOT_DEPTH = 6.5;
@@ -155,7 +155,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
       gl={{ antialias: !film.mobile && tier >= 2, powerPreference: 'high-performance', stencil: false, alpha: false }}
       camera={{ fov: cameraFov(film.mobile), near: 0.1, far: 60, position: [0, 0, 5.6] }}
       onCreated={({ gl }) => {
-        gl.setClearColor(palette.raat, 1);
+        gl.setClearColor(getThemeColor('--chapter-bg', { fresh: true }), 1);
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
       }}
@@ -176,15 +176,15 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
           }
         }}
       />
-      <fog attach="fog" args={[palette.raat, 9, 26]} />
+      <fog attach="fog" args={[getThemeColor('--chapter-bg', { fresh: true }), 9, 26]} />
       <ambientLight intensity={0.25} />
-      <directionalLight position={[3, 4, 5]} intensity={2.2} color="#FFE2A8" />
-      <directionalLight position={[-4, -1, -3]} intensity={1.4} color={palette.mor} />
+      <directionalLight position={[3, 4, 5]} intensity={2.2} color={getThemeColor('--pigment-light-warm')} />
+      <directionalLight position={[-4, -1, -3]} intensity={1.4} color={getThemeColor('--mor')} />
       <Environment resolution={tier === 3 ? 256 : 64} frames={1}>
-        <Lightformer form="rect" intensity={3} position={[0, 3, 4]} scale={[8, 1.5, 1]} color="#FFE7B0" />
-        <Lightformer form="rect" intensity={1.2} position={[-5, 0, 0]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} color={palette.gold500} />
-        <Lightformer form="ring" intensity={1.5} position={[4, -1, 2]} scale={2} color={palette.mor} />
-        <Lightformer form="rect" intensity={0.6} position={[0, -4, 0]} rotation-x={-Math.PI / 2} scale={[10, 10, 1]} color="#2a1d12" />
+        <Lightformer form="rect" intensity={3} position={[0, 3, 4]} scale={[8, 1.5, 1]} color={getThemeColor('--pigment-light-soft')} />
+        <Lightformer form="rect" intensity={1.2} position={[-5, 0, 0]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} color={getThemeColor('--gold-500')} />
+        <Lightformer form="ring" intensity={1.5} position={[4, -1, 2]} scale={2} color={getThemeColor('--mor')} />
+        <Lightformer form="rect" intensity={0.6} position={[0, -4, 0]} rotation-x={-Math.PI / 2} scale={[10, 10, 1]} color={getThemeColor('--pigment-light-ground')} />
       </Environment>
 
       <CameraRig />

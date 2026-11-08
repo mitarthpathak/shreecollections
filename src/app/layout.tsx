@@ -36,8 +36,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#07060A',
-  colorScheme: 'dark',
+  // Static values: metadata can't read CSS. Kept equal to --kagaz / --raat (check:contrast verifies).
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FAF5EC' },
+    { media: '(prefers-color-scheme: dark)', color: '#07060A' },
+  ],
+  colorScheme: 'light dark',
   viewportFit: 'cover',
   width: 'device-width',
   initialScale: 1,
@@ -47,10 +51,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en-IN" className={fontVars} data-tier="2" suppressHydrationWarning>
       <body>
-        <a href="#main" className="sr-only z-[200] rounded-full bg-gold-300 px-4 py-3 text-raat focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        <a href="#main" className="sr-only z-[200] rounded-full bg-cta-bg px-4 py-3 text-cta-text focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           Skip to content
         </a>
-        <Link href="/shop" className="sr-only z-[200] rounded-full bg-gold-300 px-4 py-3 text-raat focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        <Link href="/shop" className="sr-only z-[200] rounded-full bg-cta-bg px-4 py-3 text-cta-text focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           Skip to shop
         </Link>
         <Providers>

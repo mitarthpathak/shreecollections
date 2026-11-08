@@ -5,7 +5,7 @@ import CustomShaderMaterial from 'three-custom-shader-material';
 import * as THREE from 'three';
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { TickerDriver } from '@/film/TickerDriver';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
 
 const MAX = 6;
 
@@ -88,7 +88,7 @@ function Cloth({ src }: { src: string }) {
         roughness={0.55}
         sheen={1}
         sheenRoughness={0.35}
-        sheenColor={palette.gold300}
+        sheenColor={getThemeColor('--gold-300')}
         side={THREE.DoubleSide}
       />
     </mesh>
@@ -110,7 +110,7 @@ export default function FabricViewer({ src, label }: { src: string; label: strin
   const active = useCallback(() => onScreen.current && !document.hidden, []);
 
   return (
-    <div ref={wrap} className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-[radial-gradient(circle_at_50%_40%,#2a1d12,#07060A_70%)]" data-cursor="Drag">
+    <div ref={wrap} className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-[radial-gradient(circle_at_50%_40%,var(--surface-2),var(--bg)_70%)]" data-cursor="Drag">
       <Canvas
         frameloop="never"
         dpr={[1, 1.5]}
@@ -122,15 +122,15 @@ export default function FabricViewer({ src, label }: { src: string; label: strin
       >
         <TickerDriver active={active} />
         <ambientLight intensity={0.35} />
-        <directionalLight position={[2, 3, 4]} intensity={2.2} color="#FFE7B0" />
-        <pointLight position={[-2.5, -1, 2]} color={palette.mor} intensity={6} />
+        <directionalLight position={[2, 3, 4]} intensity={2.2} color={getThemeColor('--pigment-light-soft')} />
+        <pointLight position={[-2.5, -1, 2]} color={getThemeColor('--mor')} intensity={6} />
         <Environment resolution={128} frames={1}>
-          <Lightformer form="rect" intensity={2} position={[0, 2, 3]} scale={[4, 1, 1]} color="#FFE7B0" />
-          <Lightformer form="ring" intensity={1.5} position={[-3, 0, 1]} scale={2} color={palette.gold300} />
+          <Lightformer form="rect" intensity={2} position={[0, 2, 3]} scale={[4, 1, 1]} color={getThemeColor('--pigment-light-soft')} />
+          <Lightformer form="ring" intensity={1.5} position={[-3, 0, 1]} scale={2} color={getThemeColor('--gold-300')} />
         </Environment>
         <Cloth src={src} />
       </Canvas>
-      <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-ivory-dim">{label}</p>
+      <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-fg-muted">{label}</p>
     </div>
   );
 }

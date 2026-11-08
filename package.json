@@ -11,7 +11,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "seed": "node scripts/seed-products.mjs",
-    "assets": "node scripts/generate-assets.mjs"
+    "assets": "node scripts/generate-assets.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

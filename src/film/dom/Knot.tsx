@@ -37,12 +37,12 @@ export function KnotChapter() {
     <>
       <Section index={10} ref={root} label="The knot">
         <div className="sticky top-0 grid h-svh place-items-center">
-          <p data-signoff className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+2rem)] whitespace-nowrap font-display text-lg tracking-[0.22em] text-gold-300 sm:text-xl sm:tracking-[0.3em] md:bottom-12 short:bottom-[calc(var(--tabbar-h)+var(--safe-b)+0.75rem)] md:short:bottom-4">
+          <p data-signoff className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+2rem)] whitespace-nowrap font-display text-lg tracking-[0.22em] text-gold-text sm:text-xl sm:tracking-[0.3em] md:bottom-12 short:bottom-[calc(var(--tabbar-h)+var(--safe-b)+0.75rem)] md:short:bottom-4">
             {brand.signOff.toUpperCase()}
           </p>
         </div>
       </Section>
-      <footer ref={foot} className="relative z-10 border-t border-gold-700/30 bg-raat/80 pb-tabbar">
+      <footer ref={foot} className="relative z-10 border-t border-divider bg-bg/80 pb-tabbar">
         <FooterContent />
       </footer>
     </>

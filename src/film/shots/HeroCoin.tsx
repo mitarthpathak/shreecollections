@@ -7,7 +7,10 @@ import { easing } from 'maath';
 import { film } from '../state';
 import { heroCoinPlacement, type CoinPlacement } from '../rail';
 import { badgeTexture } from '../textures';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
+
+/** Identity colour: the emissive map shows as painted (not a design colour). */
+const AS_PAINTED = new THREE.Color(1, 1, 1);
 
 /**
  * The badge as a gold coin. The logo artwork itself only floats, tilts and glows —
@@ -82,8 +85,7 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
                 float g = pow(max(0.0, cos(a - uTime * 0.9)), 60.0) * uGlint;
                 csm_Emissive = vec3(1.0, 0.86, 0.55) * g * 1.6;
               }`}
-            color={palette.gold300}
-            emissive="#000000"
+            color={getThemeColor('--gold-300')}
             metalness={1}
             roughness={0.2}
             clearcoat={1}
@@ -96,17 +98,17 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
           <>
             <mesh position={[0, 0, 0.07]}>
               <circleGeometry args={[1.07, 96]} />
-              <meshStandardMaterial map={face} emissiveMap={face} emissive="#ffffff" emissiveIntensity={0.42} roughness={0.55} metalness={0.25} />
+              <meshStandardMaterial map={face} emissiveMap={face} emissive={AS_PAINTED} emissiveIntensity={0.42} roughness={0.55} metalness={0.25} />
             </mesh>
             <mesh position={[0, 0, -0.07]} rotation={[0, Math.PI, 0]}>
               <circleGeometry args={[1.07, 96]} />
-              <meshStandardMaterial map={face} emissiveMap={face} emissive="#ffffff" emissiveIntensity={0.3} roughness={0.55} metalness={0.25} />
+              <meshStandardMaterial map={face} emissiveMap={face} emissive={AS_PAINTED} emissiveIntensity={0.3} roughness={0.55} metalness={0.25} />
             </mesh>
           </>
         )}
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[1.07, 1.07, 0.14, 96, 1, true]} />
-          <meshPhysicalMaterial color={palette.gold500} metalness={1} roughness={0.35} side={THREE.DoubleSide} />
+          <meshPhysicalMaterial color={getThemeColor('--gold-500')} metalness={1} roughness={0.35} side={THREE.DoubleSide} />
         </mesh>
       </group>
     </group>

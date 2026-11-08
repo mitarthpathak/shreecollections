@@ -11,12 +11,12 @@ export function StoreCard({ className = '', headingLevel = 3 }: { className?: st
   const lang = useLang();
   return (
     <div className={`panel rounded-3xl p-6 md:p-8 ${className}`}>
-      <p className="label text-gold-500">{lang === 'hi' ? 'दुकान' : 'The store'}</p>
+      <p className="label text-gold-text">{lang === 'hi' ? 'दुकान' : 'The store'}</p>
       <H className="mt-2 font-display text-3xl text-gold">{brand.name}</H>
-      <p className="mt-1 text-sm text-ivory-dim">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
+      <p className="mt-1 text-sm text-fg-muted">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
       <dl className="mt-6 space-y-4 text-sm">
         <div>
-          <dt className="label mb-1 text-gold-500">{lang === 'hi' ? 'पता' : 'Address'}</dt>
+          <dt className="label mb-1 text-gold-text">{lang === 'hi' ? 'पता' : 'Address'}</dt>
           <dd>
             {brand.location.streetAddress ?? <Todo label="street address" />}
             <br />
@@ -24,7 +24,7 @@ export function StoreCard({ className = '', headingLevel = 3 }: { className?: st
           </dd>
         </div>
         <div>
-          <dt className="label mb-1 text-gold-500">{lang === 'hi' ? 'समय' : 'Hours'}</dt>
+          <dt className="label mb-1 text-gold-text">{lang === 'hi' ? 'समय' : 'Hours'}</dt>
           <dd>
             {brand.hours ? (
               <ul>{brand.hours.map((h) => <li key={h.days}>{lang === 'hi' ? h.daysHi : h.days}: {h.open}–{h.close}</li>)}</ul>
@@ -46,11 +46,11 @@ export function StoreCard({ className = '', headingLevel = 3 }: { className?: st
         <a href={brand.location.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-gold col-span-2" data-magnetic>
           <IconPin size={18} /> {t('getDirections')}
         </a>
-        <a href={brand.instagram.url} target="_blank" rel="noopener noreferrer" className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 text-sm text-ivory-dim hover:text-gold-100">
+        <a href={brand.instagram.url} target="_blank" rel="noopener noreferrer" className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 text-sm text-fg-muted hover:text-gold-text">
           <IconInstagram size={18} /> @{brand.instagram.handle}
         </a>
       </div>
-      {!brand.contact.phone && <p className="mt-2 text-[11px] text-ivory-dim"><Todo label="phone & WhatsApp number" /></p>}
+      {!brand.contact.phone && <p className="mt-2 text-[11px] text-fg-muted"><Todo label="phone & WhatsApp number" /></p>}
     </div>
   );
 }
