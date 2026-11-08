@@ -86,8 +86,8 @@ export function Dhaaga() {
           <Mandala />
         </div>
       </div>
-      <div className="relative -mt-[100svh] flex min-h-full flex-col justify-center px-5 py-[30svh] md:px-12">
-        <h2 className="mx-auto max-w-[1600px] font-display text-[clamp(3rem,12vw,13rem)] leading-[0.95] tracking-tight">
+      <div className="relative -mt-[100svh] flex min-h-full flex-col justify-center px-safe py-[26svh] md:px-safe-12 short:py-[14svh]">
+        <h2 className="mx-auto max-w-[1600px] font-display text-[length:clamp(2.5rem,min(12vw,20svh),13rem)] leading-[0.95] tracking-tight short:text-[length:clamp(2rem,min(12vw,15svh),13rem)]">
           {words.map((w, i) => (
             <span key={i} className="relative mr-[0.25em] inline-block">
               <span className="text-outline-gold">{w}</span>
@@ -97,7 +97,7 @@ export function Dhaaga() {
             </span>
           ))}
         </h2>
-        <p lang="hi" className="font-hindi-display mx-auto mt-8 w-full max-w-[1600px] text-[clamp(1.4rem,3vw,2.6rem)] text-ivory/85">
+        <p lang="hi" className="font-hindi-display mx-auto mt-8 w-full max-w-[1600px] text-[length:clamp(1.3rem,min(3vw,6svh),2.6rem)] text-ivory/85 short:mt-3">
           {brand.copy.thread.hi}
         </p>
       </div>
