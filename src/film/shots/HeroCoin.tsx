@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import CustomShaderMaterial from 'three-custom-shader-material';
 import { easing } from 'maath';
 import { film } from '../state';
-import { anchor, heroOffset } from '../rail';
+import { heroCoinPlacement, type CoinPlacement } from '../rail';
 import { badgeTexture } from '../textures';
 import { palette } from '@/lib/palette';
 
@@ -13,12 +13,15 @@ import { palette } from '@/lib/palette';
  * The badge as a gold coin. The logo artwork itself only floats, tilts and glows —
  * it is never distorted or run through velocity shaders. The travelling glint lives
  * on the metal rim only.
+ *
+ * Its size and place come from the hero layout (film.coin): the slot above the copy on
+ * portrait screens, right of it on landscape ones — recomputed when either changes.
  */
 export function HeroCoin({ onReady }: { onReady?: () => void }) {
   const group = useRef<THREE.Group>(null);
   const spin = useRef<THREE.Group>(null);
   const [face, setFace] = useState<THREE.Texture | null>(null);
-  const pos = useMemo(() => anchor(0).add(heroOffset(film.mobile)), []);
+  const placed = useMemo<CoinPlacement & { key: string }>(() => ({ pos: new THREE.Vector3(), scale: 1, key: '' }), []);
 
   useEffect(() => {
     let t: THREE.Texture | null = null;
@@ -43,6 +46,16 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
     const g = group.current, sp = spin.current;
     if (!g || !sp) return;
     rimUniforms.uTime.value += dt;
+    const { width, height } = s.size;
+    const key = `${film.coin.x}|${film.coin.y}|${film.coin.r}|${width}|${height}|${film.mobile}`;
+    if (key !== placed.key) {
+      heroCoinPlacement(width, height, film.mobile, placed);
+      placed.key = key;
+      g.scale.setScalar(placed.scale);
+    }
+    // float and lift keep their old proportions to the coin's size
+    const k = placed.scale / (film.mobile ? 0.6 : 0.88);
+    const { pos } = placed;
     const { turn, lift } = film.u.hero;
     const t = s.clock.elapsedTime;
     // idle float + pointer tilt (desktop) / idle sway (mobile)
@@ -50,11 +63,11 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
     const py = film.mobile ? Math.cos(t * 0.5) * 0.15 : film.pointer.y;
     easing.damp(sp.rotation, 'y', turn * (Math.PI / 2) + px * 0.35 * (1 - turn), 0.25, dt);
     easing.damp(sp.rotation, 'x', -py * 0.25 * (1 - turn), 0.3, dt);
-    g.position.set(pos.x, pos.y + Math.sin(t * 0.8) * 0.06 + lift * 0.2, pos.z);
+    g.position.set(pos.x, pos.y + (Math.sin(t * 0.8) * 0.06 + lift * 0.2) * k, pos.z);
   });
 
   return (
-    <group ref={group} scale={film.mobile ? 0.6 : 0.88}>
+    <group ref={group} name="hero-coin">
       <group ref={spin}>
         {/* rim: bevelled metal with a glint that travels around it */}
         <mesh geometry={rimGeo} rotation={[Math.PI / 2, 0, 0]}>

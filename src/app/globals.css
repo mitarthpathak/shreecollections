@@ -23,6 +23,9 @@
   --header-h: 64px;
   --tabbar-h: 56px;
   --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-ui: cubic-bezier(0.33, 1, 0.68, 1);
 
@@ -47,9 +50,10 @@
   --color-matki: var(--matki);
   --color-accent: var(--accent);
 
-  --font-display: var(--font-cinzel), 'Cinzel', serif;
-  --font-editorial: var(--font-cormorant), 'Cormorant Garamond', serif;
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  /* Latin faces first; Devanagari (Hindi UI strings) falls through to Mukta glyph by glyph. */
+  --font-display: var(--font-cinzel), 'Cinzel', var(--font-mukta), serif;
+  --font-editorial: var(--font-cormorant), 'Cormorant Garamond', var(--font-mukta), serif;
+  --font-sans: var(--font-manrope), var(--font-mukta), system-ui, sans-serif;
   --font-hindi-display: var(--font-tiro), var(--font-mukta), serif;
   --font-hindi: var(--font-mukta), var(--font-manrope), sans-serif;
 
@@ -88,12 +92,29 @@ html.lenis body {
   overflow: clip;
 }
 
+/*
+ * Hindi copy: only elements that carry lang="hi" themselves. Not :lang(hi), which once
+ * <html lang="hi"> is set matches every element on the page (SplitText's word boxes in the
+ * hero and Ek Dhaaga headlines included) and swapped their font and line height.
+ */
 @layer base {
-  :lang(hi),
-  [lang='hi'] {
+  [lang='hi']:not(html) {
     font-family: var(--font-hindi);
     line-height: 1.6;
   }
+}
+
+/* Landscape phones: too short for type sized by width alone. */
+@custom-variant short (@media (orientation: landscape) and (max-height: 500px));
+
+/* Side padding that also clears a landscape notch. */
+@utility px-safe {
+  padding-left: max(1.25rem, var(--safe-l));
+  padding-right: max(1.25rem, var(--safe-r));
+}
+@utility px-safe-12 {
+  padding-left: max(3rem, var(--safe-l));
+  padding-right: max(3rem, var(--safe-r));
 }
 @layer components {
   .font-hindi-display {
@@ -163,9 +184,15 @@ img {
 
 .chapter-title {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 12vw, 14rem);
+  /* by width, but never taller than the screen allows (landscape phones) */
+  font-size: clamp(2.4rem, min(12vw, 21svh), 14rem);
   line-height: 0.92;
   letter-spacing: -0.01em;
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .chapter-title {
+    font-size: clamp(2rem, min(12vw, 15svh), 14rem);
+  }
 }
 
 /* ───────────────────────── Buttons ───────────────────────── */
@@ -457,4 +484,17 @@ html[data-chapter-active='knot'] [data-poster='knot'] {
   [data-poster] {
     filter: brightness(0.5);
   }
+}
+
+/*
+ * The film's floating Shop button: not over the hero, which has its own shop links
+ * (FilmNav also keeps it off phones, where the tab bar has Shop).
+ */
+[data-film-fab] {
+  transition: opacity 300ms var(--ease-ui), visibility 300ms, transform 160ms var(--ease-ui);
+}
+html:not([data-chapter-active]) [data-film-fab],
+html[data-chapter-active='hero'] [data-film-fab] {
+  opacity: 0;
+  visibility: hidden;
 }

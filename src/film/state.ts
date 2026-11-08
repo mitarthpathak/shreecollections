@@ -13,7 +13,16 @@ export const film = {
   pointer: { x: 0, y: 0 },
   /** the canvas is hidden behind an opaque section or the tab is hidden */
   covered: false,
+  /** max-width 767px; kept current by Film (rotation, window resize) */
   mobile: false,
+  /**
+   * Where the hero coin should sit on screen at rest, in CSS px from the top-left of the
+   * viewport (centre x/y and radius r), measured by the Hero copy so the coin never covers
+   * it. r = 0 until measured. The 3D coin and the thread's first stitch follow it.
+   */
+  coin: { x: 0, y: 0, r: 0 },
+  /** CSS px of footer scrolled into view below the film (the knot rises with the page) */
+  footerRise: 0,
   /** Values tweened by the chapter timelines and read by the shots. */
   u: {
     hero: { turn: 0, lift: 0, fade: 1 },
