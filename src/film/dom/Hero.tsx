@@ -42,8 +42,8 @@ export function Hero({ introDone }: { introDone: boolean }) {
   return (
     <Section index={0} ref={root}>
       <div className="sticky top-0 h-svh overflow-hidden">
-        <div data-hero-copy className="relative z-10 mx-auto flex h-full max-w-[1600px] flex-col justify-end px-5 pb-[calc(var(--tabbar-h)+var(--safe-b)+5.5rem)] md:justify-center md:px-12 md:pb-0">
-          <p data-hero-eyebrow className="label mb-5 text-gold-500">
+        <div data-hero-copy className="relative z-10 mx-auto flex h-full max-w-[1600px] flex-col justify-end px-5 pb-[calc(var(--tabbar-h)+var(--safe-b)+4.25rem)] md:justify-center md:px-12 md:pb-0">
+          <p data-hero-eyebrow className="label mb-3 text-gold-500 md:mb-5">
             {brand.tagline} · {brand.location.city}
           </p>
           <h1 data-hero-title className="chapter-title max-w-[11ch] text-gold-glint !text-[clamp(3.2rem,11vw,11.5rem)]">
