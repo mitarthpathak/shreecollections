@@ -9,12 +9,13 @@ import { threadToBag } from '@/lib/fx';
 import { formatINR } from '@/lib/format';
 import { getLenis } from '@/lib/clock';
 import { prefersReducedMotion } from '@/lib/gsap';
-import { buildWhatsAppOrder } from '@/lib/whatsapp';
+import { contactChannel, copyForInstagram, orderMessage, whatsappLink } from '@/lib/whatsapp';
+import { ContactIcon } from '../ContactIcon';
 import { ZoomGallery } from './ZoomGallery';
 import { Price } from '../Price';
 import { BadgeList, ProductCard } from '../ProductCard';
 import { WishlistButton } from '../WishlistButton';
-import { IconMinus, IconPlus, IconWhatsApp, IconChevron } from '../icons';
+import { IconMinus, IconPlus, IconChevron } from '../icons';
 
 const FabricViewer = dynamic(() => import('./FabricViewer'), {
   ssr: false,
@@ -22,7 +23,7 @@ const FabricViewer = dynamic(() => import('./FabricViewer'), {
 });
 
 function deliveryEstimate(pin: string, lang: 'en' | 'hi') {
-  // Mock until the owner confirms shipping rules (TODO(brand): shipping policy).
+  // Mock until the owner confirms shipping rules (owner to confirm: shipping policy).
   if (!/^[1-9]\d{5}$/.test(pin)) return lang === 'hi' ? 'कृपया सही 6 अंकों का पिनकोड डालें।' : 'Please enter a valid 6-digit pincode.';
   if (pin.startsWith('327')) return lang === 'hi' ? 'बांसवाड़ा: दुकान से लें या उसी दिन डिलीवरी (अनुमान)।' : 'Banswara: pick up in store or same-day delivery (estimate).';
   if (/^3[0-4]/.test(pin)) return lang === 'hi' ? 'राजस्थान: 2–4 दिन में (अनुमान)।' : 'Rajasthan: 2–4 days (estimate).';
@@ -113,7 +114,9 @@ export function ProductView({ slug }: { slug: string }) {
     addedTimer.current = setTimeout(() => setAdded(false), 1600);
   };
 
-  const waHref = buildWhatsAppOrder([{ product: p, size, qty }], customer);
+  const waText = orderMessage([{ product: p, size, qty }], customer);
+  const waHref = whatsappLink(waText);
+  const orderLabel = t(contactChannel === 'whatsapp' ? 'buyOnWhatsApp' : 'orderInstagram');
   const showBar = barOn && p.inStock;
 
   return (
@@ -200,11 +203,14 @@ export function ProductView({ slug }: { slug: string }) {
               if (sized && !size) {
                 e.preventDefault();
                 showSizes();
+                return;
               }
+              copyForInstagram(waText);
             }}
           >
-            <IconWhatsApp size={18} /> {p.inStock ? t('buyOnWhatsApp') : t('outOfStock')}
+            <ContactIcon /> {p.inStock ? orderLabel : t('outOfStock')}
           </a>
+          {contactChannel === 'instagram' && p.inStock && <p className="mt-2 text-center text-xs text-fg-muted">{t('orderCopied')}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <div className="flex items-center rounded-full ring-1 ring-field-line" role="group" aria-label={t('qty')}>
               <button type="button" className="grid h-12 w-12 place-items-center disabled:opacity-30" disabled={qty <= 1} onClick={() => setQty(qty - 1)} aria-label="−1"><IconMinus size={18} /></button>
@@ -311,8 +317,8 @@ export function ProductView({ slug }: { slug: string }) {
               {t('chooseSize')}
             </button>
           ) : (
-            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-gold shrink-0 !min-h-11 !px-5">
-              <IconWhatsApp size={18} /> {t('orderShort')}
+            <a href={waHref} target="_blank" rel="noopener noreferrer" onClick={() => copyForInstagram(waText)} className="btn btn-gold shrink-0 !min-h-11 !px-5">
+              <ContactIcon /> {t('orderShort')}
             </a>
           )}
         </div>

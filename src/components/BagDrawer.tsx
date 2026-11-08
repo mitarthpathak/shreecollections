@@ -6,11 +6,11 @@ import { useShop, useUI } from '@/lib/store';
 import { getProduct, type Product, productMedia } from '@/lib/catalog';
 import { formatINR } from '@/lib/format';
 import { useLang, useT } from '@/lib/i18n';
-import { buildWhatsAppOrder } from '@/lib/whatsapp';
+import { contactChannel, copyForInstagram, orderMessage, whatsappLink } from '@/lib/whatsapp';
+import { ContactIcon } from './ContactIcon';
 import { gsap, Flip, prefersReducedMotion } from '@/lib/gsap';
 import { useModal } from '@/lib/modal';
-import { IconClose, IconMinus, IconPlus, IconWhatsApp } from './icons';
-import { brand } from '@/brand.config';
+import { IconClose, IconMinus, IconPlus } from './icons';
 
 export function useBagLines() {
   const bag = useShop((s) => s.bag);
@@ -191,18 +191,15 @@ export function BagContents({ variant = 'drawer' }: { variant?: 'drawer' | 'page
         </div>
         <p className="text-xs text-fg-muted">{t('shippingNote')}</p>
         <a
-          href={buildWhatsAppOrder(lines, customer)}
+          href={whatsappLink(orderMessage(lines, customer))}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => copyForInstagram(orderMessage(lines, customer))}
           className="btn btn-gold w-full"
         >
-          <IconWhatsApp size={18} /> {t('checkoutWhatsApp')}
+          <ContactIcon /> {t(contactChannel === 'whatsapp' ? 'checkoutWhatsApp' : 'orderInstagram')}
         </a>
-        {!brand.contact.whatsapp && (
-          <p className="text-xs text-fg-muted">
-            <span className="todo">TODO(brand): WhatsApp number</span> — until it is set, WhatsApp asks which chat to send to.
-          </p>
-        )}
+        {contactChannel === 'instagram' && <p className="text-xs text-fg-muted">{t('orderCopied')}</p>}
         <button type="button" className="btn btn-ghost w-full" disabled aria-describedby={`pay-${variant}`}>
           {t('payOnline')}
         </button>

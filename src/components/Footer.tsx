@@ -6,10 +6,9 @@ import { brand } from '@/brand.config';
 import { BadgeMark } from './BadgeMark';
 import { LangToggle } from './Header';
 import { ThemeChoice } from './Theme';
-import { Todo } from './Todo';
 import { IconInstagram, IconWhatsApp } from './icons';
 import { useLang, useT } from '@/lib/i18n';
-import { buildWhatsAppEnquiry } from '@/lib/whatsapp';
+import { buildWhatsAppEnquiry, contactChannel } from '@/lib/whatsapp';
 
 export function FooterContent() {
   const t = useT();
@@ -34,6 +33,7 @@ export function FooterContent() {
             <p className="label text-fg-muted">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
           </div>
         </div>
+        {contactChannel === 'whatsapp' && (
         <form
           className="space-y-3"
           onSubmit={(e) => {
@@ -57,6 +57,7 @@ export function FooterContent() {
             </button>
           </div>
         </form>
+        )}
         <a href={brand.instagram.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 text-sm text-fg-muted hover:text-gold-text">
           <IconInstagram size={20} /> @{brand.instagram.handle}
         </a>
@@ -76,7 +77,9 @@ export function FooterContent() {
         ))}
         <div className="col-span-2 space-y-2 text-sm text-fg-muted sm:col-span-3">
           <p>
-            {brand.location.city}, {brand.location.state} · {brand.location.streetAddress ?? <Todo label="street address" />}
+            {brand.location.streetAddress && `${brand.location.streetAddress}, `}
+            {brand.location.city}, {brand.location.state}
+            {brand.location.postalCode && ` ${brand.location.postalCode}`}
           </p>
         </div>
       </div>
