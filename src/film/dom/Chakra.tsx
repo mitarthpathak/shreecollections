@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Accent } from '@/components/Accent';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { select } from 'd3-selection';
 import 'd3-transition';
@@ -242,9 +243,9 @@ export function Chakra() {
   return (
     <Section index={6} ref={root} label="Rang Chakra: find your colour" className="!h-auto min-h-[var(--m)] md:min-h-[var(--d)]">
       <div className="mx-auto grid max-w-[1600px] items-center gap-10 px-5 py-[16svh] md:grid-cols-[1fr_1.1fr] md:px-12">
-        <header data-chakra-head>
+        <header data-chakra-head className="text-halo">
           <p className="label mb-3 text-gold-text">Rang Chakra</p>
-          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{t('findColour')}</h2>
+          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-fg"><Accent text={t('findColour')} word="colour" /></h2>
           <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">अपना रंग चुनें</p>
           <p className="mt-6 max-w-md text-fg-muted">
             {lang === 'hi'

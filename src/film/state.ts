@@ -13,6 +13,12 @@ export const film = {
   pointer: { x: 0, y: 0 },
   /** the canvas is hidden behind an opaque section or the tab is hidden */
   covered: false,
+  /** The chapter colour journey's current background, sRGB 0–1 (see chapterBg.ts). */
+  bg: [0, 0, 0] as [number, number, number],
+  /** false until the first frame has computed `bg` */
+  bgReady: false,
+  /** a hero drape video is shown in the coin's place (public/media/hero-drape.mp4) */
+  heroVideo: false,
   /** max-width 767px; kept current by Film (rotation, window resize) */
   mobile: false,
   /**

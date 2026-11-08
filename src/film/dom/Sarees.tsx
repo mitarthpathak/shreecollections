@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import { Accent } from '@/components/Accent';
 import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
@@ -119,9 +120,9 @@ export function Sarees() {
   );
 
   const head = (
-    <header className="mx-auto mb-8 max-w-[1600px] px-5 md:mb-10 md:px-12">
+    <header className="text-halo mx-auto mb-8 max-w-[1600px] px-5 md:mb-10 md:px-12">
       <p className="label mb-3 text-gold-text">{t('sarees')} · {SAREES.length}+</p>
-      <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.sarees.en}</h2>
+      <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-fg"><Accent text={brand.copy.sarees.en} word="poetry" /></h2>
       <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">{brand.copy.sarees.hi}</p>
     </header>
   );
@@ -135,7 +136,7 @@ export function Sarees() {
           {SAREES.map((p, i) => <Slide key={p.slug} p={p} i={i} />)}
           <Link href="/shop/sarees" className="grid aspect-[3/4] w-[22vw] min-w-[240px] shrink-0 place-items-center rounded-[18px] text-center ring-1 ring-field-line transition-colors hover:bg-surface" data-cursor="View">
             <span>
-              <span className="font-editorial font-medium block text-3xl text-gold">{t('viewAll')}</span>
+              <span className="font-editorial font-medium block text-3xl text-fg">{t('viewAll')}</span>
               <span className="label mt-2 block text-fg-muted">{t('sarees')} →</span>
             </span>
           </Link>

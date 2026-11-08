@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { Section } from './Section';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
+import { PEACOCK_EYE } from '../peacock';
 
 /** Mor pankh wipe: the feather sweeps across the lens; its eye becomes the mask into suits. */
 export function Mor() {
@@ -26,17 +27,23 @@ export function Mor() {
         <p data-mor-label className="label text-gold-text opacity-0 motion-reduce:opacity-100">
           Mor Pankh · <span lang="hi">मोरपंख</span>
         </p>
+        {/* the same crisp eye as the coin face and the logo badge (peacock.ts) */}
         <div
           data-eye
           aria-hidden
           className="absolute inset-0 opacity-0"
           style={{
             clipPath: 'circle(0% at 50% 55%)',
-            background:
-              'radial-gradient(ellipse 34% 44% at 50% 55%, color-mix(in srgb, var(--pigment-peacock-ink) 95%, transparent) 0%, color-mix(in srgb, var(--pigment-peacock-blue) 90%, transparent) 20%, color-mix(in srgb, var(--mor) 75%, transparent) 38%, color-mix(in srgb, var(--pigment-peacock-olive) 45%, transparent) 52%, color-mix(in srgb, var(--gold-500) 35%, transparent) 60%, transparent 74%), var(--chapter-bg)',
+            background: 'var(--tint-mor)',
             maskImage: 'radial-gradient(circle at 50% 55%, var(--text) 55%, transparent 80%)',
           }}
-        />
+        >
+          <svg viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" className="absolute left-1/2 top-[55%] h-[88svh] w-[68svh] max-w-[90vw] -translate-x-1/2 -translate-y-1/2">
+            {PEACOCK_EYE.map((r) => (
+              <ellipse key={r.token} cx="0" cy={r.dy * 100} rx={78 * r.rx} ry={100 * r.ry} style={{ fill: `var(${r.token})` }} />
+            ))}
+          </svg>
+        </div>
       </div>
     </Section>
   );

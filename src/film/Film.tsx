@@ -2,6 +2,7 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { film } from './state';
+import { chapterBgAt, rgbCss } from './chapterBg';
 import { CHAPTERS } from './chapters';
 import { useUI } from '@/lib/store';
 import { ScrollTrigger, useGSAP, prefersReducedMotion } from '@/lib/gsap';
@@ -28,7 +29,9 @@ const DEBUG_BUILD = process.env.NODE_ENV !== 'production' || process.env.NEXT_PU
 const Debug = DEBUG_BUILD ? dynamic(() => import('./Debug'), { ssr: false }) : () => null;
 const MOBILE_QUERY = '(max-width: 767px)';
 
-export function Film() {
+export type HeroMedia = { video: string; poster: string | null } | null;
+
+export function Film({ heroMedia = null }: { heroMedia?: HeroMedia }) {
   const tier = useUI((s) => s.tier);
   const hydrated = useUI((s) => s.hydrated);
   const [loadStage, setLoadStage] = useState(false);
@@ -39,6 +42,10 @@ export function Film() {
   const [mobile, setMobile] = useState(false);
   const fontsReady = useRef(false);
   const root = useRef<HTMLDivElement>(null);
+  const backdrop = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    film.heroVideo = Boolean(heroMedia);
+  }, [heroMedia]);
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_QUERY);
@@ -160,9 +167,29 @@ export function Film() {
         film.chapter = c;
         film.chapterProgress = film.chapters[c] ?? 0;
         film.velocity = getLenis()?.velocity ? getLenis()!.velocity * 60 : 0;
+        // Colour journey: one fixed backdrop element carries --chapter-bg (not <html>, so the
+        // page isn't restyled every frame); the WebGL clear colour eases to film.bg.
+        chapterBgAt(c, film.chapterProgress, bgNow);
+        if (Math.abs(bgNow[0] - bgLast[0]) + Math.abs(bgNow[1] - bgLast[1]) + Math.abs(bgNow[2] - bgLast[2]) > 0.003 || !film.bgReady) {
+          bgLast[0] = bgNow[0];
+          bgLast[1] = bgNow[1];
+          bgLast[2] = bgNow[2];
+          film.bg[0] = bgNow[0];
+          film.bg[1] = bgNow[1];
+          film.bg[2] = bgNow[2];
+          film.bgReady = true;
+          backdrop.current?.style.setProperty('--chapter-bg', rgbCss(bgNow));
+        }
       });
+      const bgNow: [number, number, number] = [0, 0, 0];
+      const bgLast: [number, number, number] = [-1, -1, -1];
+      const onTheme = () => (bgLast[0] = -1); // re-blend with the new theme's tints
+      const mo = new MutationObserver(onTheme);
+      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
       return () => {
         off();
+        mo.disconnect();
+        film.bgReady = false;
         window.removeEventListener('resize', onResize);
         ScrollTrigger.removeEventListener('refresh', restore);
         window.clearTimeout(fallback);
@@ -203,6 +230,8 @@ export function Film() {
 
   return (
     <>
+      {/* first in paint order: the stage and posters (same z) cover it */}
+      <div ref={backdrop} aria-hidden data-chapter-bg className="pointer-events-none fixed inset-0 z-0" style={{ background: 'var(--chapter-bg)' }} />
       <Preloader progress={() => progressRef.current()} onDone={() => setIntroDone(true)} />
       {loadStage && tier > 0 && (
         <div className={`fixed inset-0 z-0 transition-opacity duration-1000 ${stageReady ? 'opacity-100' : 'opacity-0'}`} aria-hidden>
@@ -213,7 +242,7 @@ export function Film() {
       <FilmNav />
       {DEBUG_BUILD && <Debug />}
       <div id="film" ref={root} data-stage-ready={stageReady && tier > 0} className="relative z-10" style={{ ['--chapters' as string]: CHAPTERS.length }}>
-        <Hero introDone={introDone} />
+        <Hero introDone={introDone} media={heroMedia} />
         <Dhaaga />
         <Weave />
         <Sarees />

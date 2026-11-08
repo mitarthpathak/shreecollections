@@ -70,7 +70,7 @@ export function Weave() {
               </p>
               <h2 className="flex flex-wrap items-baseline gap-x-6">
                 <span className="mask-line">
-                  <span data-rise className="chapter-title block text-gold">{f.kind}</span>
+                  <span data-rise className="chapter-title block text-fg">{f.kind}</span>
                 </span>
                 <span className="mask-line">
                   <span data-rise lang="hi" className="font-hindi-display block text-[length:clamp(1.6rem,min(5vw,9svh),5rem)] text-fg/80">{f.hi}</span>

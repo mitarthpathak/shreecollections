@@ -1,6 +1,10 @@
 'use client';
 import Link from 'next/link';
+import { Accent } from '@/components/Accent';
 import { useEffect, useRef } from 'react';
+import { ProductCard } from '@/components/ProductCard';
+import { getAllProducts } from '@/lib/catalog';
+import type { HeroMedia } from '../Film';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
 import { gsap, SplitText, useGSAP, prefersReducedMotion } from '@/lib/gsap';
@@ -11,11 +15,66 @@ import { useLang, useT } from '@/lib/i18n';
  * The coin's preferred spot, as fractions of the viewport height — where it has always sat:
  * right of the headline on landscape screens (x = W/2 + dx·H), above it on portrait ones.
  * It keeps that spot whenever it fits, and otherwise shrinks and slides into the free space.
+ * (A media slot when a hero drape video exists: the video takes the coin's place.)
  */
 const COIN = {
-  wide: { dx: 0.479, y: 0.488, r: 0.247 },
-  tall: { dx: 0, y: 0.316, r: 0.1365 },
+  wide: { dx: 0.47, y: 0.48, r: 0.2 },
+  tall: { dx: 0, y: 0.31, r: 0.115 },
 };
+
+/** "New arrivals" in the hero's last beat: the newest pieces, as real product cards. */
+const NEW_ARRIVALS = getAllProducts()
+  .filter((p) => p.badges?.includes('new'))
+  .slice(0, 6);
+
+function NewArrivals({ className = '', title, viewAll, ...rest }: { className?: string; title: string; viewAll: string } & React.HTMLAttributes<HTMLElement>) {
+  return (
+    <section aria-label={title} className={className} {...rest}>
+      <div className="mx-auto max-w-[1600px] px-safe md:px-safe-12">
+        <div className="mb-3 flex items-baseline justify-between gap-4">
+          <h2 className="label text-gold-text">{title}</h2>
+          <Link href="/shop" className="label inline-flex min-h-11 items-center text-fg-muted underline decoration-gold-line underline-offset-4 hover:text-gold-text">
+            {viewAll} →
+          </Link>
+        </div>
+      </div>
+      <div className="no-scrollbar flex snap-x gap-3 overflow-x-auto px-safe pb-1 md:gap-4 md:px-safe-12" data-lenis-prevent>
+        {NEW_ARRIVALS.map((p) => (
+          <div key={p.slug} className="w-[9.5rem] shrink-0 snap-start md:w-[11.5rem]">
+            <ProductCard product={p} sizes="184px" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** The hero drape video in the coin's slot: muted, looped, inline; loaded only after the page is up. */
+function HeroVideo({ media }: { media: NonNullable<HeroMedia> }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v || prefersReducedMotion()) return; // the poster stays as a still
+    const ric = (window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 200))) as (cb: () => void) => number;
+    const start = () =>
+      ric(() => {
+        v.src = media.video;
+        v.play().catch(() => {});
+      });
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+    return () => window.removeEventListener('load', start);
+  }, [media.video]);
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute z-0 overflow-hidden rounded-lg bg-surface shadow-[0_30px_80px_-30px_var(--shadow)]"
+      style={{ left: 'calc(var(--slot-x) - var(--slot-r) * 0.8)', top: 'calc(var(--slot-y) - var(--slot-r))', width: 'calc(var(--slot-r) * 1.6)', height: 'calc(var(--slot-r) * 2)' }}
+    >
+      <video ref={ref} muted loop playsInline preload="none" poster={media.poster ?? undefined} className="h-full w-full object-cover" />
+    </div>
+  );
+}
 
 /** Fit the coin into the space the hero copy leaves free (screen px at rest, scroll 0). */
 function placeCoin(root: HTMLElement) {
@@ -57,7 +116,7 @@ function placeCoin(root: HTMLElement) {
   return { x, y, r };
 }
 
-export function Hero({ introDone }: { introDone: boolean }) {
+export function Hero({ introDone, media = null }: { introDone: boolean; media?: HeroMedia }) {
   const root = useRef<HTMLElement>(null);
   const t = useT();
   const lang = useLang();
@@ -71,7 +130,12 @@ export function Hero({ introDone }: { introDone: boolean }) {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const c = placeCoin(el);
-        if (c) Object.assign(film.coin, c);
+        if (!c) return;
+        Object.assign(film.coin, c);
+        // the media slot (video) sits where the coin would
+        el.style.setProperty('--slot-x', `${c.x.toFixed(1)}px`);
+        el.style.setProperty('--slot-y', `${c.y.toFixed(1)}px`);
+        el.style.setProperty('--slot-r', `${c.r.toFixed(1)}px`);
       });
     };
     measure();
@@ -96,7 +160,7 @@ export function Hero({ introDone }: { introDone: boolean }) {
   useGSAP(
     () => {
       if (!introDone || prefersReducedMotion()) return;
-      const split = SplitText.create('[data-hero-title]', { type: 'words,lines', mask: 'lines', linesClass: 'mask-line', wordsClass: 'text-gold' });
+      const split = SplitText.create('[data-hero-title]', { type: 'words,lines', mask: 'lines', linesClass: 'mask-line', wordsClass: 'hero-word' });
       const tl = gsap.timeline();
       tl.from(split.words, { yPercent: 115, duration: 1.15, ease: 'expo.out', stagger: 0.06 })
         .from('[data-hero-hi]', { y: 24, opacity: 0, duration: 1, ease: 'expo.out' }, '-=0.8')
@@ -115,8 +179,10 @@ export function Hero({ introDone }: { introDone: boolean }) {
       gsap
         .timeline({ scrollTrigger: ranges.pin(el) })
         .to(film.u.hero, { turn: 1, lift: 1, ease: 'power3.inOut', duration: 1 }, 0)
-        .to('[data-hero-copy]', { yPercent: -18, autoAlpha: 0, ease: 'power2.in', duration: 0.55 }, 0.1)
-        .to('[data-scroll-cue]', { opacity: 0, duration: 0.2 }, 0);
+        .to('[data-hero-copy]', { yPercent: -18, autoAlpha: 0, ease: 'power2.in', duration: 0.5 }, 0.05)
+        .to('[data-scroll-cue]', { opacity: 0, duration: 0.2 }, 0)
+        // the last beat is never empty: new arrivals rise in as the headline leaves
+        .fromTo('[data-new-arrivals]', { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.3 }, 0.45);
     },
     { scope: root },
   );
@@ -124,6 +190,7 @@ export function Hero({ introDone }: { introDone: boolean }) {
   return (
     <Section index={0} ref={root}>
       <div className="sticky top-0 h-svh overflow-hidden">
+        {media && <HeroVideo media={media} />}
         {/* copy sits at the bottom on portrait screens (the coin above it), centred beside the coin on landscape ones */}
         <div
           data-hero-copy
@@ -134,9 +201,9 @@ export function Hero({ introDone }: { introDone: boolean }) {
           </p>
           <h1
             data-hero-title
-            className="hero-title chapter-title max-w-[11ch] text-gold-glint text-[length:clamp(2.4rem,min(13vw,7.6svh),11.5rem)] md:text-[length:clamp(2.4rem,min(11vw,20svh),11.5rem)] short:text-[length:clamp(2.2rem,12svh,11.5rem)] md:short:text-[length:clamp(2.2rem,min(11vw,14svh),11.5rem)]"
+            className="hero-title chapter-title max-w-[11ch] text-fg text-[length:clamp(2.4rem,min(13vw,7.6svh),11.5rem)] md:text-[length:clamp(2.4rem,min(11vw,20svh),11.5rem)] short:text-[length:clamp(2.2rem,12svh,11.5rem)] md:short:text-[length:clamp(2.2rem,min(11vw,14svh),11.5rem)]"
           >
-            {brand.copy.hero.en}
+            <Accent text={brand.copy.hero.en} word="Devotion" />
           </h1>
           <p
             data-hero-hi
@@ -157,9 +224,16 @@ export function Hero({ introDone }: { introDone: boolean }) {
           Scroll
           <span className="h-10 w-px animate-pulse bg-gradient-to-b from-gold-text to-transparent" />
         </div>
+        <NewArrivals
+          title={t('newArrivals')}
+          viewAll={t('viewAll')}
+          data-new-arrivals="" className="invisible absolute inset-x-0 bottom-[calc(var(--tabbar-h)+var(--safe-b)+0.75rem)] z-20 opacity-0 motion-reduce:hidden md:bottom-8"
+        />
         {/* measures the tab bar + home indicator the coin must stay above */}
         <div data-hero-bottom aria-hidden className="pointer-events-none invisible absolute inset-x-0 bottom-0 h-[calc(var(--tabbar-h)+var(--safe-b))] md:h-0" />
       </div>
+      {/* reduced motion: no scroll choreography, so the rail simply follows the hero */}
+      <NewArrivals title={t('newArrivals')} viewAll={t('viewAll')} className="relative z-10 hidden py-10 motion-reduce:block" />
     </Section>
   );
 }

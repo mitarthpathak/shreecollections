@@ -71,6 +71,7 @@ const dict = {
   close: { en: 'Close', hi: 'बंद करें' },
   menu: { en: 'Menu', hi: 'मेन्यू' },
   language: { en: 'Language', hi: 'भाषा' },
+  newArrivals: { en: 'New arrivals', hi: 'नए आगमन' },
   theme: { en: 'Theme', hi: 'थीम' },
   themeSystem: { en: 'System', hi: 'सिस्टम' },
   themeLight: { en: 'Light', hi: 'लाइट' },

@@ -10,6 +10,7 @@ import { fabricTexture } from '../textures';
 import { WEAVE_FABRICS } from '../fabrics';
 import { getThemeColor } from '@/lib/theme';
 import { sceneTheme } from '../sceneTheme';
+import { flatNormal, loadFabricPhoto } from '../fabricPhotos';
 
 const W = 5.6;
 const H = 3.6;
@@ -68,12 +69,35 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
   );
   useEffect(() => () => textures.forEach((t) => t.dispose()), [textures]);
 
+  // Real fabric photos replace the procedural textures where the owner has added them.
+  const live = useRef<THREE.Texture[] | null>(null);
+  const normals = useRef<(THREE.Texture | null)[]>([]);
+  const flat = useMemo(() => flatNormal(), []);
+  const mat = useRef<THREE.MeshPhysicalMaterial | null>(null);
+  useEffect(() => {
+    if (mode !== 'weave') return;
+    let alive = true;
+    const loaded: THREE.Texture[] = [];
+    Promise.all(WEAVE_FABRICS.map((f) => loadFabricPhoto(f.kind).catch(() => null))).then((photos) => {
+      photos.forEach((ph) => ph && loaded.push(ph.albedo, ...(ph.normal ? [ph.normal] : [])));
+      if (!alive) return loaded.forEach((t) => t.dispose());
+      if (!photos.some(Boolean)) return;
+      live.current = textures.map((t, i) => photos[i]?.albedo ?? t);
+      normals.current = photos.map((ph) => ph?.normal ?? null);
+    });
+    return () => {
+      alive = false;
+      loaded.forEach((t) => t.dispose());
+    };
+  }, [mode, textures]);
+  useEffect(() => () => flat.dispose(), [flat]);
+
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
       uWind: { value: 1 },
-      uTexA: { value: textures[0] },
-      uTexB: { value: textures[Math.min(1, textures.length - 1)] },
+      uTexA: { value: textures[0] as THREE.Texture },
+      uTexB: { value: textures[Math.min(1, textures.length - 1)] as THREE.Texture },
       uMix: { value: 0 },
       uAlpha: { value: 0 },
       uTint: { value: new THREE.Color(getThemeColor('--gold-300')) },
@@ -98,9 +122,12 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
     }
     if (mode === 'weave') {
       const { fabric, sheet, assemble } = film.u.weave;
-      const a = Math.min(textures.length - 1, Math.floor(fabric));
-      uniforms.uTexA.value = textures[a];
-      uniforms.uTexB.value = textures[Math.min(textures.length - 1, a + 1)];
+      const tx = live.current ?? textures;
+      const a = Math.min(tx.length - 1, Math.floor(fabric));
+      uniforms.uTexA.value = tx[a];
+      uniforms.uTexB.value = tx[Math.min(tx.length - 1, a + 1)];
+      const nm = normals.current[Math.round(fabric)] ?? flat;
+      if (mat.current && mat.current.normalMap !== nm) mat.current.normalMap = nm;
       uniforms.uMix.value = fabric - a;
       uniforms.uAlpha.value = sheet;
       // warp and weft fly in from the thread and settle into a grid, then hand over to the sheet
@@ -141,7 +168,9 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       <mesh ref={mesh} rotation={[-0.08, 0, 0.04]}>
         <planeGeometry args={[W, H, seg, Math.round(seg * 0.66)]} />
         <CustomShaderMaterial
+          ref={(m) => void (mat.current = m as unknown as THREE.MeshPhysicalMaterial | null)}
           baseMaterial={THREE.MeshPhysicalMaterial}
+          normalMap={flat}
           vertexShader={vertex}
           fragmentShader={fragment}
           uniforms={uniforms}

@@ -117,35 +117,62 @@ function drawFabric(kind: FabricKind, base: string, size: number) {
       break;
     }
     case 'Bandhani': {
-      for (let y = 0; y < 16; y++)
-        for (let x = 0; x < 16; x++) {
-          const cx = (x + (y % 2) * 0.5) * 32 * s + 8 * s, cy = y * 32 * s + 8 * s;
-          for (let k = 0; k < 8; k++) {
-            const a = (k / 8) * Math.PI * 2;
-            ctx.fillStyle = k % 2 ? getThemeColor('--pigment-zari-pale') : getThemeColor('--pitambar');
-            ctx.beginPath();
-            ctx.arc(cx + Math.cos(a) * 6 * s, cy + Math.sin(a) * 6 * s, 1.8 * s, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          ctx.fillStyle = getThemeColor('--pigment-zari-pale');
-          ctx.beginPath();
-          ctx.arc(cx, cy, 2.2 * s, 0, Math.PI * 2);
-          ctx.fill();
+      // Bandhani: tiny undyed dots, each with the darker pinch of its knot, set in rings
+      // (flowers of a 4-dot centre, an inner and an outer ring) with 3-dot clusters between.
+      const zari = getThemeColor('--pigment-zari-pale');
+      const yellow = getThemeColor('--pitambar');
+      const knot = themeColor('--raat', 0.35);
+      const dot = (x: number, y: number, r: number, col: string) => {
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = knot;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.38, 0, Math.PI * 2);
+        ctx.fill();
+      };
+      const ring = (cx: number, cy: number, rad: number, n: number, r: number, col: string, phase = 0) => {
+        for (let k = 0; k < n; k++) {
+          const a = phase + (k / n) * Math.PI * 2;
+          dot(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, r, col);
+        }
+      };
+      const step = 64 * s;
+      for (let row = -1; row <= 8; row++)
+        for (let col = -1; col <= 8; col++) {
+          const cx = (col + (row % 2 ? 0.5 : 0)) * step + step / 2;
+          const cy = row * step + step / 2;
+          ring(cx, cy, 3.4 * s, 4, 1.9 * s, zari, Math.PI / 4);
+          ring(cx, cy, 10 * s, 10, 1.6 * s, yellow);
+          ring(cx, cy, 19 * s, 16, 1.5 * s, zari, Math.PI / 16);
+          // a 3-dot cluster in the gap to the next flower
+          const gx = cx + step / 2, gy = cy + step / 2;
+          ring(gx, gy, 3 * s, 3, 1.4 * s, zari, -Math.PI / 2);
         }
       break;
     }
     case 'Leheriya': {
-      const wave = line().curve(curveBasis);
+      // Leheriya: diagonal stripes of resist-dyed colour with a small ripple (lehar) along
+      // each edge, separated by thin lines of the ground colour.
       const cols = ['--pitambar', '--pigment-leheriya-mint', '--gold-300', '--pigment-leheriya-green'].map((t) => getThemeColor(t));
-      for (let i = -20; i < 40; i++) {
-        const pts: [number, number][] = Array.from({ length: 10 }, (_, k) => {
-          const t = k / 9;
-          return [t * size + i * 22 * s - size * 0.5, t * size + Math.sin(t * Math.PI * 4) * 6 * s];
-        });
-        ctx.strokeStyle = cols[((i % 4) + 4) % 4];
-        ctx.lineWidth = (i % 2 ? 5 : 9) * s;
-        ctx.stroke(new Path2D(wave(pts) ?? ''));
+      const band = 16 * s;
+      ctx.save();
+      ctx.translate(size / 2, size / 2);
+      ctx.rotate(-Math.PI / 4);
+      ctx.translate(-size, -size);
+      const edge = (y0: number, x: number) => y0 + Math.sin(x / (9 * s)) * 1.8 * s;
+      for (let i = 0; i * band < size * 2; i++) {
+        const y0 = i * band;
+        ctx.fillStyle = cols[i % cols.length];
+        ctx.beginPath();
+        ctx.moveTo(0, edge(y0, 0));
+        for (let x = 0; x <= size * 2; x += 3 * s) ctx.lineTo(x, edge(y0, x));
+        for (let x = size * 2; x >= 0; x -= 3 * s) ctx.lineTo(x, edge(y0 + band - 2.2 * s, x));
+        ctx.closePath();
+        ctx.fill();
       }
+      ctx.restore();
       break;
     }
   }

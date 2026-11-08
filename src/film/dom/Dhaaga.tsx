@@ -89,9 +89,10 @@ export function Dhaaga() {
       <div className="relative -mt-[100svh] flex min-h-full flex-col justify-center px-safe py-[26svh] md:px-safe-12 short:py-[14svh]">
         <h2 className="mx-auto max-w-[1600px] font-editorial font-medium text-[length:clamp(2.5rem,min(12vw,20svh),13rem)] leading-[0.95] tracking-tight short:text-[length:clamp(2rem,min(12vw,15svh),13rem)]">
           {words.map((w, i) => (
-            <span key={i} className="relative mr-[0.25em] inline-block">
+            <span key={i} className={`relative mr-[0.25em] inline-block ${w.startsWith('thread') ? 'italic' : ''}`}>
               <span className="text-outline-gold">{w}</span>
-              <span data-fill aria-hidden className="text-gold absolute inset-0" style={{ clipPath: 'inset(0 0 0 0)' }}>
+              {/* the one accent word fills in italic gold; the rest fill in --text */}
+              <span data-fill aria-hidden className={`absolute inset-0 ${w.startsWith('thread') ? 'accent-word' : 'text-fg'}`} style={{ clipPath: 'inset(0 0 0 0)' }}>
                 {w}
               </span>
             </span>

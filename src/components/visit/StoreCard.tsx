@@ -12,7 +12,7 @@ export function StoreCard({ className = '', headingLevel = 3 }: { className?: st
   return (
     <div className={`panel rounded-3xl p-6 md:p-8 ${className}`}>
       <p className="label text-gold-text">{lang === 'hi' ? 'दुकान' : 'The store'}</p>
-      <H className="mt-2 font-editorial font-medium text-3xl text-gold">{brand.name}</H>
+      <H className="mt-2 font-editorial font-medium text-3xl text-fg">{brand.name}</H>
       <p className="mt-1 text-sm text-fg-muted">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
       <dl className="mt-6 space-y-4 text-sm">
         <div>

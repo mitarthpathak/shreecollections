@@ -57,6 +57,7 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
   useFrame((s, dt) => {
     const g = group.current, sp = spin.current;
     if (!g || !sp) return;
+    g.visible = !film.heroVideo; // a hero drape video takes the coin's place
     rimUniforms.uTime.value += dt;
     rimUniforms.uGlintColor.value.copy(sceneTheme.glint);
     rimUniforms.uLight.value = sceneTheme.light;

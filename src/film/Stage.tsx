@@ -23,7 +23,7 @@ import { TIER_SETTINGS } from '@/lib/tier';
 import { useUI, type Tier } from '@/lib/store';
 import { getThemeColor } from '@/lib/theme';
 import type { BloomEffect } from 'postprocessing';
-import { onThemeChange, readSceneTheme, sceneTheme, stepSceneTheme } from './sceneTheme';
+import { onThemeChange, readSceneTheme, sceneTheme, setSceneBg, stepSceneTheme } from './sceneTheme';
 
 /** How far the knot sits in front of the camera at the end of the film (see shots/Knot). */
 const KNOT_DEPTH = 6.5;
@@ -91,6 +91,7 @@ function ThemeDriver({ bloom }: { bloom: React.RefObject<BloomEffect | null> }) 
     return onThemeChange(readSceneTheme);
   }, []);
   useFrame((_, dt) => {
+    if (film.bgReady) setSceneBg(film.bg);
     stepSceneTheme(dt);
     gl.setClearColor(sceneTheme.bg, 1);
     if (scene.fog) (scene.fog as THREE.Fog).color.copy(sceneTheme.bg);

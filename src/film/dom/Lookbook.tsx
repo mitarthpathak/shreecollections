@@ -42,7 +42,7 @@ export function Lookbook({ wall3D }: { wall3D: boolean }) {
       <div className="sticky top-0 flex h-svh flex-col justify-end pb-16 max-md:static max-md:h-auto max-md:py-[14svh] md:short:pb-4">
         <div className="mx-auto w-full max-w-[1600px] px-safe md:px-safe-12">
           <p className="label mb-3 text-gold-text short:mb-1">{t('lookbook')}</p>
-          <h2 className="font-editorial font-medium text-[length:clamp(2.6rem,min(7vw,13svh),7rem)] leading-[0.95] text-gold">Lookbook</h2>
+          <h2 className="font-editorial font-medium text-[length:clamp(2.6rem,min(7vw,13svh),7rem)] leading-[0.95] text-fg">Lookbook</h2>
           <p className="mt-2 max-w-md text-fg-muted md:short:hidden">Curated from our store in {brand.location.city}. More every week on Instagram.</p>
         </div>
         {/* flat reel: phones, lower tiers, reduced motion */}

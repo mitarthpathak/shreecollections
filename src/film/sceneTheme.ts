@@ -49,7 +49,12 @@ let primed = false;
 
 const v3 = (out: THREE.Vector3, token: string) => out.set(...themeRGB01(token));
 
-/** Re-read the targets from CSS (after a theme change, or when --chapter-bg moves). */
+/** The colour journey's background (sRGB 0–1), set every frame by the film. */
+export function setSceneBg(rgb: readonly [number, number, number]) {
+  target.bg.setRGB(rgb[0], rgb[1], rgb[2], THREE.SRGBColorSpace);
+}
+
+/** Re-read the targets from CSS (after a theme change). */
 export function readSceneTheme() {
   forgetThemeColors();
   target.light = resolvedTheme() === 'light' ? 1 : 0;

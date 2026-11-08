@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { useId } from 'react';
 import { brand } from '@/brand.config';
+import { PEACOCK_EYE } from '@/film/peacock';
 
 /**
  * The circular badge. With the owner's corrected artwork in /public/brand/logo.png
@@ -13,7 +14,6 @@ export function BadgeMark({ size = 44, className = '', priority = false }: { siz
   // which paints nothing if that copy sits inside display:none.
   const uid = useId().replace(/[^\w-]/g, '');
   const gold = `bm-gold-${uid}`;
-  const eye = `bm-eye-${uid}`;
   if (brand.logo.hasArtwork) {
     return (
       <Image
@@ -42,18 +42,14 @@ export function BadgeMark({ size = 44, className = '', priority = false }: { siz
           <stop offset="0.75" style={{ stopColor: 'var(--gold-500)' }} />
           <stop offset="1" style={{ stopColor: 'var(--gold-700)' }} />
         </linearGradient>
-        <radialGradient id={eye} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" style={{ stopColor: 'var(--pigment-peacock-navy)' }} />
-          <stop offset="0.45" style={{ stopColor: 'var(--mor)' }} />
-          <stop offset="0.75" style={{ stopColor: 'var(--gold-300)' }} />
-          <stop offset="1" stopOpacity="0" style={{ stopColor: 'var(--mor)' }} />
-        </radialGradient>
       </defs>
       <circle cx="100" cy="100" r="98" style={{ fill: 'var(--raat)' }} />
       <circle cx="100" cy="100" r="92" fill="none" stroke={`url(#${gold})`} strokeWidth="3" />
       <circle cx="100" cy="100" r="86" fill="none" strokeWidth="0.8" style={{ stroke: 'var(--gold-700)' }} />
       {/* mor pankh eye */}
-      <ellipse cx="100" cy="52" rx="14" ry="20" fill={`url(#${eye})`} />
+      {PEACOCK_EYE.map((r) => (
+        <ellipse key={r.token} cx="100" cy={52 + r.dy * 20} rx={14 * r.rx} ry={20 * r.ry} style={{ fill: `var(${r.token})` }} />
+      ))}
       <path d="M100 74 C 98 90, 100 98, 100 104" stroke={`url(#${gold})`} strokeWidth="1.5" fill="none" />
       <text
         x="100"

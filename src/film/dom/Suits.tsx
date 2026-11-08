@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import { Accent } from '@/components/Accent';
 import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
@@ -100,7 +101,7 @@ export function Suits() {
       <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-[20svh] md:px-12">
         <header data-suits-head className="mb-10 md:mb-16">
           <p className="label mb-3 text-gold-text">{t('suits')}</p>
-          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.suits.en}</h2>
+          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-fg"><Accent text={brand.copy.suits.en} word="tailored" /></h2>
           <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">{brand.copy.suits.hi}</p>
         </header>
         <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:gap-16">

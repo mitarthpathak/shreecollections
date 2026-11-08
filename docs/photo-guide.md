@@ -37,3 +37,36 @@ sideways swipe (phones).
 Products without `photos` keep their drawn placeholders. `npm run assets` redraws only the
 placeholder files (`1.webp`, `2.webp`, `3.webp`, `fabric.webp`), never `photo-*.webp`; keep a
 copy of your photos anyway.
+
+## Hero drape video (optional)
+
+A short, quiet loop for the home page's first screen: a saree's pallu or a dupatta moving in a
+breeze, or being draped. It plays muted, looped and inline, starts only after the page has
+loaded, and is replaced by its poster for visitors who prefer reduced motion.
+
+- `public/media/hero-drape.mp4`: **4:5 portrait**, 1080 × 1350 px, 6–10 s seamless loop, H.264,
+  no audio track, ≤ 3 MB (CRF ~26). Slow movement, no cuts, no text.
+- `public/media/hero-drape.webp`: its first frame, 1080 × 1350, ≤ 150 KB (shown until the video
+  starts, and as the still for reduced motion).
+- Light it like the product photos: daylight, the same ivory wall.
+
+When `hero-drape.mp4` exists the video takes the coin's place next to the headline; without it
+the 3D coin stays. Nothing else to configure (it is checked at build time, so redeploy after
+adding it).
+
+## Fabric textures for the Weave chapter (optional)
+
+The Weave chapter shows six fabrics on a moving silk sheet. Until real macro photos exist they
+are drawn in code. To use photos, add per fabric (Banarasi, Chanderi, Georgette, Cotton,
+Bandhani, Leheriya):
+
+- `public/textures/<fabric>/albedo.webp`: a flat, evenly lit macro of the cloth, **2048 × 2048**,
+  shot straight on (camera parallel to the cloth, no folds, no shadows, no visible edge),
+  daylight or two soft lights at 45°, white-balanced on a grey card. It should tile: crop a
+  square from the middle of the shot and check the repeat in an image editor (offset by 50%).
+- `public/textures/<fabric>/normal.webp` (optional): a normal map made from the same crop
+  (e.g. in Materialize or Photoshop's 3D filter), same size.
+- Folder names are lowercase: `banarasi`, `chanderi`, `georgette`, `cotton`, `bandhani`,
+  `leheriya`. WebP, quality ~85, ≤ 1.5 MB each.
+
+Missing files simply keep the drawn version; nothing else to change.

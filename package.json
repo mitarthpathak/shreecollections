@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/copy-gpu-benchmarks.mjs",
+    "predev": "node scripts/copy-gpu-benchmarks.mjs && node scripts/fabric-textures.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-gpu-benchmarks.mjs",
+    "prebuild": "node scripts/copy-gpu-benchmarks.mjs && node scripts/fabric-textures.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

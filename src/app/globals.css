@@ -363,15 +363,14 @@ img {
 
 @layer components {
 /* ───────────────────────── Gold ───────────────────────── */
-/* Headings: flat gold text (the metallic gradient is reserved for the logo coin). */
-.text-gold,
-.text-gold-glint {
+/* The logo wordmark's gold (headings are flat --text with one .accent-word). */
+.text-gold {
   color: var(--gold-text);
 }
 
 .text-outline-gold {
   color: transparent;
-  -webkit-text-stroke: 1px var(--gold-text);
+  -webkit-text-stroke: 1px var(--text-muted);
 }
 
 .hairline {
@@ -410,6 +409,14 @@ img {
     font-family: var(--font-display);
     font-weight: 400;
   }
+}
+
+/*
+ * Copy that the 3D can pass behind (the saree ribbon, the Rang Chakra silk, the matki): a soft
+ * halo in the page colour keeps it readable in both themes without boxing it in.
+ */
+.text-halo {
+  text-shadow: 0 0 2px var(--bg), 0 0 8px var(--bg), 0 0 18px var(--bg), 0 0 32px color-mix(in srgb, var(--bg) 70%, transparent);
 }
 
 /* One accent word per heading: italic Cormorant in --gold-text. */
