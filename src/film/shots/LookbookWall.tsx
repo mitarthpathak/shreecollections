@@ -28,6 +28,35 @@ export function LookbookWall() {
   const center = useMemo(() => rail.getPoint(stationT(8)).add(new THREE.Vector3(0, 0, -1.6)), []);
   const group = useRef<THREE.Group>(null);
   const shared = useMemo(() => ({ uVel: { value: 0 }, uShow: { value: 0 } }), []);
+  // Materials are built once per texture so the shared uniform objects stay linked.
+  const mats = useMemo(
+    () =>
+      maps.map(
+        (map) =>
+          new THREE.ShaderMaterial({
+            transparent: true,
+            uniforms: { uVel: shared.uVel, uShow: shared.uShow, uMap: { value: map } },
+            vertexShader: /* glsl */ `
+                uniform float uVel; varying vec2 vUv;
+                void main(){
+                  vUv = uv;
+                  vec3 p = position;
+                  p.z += sin(uv.x * 3.14159) * uVel * 0.35;
+                  p.y += sin(uv.x * 3.14159) * uVel * 0.08;
+                  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+                }`,
+            fragmentShader: /* glsl */ `
+                uniform sampler2D uMap; uniform float uVel; uniform float uShow; varying vec2 vUv;
+                void main(){
+                  float sh = uVel * 0.006;
+                  vec3 c = vec3(texture2D(uMap, vUv + vec2(sh, 0.0)).r, texture2D(uMap, vUv).g, texture2D(uMap, vUv - vec2(sh, 0.0)).b);
+                  gl_FragColor = vec4(c, uShow);
+                }`,
+          }),
+      ),
+    [maps, shared],
+  );
+  useEffect(() => () => mats.forEach((m) => m.dispose()), [mats]);
 
   useFrame((_, dt) => {
     const g = group.current;
@@ -41,31 +70,11 @@ export function LookbookWall() {
 
   return (
     <group ref={group} position={center}>
-      {maps.map((map, i) => {
+      {maps.map((_, i) => {
         const a = (i - (N - 1) / 2) * 0.42;
         return (
-          <mesh key={i} position={[Math.sin(a) * R, 0, -Math.cos(a) * R]} rotation={[0, -a, 0]}>
+          <mesh key={i} material={mats[i]} position={[Math.sin(a) * R, 0, -Math.cos(a) * R]} rotation={[0, -a, 0]}>
             <planeGeometry args={[1.5, 2, 24, 1]} />
-            <shaderMaterial
-              transparent
-              uniforms={{ ...shared, uMap: { value: map } }}
-              vertexShader={/* glsl */ `
-                uniform float uVel; varying vec2 vUv;
-                void main(){
-                  vUv = uv;
-                  vec3 p = position;
-                  p.z += sin(uv.x * 3.14159) * uVel * 0.35;
-                  p.y += sin(uv.x * 3.14159) * uVel * 0.08;
-                  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
-                }`}
-              fragmentShader={/* glsl */ `
-                uniform sampler2D uMap; uniform float uVel; uniform float uShow; varying vec2 vUv;
-                void main(){
-                  float sh = uVel * 0.006;
-                  vec3 c = vec3(texture2D(uMap, vUv + vec2(sh, 0.0)).r, texture2D(uMap, vUv).g, texture2D(uMap, vUv - vec2(sh, 0.0)).b);
-                  gl_FragColor = vec4(c, uShow);
-                }`}
-            />
           </mesh>
         );
       })}

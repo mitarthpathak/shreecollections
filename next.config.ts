@@ -6,6 +6,8 @@ import type { NextConfig } from 'next';
 // there, and every page here is static anyway.
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Always inlined, so ?debug / ?capture code is dead-code-eliminated from normal production builds.
+  env: { NEXT_PUBLIC_FILM_DEBUG: process.env.NEXT_PUBLIC_FILM_DEBUG ?? '0' },
   poweredByHeader: false,
   images: {
     formats: ['image/avif', 'image/webp'],

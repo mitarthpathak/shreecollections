@@ -18,7 +18,7 @@ export function Knot() {
   const geo = useMemo(() => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg"><path d="${glyph.d}"/></svg>`;
     const data = new SVGLoader().parse(svg);
-    const shapes = data.paths.flatMap((p) => SVGLoader.createShapes(p));
+    const shapes = data.paths.flatMap((p) => p.toShapes());
     const g = new THREE.ExtrudeGeometry(shapes, { depth: 70, bevelEnabled: true, bevelThickness: 14, bevelSize: 8, bevelSegments: 3, curveSegments: 10 });
     const merged = mergeGeometries([g]) ?? g;
     merged.center();

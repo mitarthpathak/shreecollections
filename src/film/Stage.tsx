@@ -44,6 +44,28 @@ function CameraRig() {
   return null;
 }
 
+function ExposeForDebug() {
+  const state = useThree();
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_FILM_DEBUG === '1') (window as unknown as { __three: unknown }).__three = state;
+  }, [state]);
+  return null;
+}
+
+/** ?capture (debug builds): window.__capture() renders one frame and returns it as WebP, for the tier-0 posters. */
+function Capture() {
+  const { gl, advance } = useThree();
+  useEffect(() => {
+    const allowed = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_FILM_DEBUG === '1';
+    if (!allowed || !new URLSearchParams(window.location.search).has('capture')) return;
+    (window as unknown as { __capture: () => string }).__capture = () => {
+      advance(performance.now() / 1000);
+      return gl.domElement.toDataURL('image/webp', 0.8);
+    };
+  }, [gl, advance]);
+  return null;
+}
+
 function Ready({ onReady }: { onReady: () => void }) {
   const { gl, scene, camera } = useThree();
   useEffect(() => {
@@ -139,6 +161,8 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
         </EffectComposer>
       )}
       <Ready onReady={onReady} />
+      <ExposeForDebug />
+      <Capture />
     </Canvas>
   );
 }

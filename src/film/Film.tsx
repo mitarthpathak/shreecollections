@@ -8,6 +8,7 @@ import { ScrollTrigger, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { onFrame, getLenis } from '@/lib/clock';
 import { Preloader } from './dom/Preloader';
 import { FilmNav } from './dom/FilmNav';
+import { Posters } from './dom/Posters';
 import { Hero } from './dom/Hero';
 import { Dhaaga } from './dom/Dhaaga';
 import { Weave } from './dom/Weave';
@@ -22,6 +23,8 @@ import { KnotChapter } from './dom/Knot';
 
 // three.js and every shot load after first paint, during idle.
 const Stage = dynamic(() => import('./Stage'), { ssr: false });
+const DEBUG_BUILD = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_FILM_DEBUG === '1';
+const Debug = DEBUG_BUILD ? dynamic(() => import('./Debug'), { ssr: false }) : () => null;
 
 export function Film() {
   const tier = useUI((s) => s.tier);
@@ -135,7 +138,9 @@ export function Film() {
           <Stage key={tier} tier={tier} onReady={() => setStageReady(true)} />
         </div>
       )}
+      <Posters hidden={stageReady && tier > 0} />
       <FilmNav />
+      {DEBUG_BUILD && <Debug />}
       <div id="film" ref={root} data-stage-ready={stageReady && tier > 0} className="relative z-10" style={{ ['--chapters' as string]: CHAPTERS.length }}>
         <Hero introDone={introDone} />
         <Dhaaga />

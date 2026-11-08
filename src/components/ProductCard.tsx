@@ -132,8 +132,9 @@ export function ProductCard({
       </div>
       <div className="mt-3 space-y-1 px-0.5">
         <p className="label text-[0.62rem] text-gold-500">
-          {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric} · {p.subcategory}
-          {!p.stitched && ` · ${t('unstitched')}`}
+          {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric}
+          {p.subcategory !== p.fabric && ` · ${p.subcategory}`}
+          {p.category === 'suit' && !p.stitched && ` · ${t('unstitched')}`}
         </p>
         <h3 className="text-[0.95rem] leading-snug text-ivory" lang={lang === 'hi' ? 'hi' : undefined}>
           <Link href={`/product/${p.slug}`} className="hover:text-gold-100">

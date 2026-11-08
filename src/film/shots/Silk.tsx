@@ -9,8 +9,8 @@ import { SNOISE } from '../glsl';
 import { WEAVE_FABRICS, fabricTexture } from '../textures';
 import { palette } from '@/lib/palette';
 
-const W = 4.4;
-const H = 2.9;
+const W = 5.6;
+const H = 3.6;
 
 const vertex = /* glsl */ `
   uniform float uTime; uniform float uWind;
@@ -43,12 +43,12 @@ const fragment = /* glsl */ `
     vec2 uv = vUv2 * vec2(2.2, 1.45);
     vec3 a = texture2D(uTexA, uv).rgb;
     vec3 b = texture2D(uTexB, uv).rgb;
-    float n = snoise(vec3(vUv2 * 3.2, 0.7)) * 0.5 + 0.5;
+    float n = snoise(vec3(vUv2 * 7.0, 0.7)) * 0.35 + snoise(vec3(vUv2 * 2.2, 1.9)) * 0.15 + 0.5;
     float m = uMix * 1.12 - 0.06;
-    float edge = 1.0 - smoothstep(0.0, 0.045, abs(n - m));
+    float edge = 1.0 - smoothstep(0.0, 0.025, abs(n - m));
     vec3 col = n < m ? b : a;
     float l = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(col, uTint * (0.35 + l * 1.35), uTintAmt);
+    col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt);
     csm_DiffuseColor = vec4(col, uAlpha);
     csm_Emissive = vec3(1.0, 0.78, 0.35) * edge * 2.4 * step(0.001, uMix) * step(uMix, 0.999);
   }
@@ -111,13 +111,13 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
           im.setMatrixAt(i, dummy.matrix);
         }
         im.instanceMatrix.needsUpdate = true;
-        (im.material as THREE.MeshBasicMaterial).opacity = 1 - sheet;
+        (im.material as THREE.MeshBasicMaterial).opacity = (1 - sheet) * 0.75;
       }
     } else {
       const c = film.u.chakra;
-      uniforms.uAlpha.value = c.show;
+      uniforms.uAlpha.value = c.show * 0.9;
       (uniforms.uTint.value as THREE.Color).setRGB(...c.tint);
-      uniforms.uTintAmt.value = c.tintAmt;
+      uniforms.uTintAmt.value = 0.55 + c.tintAmt * 0.4;
     }
     if (mesh.current) {
       mesh.current.visible = uniforms.uAlpha.value > 0.002;
@@ -127,7 +127,7 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
 
   const seg = Math.max(24, segments);
   return (
-    <group position={pos}>
+    <group position={[pos.x + (film.mobile ? 0 : 0.9), pos.y + (film.mobile ? 0.9 : 0.35), pos.z]} scale={film.mobile ? 0.5 : 1}>
       <mesh ref={mesh} rotation={[-0.08, 0, 0.04]}>
         <planeGeometry args={[W, H, seg, Math.round(seg * 0.66)]} />
         <CustomShaderMaterial
@@ -148,8 +148,8 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       </mesh>
       {mode === 'weave' && (
         <instancedMesh ref={threads} args={[undefined, undefined, N * 2]} frustumCulled={false}>
-          <boxGeometry args={[0.012, 1, 0.012]} />
-          <meshBasicMaterial color={palette.gold300} transparent blending={THREE.AdditiveBlending} depthWrite={false} />
+          <boxGeometry args={[0.006, 1, 0.006]} />
+          <meshBasicMaterial color={palette.gold500} transparent blending={THREE.AdditiveBlending} depthWrite={false} />
         </instancedMesh>
       )}
     </group>

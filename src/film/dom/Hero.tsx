@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
-import { BadgeMark } from '@/components/BadgeMark';
 import { brand } from '@/brand.config';
 import { gsap, SplitText, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
@@ -16,7 +15,7 @@ export function Hero({ introDone }: { introDone: boolean }) {
   useGSAP(
     () => {
       if (!introDone || prefersReducedMotion()) return;
-      const split = SplitText.create('[data-hero-title]', { type: 'words,lines', mask: 'lines', linesClass: 'mask-line' });
+      const split = SplitText.create('[data-hero-title]', { type: 'words,lines', mask: 'lines', linesClass: 'mask-line', wordsClass: 'text-gold' });
       const tl = gsap.timeline();
       tl.from(split.words, { yPercent: 115, duration: 1.15, ease: 'expo.out', stagger: 0.06 })
         .from('[data-hero-hi]', { y: 24, opacity: 0, duration: 1, ease: 'expo.out' }, '-=0.8')
@@ -43,10 +42,6 @@ export function Hero({ introDone }: { introDone: boolean }) {
   return (
     <Section index={0} ref={root}>
       <div className="sticky top-0 h-svh overflow-hidden">
-        {/* poster: shown for tier 0 and until the stage is ready */}
-        <div className="poster-3d pointer-events-none absolute inset-0 flex items-start justify-center pt-[16svh] md:items-center md:justify-end md:pr-[12vw] md:pt-0">
-          <BadgeMark size={360} className="h-auto w-[62vw] max-w-[420px] drop-shadow-[0_0_80px_rgba(233,196,106,.25)] md:w-[30vw]" priority />
-        </div>
         <div data-hero-copy className="relative z-10 mx-auto flex h-full max-w-[1600px] flex-col justify-end px-5 pb-[calc(var(--tabbar-h)+var(--safe-b)+5.5rem)] md:justify-center md:px-12 md:pb-0">
           <p data-hero-eyebrow className="label mb-5 text-gold-500">
             {brand.tagline} · {brand.location.city}

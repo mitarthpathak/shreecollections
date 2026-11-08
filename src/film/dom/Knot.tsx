@@ -24,10 +24,6 @@ export function KnotChapter() {
     <>
       <Section index={10} ref={root} label="The knot">
         <div className="sticky top-0 grid h-svh place-items-center">
-          {/* poster: shown for tier 0 and until the stage is ready */}
-          <p aria-hidden className="poster-3d font-hindi-display text-gold-glint text-[clamp(8rem,34vw,26rem)] leading-none">
-            {brand.wordmark.hi}
-          </p>
           <p data-signoff className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+2rem)] font-display text-xl tracking-[0.3em] text-gold-300 md:bottom-12">
             {brand.signOff.toUpperCase()}
           </p>

@@ -38,9 +38,10 @@ export function Matki({ coins = 48 }: { coins?: number }) {
     const g = pot.current;
     if (!g) return;
     g.visible = show > 0.01;
+    const dir = film.mobile ? 1 : -1;
     const tilt = THREE.MathUtils.smoothstep(pour, 0, 0.35) * 1.15;
-    g.rotation.z = -tilt;
-    g.scale.setScalar(0.9 * show + 0.1);
+    g.rotation.z = dir * tilt;
+    g.scale.setScalar((film.mobile ? 0.5 : 0.75) * (0.9 * show + 0.1));
     // mouth position in world space
     mouth.set(0, 0.92, 0).applyEuler(g.rotation).multiplyScalar(g.scale.x).add(g.position);
     const write = (mesh: THREE.InstancedMesh | null, from: number, n: number) => {
@@ -51,9 +52,9 @@ export function Matki({ coins = 48 }: { coins?: number }) {
         if (tau <= 0) {
           dummy.scale.setScalar(0.0001);
         } else {
-          const x = mouth.x + sd.vx * tau;
+          const x = mouth.x - dir * sd.vx * tau * (film.mobile ? 0.5 : 1);
           const yRaw = mouth.y + 0.6 * tau - 4.9 * tau * tau;
-          const floor = -1.55 + (i % 5) * 0.02;
+          const floor = (film.mobile ? -2.1 : -1.55) + (i % 5) * 0.02;
           const y = Math.max(floor, yRaw);
           dummy.position.set(x, y, mouth.z + sd.vz * tau);
           dummy.rotation.set(sd.spin * tau, sd.spin * tau * 0.7, yRaw > floor ? sd.spin * tau : 1.4);
@@ -72,7 +73,7 @@ export function Matki({ coins = 48 }: { coins?: number }) {
 
   return (
     <group>
-      <group ref={pot} position={[base.x - 1.4, base.y + 0.5, base.z]}>
+      <group ref={pot} position={film.mobile ? [base.x + 0.75, base.y + 1.75, base.z] : [base.x - 2.7, base.y + 0.55, base.z]}>
         <mesh geometry={geo}>
           <meshPhysicalMaterial map={tex} roughness={0.75} clearcoat={0.3} clearcoatRoughness={0.6} side={THREE.DoubleSide} color="#ffffff" />
         </mesh>

@@ -90,7 +90,8 @@ export function ProductView({ slug }: { slug: string }) {
         <div className="lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:self-start">
           <BadgeList badges={p.badges} />
           <p className="label mt-4 text-gold-500">
-            {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric} · {p.subcategory}
+            {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric}
+            {p.subcategory !== p.fabric && ` · ${p.subcategory}`}
           </p>
           <h1 className="mt-2 font-display text-[clamp(2rem,4vw,3.4rem)] leading-[1.02] text-gold" lang={lang === 'hi' ? 'hi' : undefined}>
             {name}
@@ -135,12 +136,12 @@ export function ProductView({ slug }: { slug: string }) {
               </div>
               {needSize && <p className="mt-2 text-sm text-sindoor" role="alert">{lang === 'hi' ? 'पहले साइज़ चुनें।' : 'Choose a size first.'}</p>}
             </fieldset>
-          ) : (
+          ) : p.category === 'suit' ? (
             <p className="mt-7 inline-flex rounded-full bg-mor/20 px-3 py-1.5 text-xs text-ivory ring-1 ring-mor/60">
               {p.stitched ? t('stitched') : t('unstitched')}
-              {!p.stitched && p.category === 'suit' && (lang === 'hi' ? ' · अपनी नाप से सिलवाएँ' : ' · tailor to your measurements')}
+              {!p.stitched && (lang === 'hi' ? ' · अपनी नाप से सिलवाएँ' : ' · tailor to your measurements')}
             </p>
-          )}
+          ) : null}
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <div className="flex items-center rounded-full ring-1 ring-gold-500/40" role="group" aria-label={t('qty')}>

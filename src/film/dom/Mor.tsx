@@ -33,7 +33,8 @@ export function Mor() {
           style={{
             clipPath: 'circle(0% at 50% 55%)',
             background:
-              'radial-gradient(ellipse 40% 50% at 50% 55%, #141E5C 0%, #1B3F8C 22%, #0E7C7B 44%, #6B8F2A 62%, #C9962E 72%, #07060A 92%)',
+              'radial-gradient(ellipse 34% 44% at 50% 55%, rgba(16,24,74,.95) 0%, rgba(22,58,120,.9) 20%, rgba(14,124,123,.75) 38%, rgba(70,110,40,.45) 52%, rgba(201,150,46,.35) 60%, rgba(7,6,10,0) 74%), #07060A',
+            maskImage: 'radial-gradient(circle at 50% 55%, #000 55%, transparent 80%)',
           }}
         />
       </div>

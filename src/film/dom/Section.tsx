@@ -33,6 +33,8 @@ export const ranges = {
   }),
   /** as the section scrolls in from below */
   enter: (el: Element) => ({ trigger: el, start: 'top bottom', end: 'top top', scrub: 1 }),
+  /** the whole pass: from the section entering to it leaving */
+  pass: (el: Element) => ({ trigger: el, start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true }),
   /** as the section scrolls away */
   exit: (el: Element) => ({ trigger: el, start: 'bottom bottom', end: 'bottom top', scrub: 1 }),
 };

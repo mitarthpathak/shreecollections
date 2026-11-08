@@ -1,17 +1,12 @@
 'use client';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
 import { WEAVE_FABRICS } from '../textures';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
-import { getByFabric } from '@/lib/catalog';
 import { useT } from '@/lib/i18n';
 
-const FABRIC_POSTER: Record<string, string | undefined> = Object.fromEntries(
-  WEAVE_FABRICS.map((f) => [f.kind, getByFabric(f.kind)[0]?.images[1]]),
-);
 
 /** The Weave: the thread becomes warp and weft, then silk; scroll cycles six fabrics. */
 export function Weave() {
@@ -23,28 +18,25 @@ export function Weave() {
       const el = root.current!;
       if (prefersReducedMotion()) return;
       const panels = gsap.utils.toArray<HTMLElement>('[data-fabric]', el);
-      const posters = gsap.utils.toArray<HTMLElement>('[data-fabric-poster]', el);
       const n = panels.length;
-      gsap.set([...panels, ...posters], { autoAlpha: 0 });
-      gsap.set([panels[0], posters[0]], { autoAlpha: 1 });
-      gsap.timeline({ scrollTrigger: ranges.enter(el) })
-        .fromTo(film.u.weave, { assemble: 0 }, { assemble: 1, ease: 'none', duration: 1 });
-      const tl = gsap.timeline({ scrollTrigger: ranges.pin(el) });
-      tl.fromTo(film.u.weave, { sheet: 0 }, { sheet: 1, duration: 0.6, ease: 'silk' }, 0)
-        .fromTo(film.u.weave, { fabric: 0 }, { fabric: n - 1, duration: n - 1, ease: 'none' }, 0.6);
+      gsap.set(panels, { autoAlpha: 0 });
+      gsap.set(panels[0], { autoAlpha: 1 });
+      // One timeline across the whole pass (enter → pin → exit), duration 10.
+      const tl = gsap.timeline({ scrollTrigger: ranges.pass(el) });
+      tl.fromTo(film.u.weave, { assemble: 0 }, { assemble: 1, duration: 2.4, ease: 'none' }, 0)
+        .fromTo(film.u.weave, { sheet: 0 }, { sheet: 1, duration: 0.9, ease: 'silk' }, 2.0)
+        .fromTo(film.u.weave, { fabric: 0 }, { fabric: n - 1, duration: 5, ease: 'none' }, 2.8)
+        .to(film.u.weave, { sheet: 0, duration: 1, ease: 'power1.in' }, 9);
       panels.forEach((p, i) => {
         if (i === 0) {
-          tl.from(p.querySelectorAll('[data-rise]'), { yPercent: 110, stagger: 0.05, duration: 0.4, ease: 'expo.out' }, 0.1);
-        } else {
-          const at = 0.6 + i - 0.55;
-          tl.to(panels[i - 1], { autoAlpha: 0, y: -40, duration: 0.3, ease: 'power2.in' }, at)
-            .fromTo(p, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.35, ease: 'expo.out' }, at + 0.25)
-            .from(p.querySelectorAll('[data-rise]'), { yPercent: 110, stagger: 0.05, duration: 0.4, ease: 'expo.out' }, at + 0.25);
-          if (posters[i]) tl.to(posters[i - 1], { autoAlpha: 0, duration: 0.5 }, at).to(posters[i], { autoAlpha: 1, duration: 0.5 }, at);
+          tl.from(p.querySelectorAll('[data-rise]'), { yPercent: 110, stagger: 0.1, duration: 0.8, ease: 'expo.out' }, 1.6);
+          return;
         }
+        const at = 2.8 + (5 / (n - 1)) * i - 0.45;
+        tl.to(panels[i - 1], { autoAlpha: 0, y: -40, duration: 0.3, ease: 'power2.in' }, at)
+          .fromTo(p, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: 'expo.out' }, at + 0.3)
+          .from(p.querySelectorAll('[data-rise]'), { yPercent: 110, stagger: 0.05, duration: 0.5, ease: 'expo.out' }, at + 0.3);
       });
-      tl.to({}, { duration: 0.4 });
-      gsap.to(film.u.weave, { sheet: 0, assemble: 0, ease: 'none', scrollTrigger: ranges.exit(el) });
     },
     { scope: root },
   );
@@ -52,17 +44,7 @@ export function Weave() {
   return (
     <Section index={2} ref={root} label="The Weave: six fabrics" className="motion-reduce:!h-auto">
       <div className="sticky top-0 h-svh overflow-hidden motion-reduce:static motion-reduce:h-auto">
-        {/* posters (tier 0 / before the stage is ready): a swatch of each fabric, crossfaded */}
-        <div className="poster-3d pointer-events-none absolute inset-0 motion-reduce:hidden" aria-hidden>
-          {WEAVE_FABRICS.map((f) =>
-            FABRIC_POSTER[f.kind] ? (
-              <div key={f.kind} data-fabric-poster className="absolute inset-0">
-                <Image src={FABRIC_POSTER[f.kind]!} alt="" fill sizes="100vw" className="object-cover opacity-30" />
-              </div>
-            ) : null,
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-raat via-raat/50 to-raat/80" />
-        </div>
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[55svh] bg-gradient-to-t from-raat via-raat/70 to-transparent motion-reduce:hidden" />
         <div className="relative mx-auto h-full max-w-[1600px] px-5 md:px-12 motion-reduce:h-auto motion-reduce:space-y-20 motion-reduce:py-24">
           {WEAVE_FABRICS.map((f, i) => (
             <article

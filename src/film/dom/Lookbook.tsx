@@ -22,9 +22,10 @@ export function Lookbook({ stageReady }: { stageReady: boolean }) {
     () => {
       const el = root.current!;
       if (prefersReducedMotion()) return;
-      gsap.fromTo(film.u.lookbook, { show: 0 }, { show: 1, ease: 'none', scrollTrigger: ranges.enter(el) });
-      gsap.fromTo(film.u.lookbook, { spin: 0 }, { spin: 1, ease: 'none', scrollTrigger: ranges.pin(el) });
-      gsap.to(film.u.lookbook, { show: 0, ease: 'none', scrollTrigger: ranges.exit(el), immediateRender: false });
+      gsap.timeline({ scrollTrigger: ranges.pass(el) })
+        .fromTo(film.u.lookbook, { show: 0 }, { show: 1, duration: 2.5, ease: 'none' }, 0)
+        .fromTo(film.u.lookbook, { spin: 0 }, { spin: 1, duration: 10, ease: 'none' }, 0)
+        .to(film.u.lookbook, { show: 0, duration: 2, ease: 'none' }, 8);
     },
     { scope: root },
   );

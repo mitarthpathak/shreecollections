@@ -106,10 +106,10 @@ export function Suits() {
         <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:gap-16">
           {/* left: sticky giant words (a sticky top band on phones) */}
           <div className="sticky top-[var(--header-h)] z-10 -mx-5 bg-gradient-to-b from-raat via-raat/90 to-transparent px-5 pb-6 pt-2 md:top-[calc(var(--header-h)+10svh)] md:mx-0 md:h-fit md:bg-none md:px-0">
-            <ul className="flex gap-4 overflow-hidden md:block md:space-y-1">
+            <ul className="no-scrollbar flex gap-3 overflow-x-auto whitespace-nowrap md:block md:space-y-1 md:overflow-visible">
               {WORDS.map((w, i) => (
                 <li key={w} data-word data-on={i === 0 ? '' : undefined} className="group/w">
-                  <span className="font-display text-[clamp(1.1rem,5vw,1.6rem)] leading-none text-outline-gold transition-colors duration-500 group-data-[on]/w:text-gold-300 group-data-[on]/w:[-webkit-text-stroke:0] md:text-[clamp(3rem,7vw,8rem)]">
+                  <span className="font-display text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-outline-gold transition-colors duration-500 group-data-[on]/w:text-gold-300 group-data-[on]/w:[-webkit-text-stroke:0] md:text-[clamp(3rem,7vw,8rem)]">
                     {w}
                   </span>
                   <span lang="hi" className="font-hindi-display ml-3 hidden text-lg text-ivory-dim opacity-0 transition-opacity duration-500 group-data-[on]/w:opacity-100 md:inline">

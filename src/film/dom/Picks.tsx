@@ -18,9 +18,10 @@ export function Picks() {
     () => {
       const el = root.current!;
       if (prefersReducedMotion()) return;
-      gsap.fromTo(film.u.picks, { show: 0 }, { show: 1, ease: 'none', scrollTrigger: ranges.enter(el) });
-      gsap.fromTo(film.u.picks, { pour: 0 }, { pour: 1, ease: 'none', scrollTrigger: { trigger: el, start: 'top 60%', end: 'bottom bottom', scrub: 1 } });
-      gsap.to(film.u.picks, { show: 0, ease: 'none', scrollTrigger: ranges.exit(el), immediateRender: false });
+      gsap.timeline({ scrollTrigger: ranges.pass(el) })
+        .fromTo(film.u.picks, { show: 0 }, { show: 1, duration: 2, ease: 'none' }, 0)
+        .fromTo(film.u.picks, { pour: 0 }, { pour: 1, duration: 5.5, ease: 'none' }, 1.5)
+        .to(film.u.picks, { show: 0, duration: 1.5, ease: 'none' }, 8.5);
       gsap.from('[data-pick]', { y: 60, opacity: 0, stagger: 0.08, ease: 'expo.out', scrollTrigger: { trigger: '[data-picks-grid]', start: 'top 85%', end: 'top 45%', scrub: 1 } });
     },
     { scope: root },

@@ -45,7 +45,7 @@ function Slide({ p, i }: { p: Product; i: number }) {
               src={p.images[0]}
               alt={`${p.name} — ${p.fabric} saree`}
               fill
-              sizes="(min-width: 768px) 26vw, 90vw"
+              sizes="(min-width: 768px) 34vw, 95vw"
               className="scale-[1.18] object-cover"
               priority={i < 1}
             />
@@ -88,15 +88,16 @@ export function Sarees() {
     () => {
       const el = root.current!;
       if (prefersReducedMotion()) return;
-      gsap.fromTo(film.u.ribbon, { show: 0 }, { show: 1, ease: 'none', scrollTrigger: ranges.enter(el) });
-      gsap.to(film.u.ribbon, { show: 0, ease: 'none', scrollTrigger: ranges.exit(el), immediateRender: false });
+      gsap.timeline({ scrollTrigger: ranges.pass(el) })
+        .fromTo(film.u.ribbon, { show: 0 }, { show: 1, duration: 2, ease: 'none' }, 0)
+        .fromTo(film.u.ribbon, { flow: 0 }, { flow: 1, duration: 10, ease: 'none' }, 0)
+        .to(film.u.ribbon, { show: 0, duration: 2, ease: 'none' }, 8);
       const mm = gsap.matchMedia();
       mm.add('(min-width: 768px)', () => {
         const tr = track.current!;
         const dist = () => tr.scrollWidth - window.innerWidth + 48;
         const tl = gsap.timeline({ scrollTrigger: { ...ranges.pin(el), invalidateOnRefresh: true } });
         tl.to(tr, { x: () => -dist(), ease: 'none', duration: 1 }, 0)
-          .to(film.u.ribbon, { flow: 1, ease: 'none', duration: 1 }, 0)
           .fromTo('[data-parallax]', { xPercent: 6 }, { xPercent: -6, ease: 'none', duration: 1 }, 0);
       });
       mm.add('(max-width: 767px)', () => {
@@ -111,7 +112,6 @@ export function Sarees() {
             scrollTrigger: { trigger: next, start: 'top bottom', end: 'top 20%', scrub: true },
           });
         });
-        gsap.to(film.u.ribbon, { flow: 1, ease: 'none', scrollTrigger: { trigger: el, start: 'top top', end: 'bottom bottom', scrub: 1 } });
       });
       return () => mm.revert();
     },

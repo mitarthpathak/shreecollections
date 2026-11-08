@@ -54,7 +54,7 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
   });
 
   return (
-    <group ref={group}>
+    <group ref={group} scale={film.mobile ? 0.6 : 0.88}>
       <group ref={spin}>
         {/* rim: bevelled metal with a glint that travels around it */}
         <mesh geometry={rimGeo} rotation={[Math.PI / 2, 0, 0]}>
@@ -91,7 +91,7 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
             </mesh>
           </>
         )}
-        <mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[1.07, 1.07, 0.14, 96, 1, true]} />
           <meshPhysicalMaterial color={palette.gold500} metalness={1} roughness={0.35} side={THREE.DoubleSide} />
         </mesh>

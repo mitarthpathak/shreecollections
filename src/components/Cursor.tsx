@@ -15,7 +15,7 @@ export function Cursor() {
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (!fine.matches || reduce.matches || !dot.current || !ring.current) return;
-    document.documentElement.dataset.cursor = 'on';
+    document.documentElement.dataset.customCursor = 'on';
     const d = dot.current, r = ring.current;
     gsap.set([d, r], { xPercent: -50, yPercent: -50, opacity: 0 });
     const dx = gsap.quickTo(d, 'x', { duration: 0.08, ease: 'power3' });
@@ -58,7 +58,7 @@ export function Cursor() {
     return () => {
       window.removeEventListener('pointermove', move);
       document.removeEventListener('pointerleave', leave);
-      delete document.documentElement.dataset.cursor;
+      delete document.documentElement.dataset.customCursor;
     };
   }, []);
 

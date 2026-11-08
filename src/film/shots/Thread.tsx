@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { film } from '../state';
+import { useShader } from '../useShader';
 import { buildThreadCurve } from '../rail';
 
 /** Ek Dhaaga: one gold thread from the coin rim to the knot, revealed ahead of the camera. */
@@ -18,6 +19,39 @@ export function Thread({ segments = 1400, glowSprite }: { segments?: number; glo
       uLength: { value: curve.getLength() },
     }),
     [curve],
+  );
+  const material = useShader(
+    {
+    uniforms: uniforms,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: /* glsl */ `
+            varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vDepth;
+            void main(){
+              vUv = uv;
+              vec4 mv = modelViewMatrix * vec4(position, 1.0);
+              vDepth = -mv.z;
+              vN = normalize(normalMatrix * normal);
+              vV = normalize(-mv.xyz);
+              gl_Position = projectionMatrix * mv;
+            }`,
+    fragmentShader: /* glsl */ `
+            uniform float uReveal; uniform float uTime; uniform float uGlow; uniform float uLength;
+            varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vDepth;
+            void main(){
+              if (vUv.x > uReveal) discard;
+              float near = smoothstep(0.6, 2.4, vDepth) * smoothstep(34.0, 12.0, vDepth); // never a streak across the lens
+              float fres = pow(1.0 - abs(dot(vN, vV)), 1.5);
+              float behind = (uReveal - vUv.x) * uLength;           // world units behind the head
+              float headGlow = exp(-behind * 1.4);
+              float after = 0.55 + 0.45 * exp(-behind * 0.05);       // faint afterglow trail
+              float glint = pow(0.5 + 0.5 * sin(vUv.x * uLength * 2.2 - uTime * 3.0), 18.0);
+              vec3 gold = mix(vec3(0.54, 0.39, 0.09), vec3(0.91, 0.77, 0.42), 0.5 + 0.5 * fres);
+              vec3 col = gold * (0.8 + fres) * after + vec3(1.0, 0.95, 0.8) * (headGlow * 1.4 + glint * 0.4);
+              gl_FragColor = vec4(col * uGlow * near, 1.0);
+            }`,
+    },
   );
   const reveal = useRef(0);
   const tmp = useMemo(() => new THREE.Vector3(), []);
@@ -41,36 +75,7 @@ export function Thread({ segments = 1400, glowSprite }: { segments?: number; glo
 
   return (
     <group>
-      <mesh geometry={geo} frustumCulled={false}>
-        <shaderMaterial
-          uniforms={uniforms}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-          vertexShader={/* glsl */ `
-            varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-            void main(){
-              vUv = uv;
-              vec4 mv = modelViewMatrix * vec4(position, 1.0);
-              vN = normalize(normalMatrix * normal);
-              vV = normalize(-mv.xyz);
-              gl_Position = projectionMatrix * mv;
-            }`}
-          fragmentShader={/* glsl */ `
-            uniform float uReveal; uniform float uTime; uniform float uGlow; uniform float uLength;
-            varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-            void main(){
-              if (vUv.x > uReveal) discard;
-              float fres = pow(1.0 - abs(dot(vN, vV)), 1.5);
-              float behind = (uReveal - vUv.x) * uLength;           // world units behind the head
-              float headGlow = exp(-behind * 1.4);
-              float after = 0.55 + 0.45 * exp(-behind * 0.05);       // faint afterglow trail
-              float glint = pow(0.5 + 0.5 * sin(vUv.x * uLength * 2.2 - uTime * 3.0), 18.0);
-              vec3 gold = mix(vec3(0.54, 0.39, 0.09), vec3(0.91, 0.77, 0.42), 0.5 + 0.5 * fres);
-              vec3 col = gold * (0.8 + fres) * after + vec3(1.0, 0.95, 0.8) * (headGlow * 2.2 + glint * 0.5);
-              gl_FragColor = vec4(col * uGlow, 1.0);
-            }`}
-        />
+      <mesh geometry={geo} material={material} frustumCulled={false}>
       </mesh>
       {glowSprite && (
         <sprite ref={head} scale={[0.5, 0.5, 0.5]}>

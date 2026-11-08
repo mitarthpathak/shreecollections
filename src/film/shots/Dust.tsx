@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { film } from '../state';
+import { useShader } from '../useShader';
 import { rail } from '../rail';
 import { rng } from '../rng';
 
@@ -28,22 +29,13 @@ export function Dust({ count }: { count: number }) {
     return g;
   }, [count]);
   const uniforms = useMemo(() => ({ uTime: { value: 0 }, uVel: { value: 0 }, uPx: { value: 1 } }), []);
-
-  useFrame((s, dt) => {
-    uniforms.uTime.value += dt;
-    uniforms.uVel.value = THREE.MathUtils.damp(uniforms.uVel.value, Math.min(1, Math.abs(film.velocity) / 2500), 6, dt);
-    uniforms.uPx.value = s.gl.getPixelRatio();
-  });
-
-  if (!count) return null;
-  return (
-    <points geometry={geo} frustumCulled={false}>
-      <shaderMaterial
-        uniforms={uniforms}
-        transparent
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        vertexShader={/* glsl */ `
+  const material = useShader(
+    {
+    uniforms: uniforms,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: /* glsl */ `
           uniform float uTime; uniform float uVel; uniform float uPx;
           attribute float aSeed; varying float vA;
           void main(){
@@ -55,16 +47,27 @@ export function Dust({ count }: { count: number }) {
             vA = tw * (0.35 + uVel * 0.65) * smoothstep(40.0, 4.0, -mv.z);
             gl_PointSize = min(3.2, (1.0 + aSeed * 1.6) * (1.0 + uVel * 1.2) * (18.0 / -mv.z)) * uPx;
             gl_Position = projectionMatrix * mv;
-          }`}
-        fragmentShader={/* glsl */ `
+          }`,
+    fragmentShader: /* glsl */ `
           varying float vA;
           void main(){
             float d = length(gl_PointCoord - 0.5);
             if (d > 0.5) discard;
             float a = smoothstep(0.5, 0.0, d) * vA;
             gl_FragColor = vec4(vec3(1.0, 0.84, 0.5) * a, a);
-          }`}
-      />
+          }`,
+    },
+  );
+
+  useFrame((s, dt) => {
+    uniforms.uTime.value += dt;
+    uniforms.uVel.value = THREE.MathUtils.damp(uniforms.uVel.value, Math.min(1, Math.abs(film.velocity) / 2500), 6, dt);
+    uniforms.uPx.value = s.gl.getPixelRatio();
+  });
+
+  if (!count) return null;
+  return (
+    <points geometry={geo} material={material} frustumCulled={false}>
     </points>
   );
 }

@@ -88,16 +88,18 @@ html.lenis body {
   overflow: clip;
 }
 
-:lang(hi),
-[lang='hi'] {
-  font-family: var(--font-hindi);
-  line-height: 1.6;
+@layer base {
+  :lang(hi),
+  [lang='hi'] {
+    font-family: var(--font-hindi);
+    line-height: 1.6;
+  }
 }
-.font-hindi-display,
-h1 [lang='hi'],
-h2 [lang='hi'] {
-  font-family: var(--font-hindi-display);
-  line-height: 1.5;
+@layer components {
+  .font-hindi-display {
+    font-family: var(--font-hindi-display);
+    line-height: 1.5;
+  }
 }
 
 ::selection {
@@ -116,6 +118,7 @@ img {
   -webkit-user-drag: none;
 }
 
+@layer components {
 /* ───────────────────────── Gold ───────────────────────── */
 .text-gold {
   background-image: linear-gradient(170deg, var(--gold-100) 0%, var(--gold-300) 38%, var(--gold-500) 68%, var(--gold-700) 100%);
@@ -259,6 +262,8 @@ img {
   backdrop-filter: blur(18px) saturate(140%);
 }
 
+}
+
 /* ───────────────────────── Film grain & vignette ───────────────────────── */
 .grain {
   position: fixed;
@@ -286,6 +291,7 @@ img {
   background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(0 0 0 / 0.55) 100%);
 }
 
+@layer components {
 /* ───────────────────────── TODO(brand) ───────────────────────── */
 .todo {
   display: inline-flex;
@@ -299,6 +305,8 @@ img {
   color: var(--pitambar);
   background: rgb(242 183 5 / 0.08);
   border: 1px dashed rgb(242 183 5 / 0.55);
+}
+
 }
 
 /* ───────────────────────── Page transition (gold thread curtain) ───────────────────────── */
@@ -349,6 +357,7 @@ img {
   30% { filter: blur(3px); }
 }
 
+@layer components {
 /* ───────────────────────── Utilities ───────────────────────── */
 .no-scrollbar {
   scrollbar-width: none;
@@ -370,11 +379,13 @@ img {
   padding-bottom: 0.08em;
 }
 
+}
+
 /* Fine-pointer cursor */
 @media (hover: hover) and (pointer: fine) {
-  html[data-cursor='on'],
-  html[data-cursor='on'] a,
-  html[data-cursor='on'] button {
+  html[data-custom-cursor='on'],
+  html[data-custom-cursor='on'] a,
+  html[data-custom-cursor='on'] button {
     cursor: none;
   }
 }
@@ -427,10 +438,23 @@ img {
   background: radial-gradient(circle at 35% 30%, var(--gold-100), var(--gold-300) 45%, var(--gold-700));
 }
 
-/* Film posters: visible for tier 0 and until the 3D stage is ready, then crossfade out. */
-.poster-3d {
-  transition: opacity 900ms var(--ease-ui);
+/* Captured posters crossfade with the active chapter (tier 0, and until the stage is ready). */
+html:not([data-chapter-active]) [data-poster='hero'],
+html[data-chapter-active='hero'] [data-poster='hero'],
+html[data-chapter-active='thread'] [data-poster='thread'],
+html[data-chapter-active='weave'] [data-poster='weave'],
+html[data-chapter-active='sarees'] [data-poster='sarees'],
+html[data-chapter-active='mor'] [data-poster='mor'],
+html[data-chapter-active='suits'] [data-poster='suits'],
+html[data-chapter-active='chakra'] [data-poster='chakra'],
+html[data-chapter-active='picks'] [data-poster='picks'],
+html[data-chapter-active='lookbook'] [data-poster='lookbook'],
+html[data-chapter-active='visit'] [data-poster='visit'],
+html[data-chapter-active='knot'] [data-poster='knot'] {
+  opacity: 1;
 }
-#film[data-stage-ready='true'] .poster-3d {
-  opacity: 0;
+@media (prefers-reduced-motion: reduce) {
+  [data-poster] {
+    filter: brightness(0.5);
+  }
 }

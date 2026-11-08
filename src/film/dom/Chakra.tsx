@@ -231,8 +231,9 @@ export function Chakra() {
     () => {
       const el = root.current!;
       if (prefersReducedMotion()) return;
-      gsap.fromTo(film.u.chakra, { show: 0 }, { show: 1, ease: 'none', scrollTrigger: ranges.enter(el) });
-      gsap.to(film.u.chakra, { show: 0, ease: 'none', scrollTrigger: ranges.exit(el), immediateRender: false });
+      gsap.timeline({ scrollTrigger: ranges.pass(el) })
+        .fromTo(film.u.chakra, { show: 0 }, { show: 1, duration: 2.5, ease: 'none' }, 0)
+        .to(film.u.chakra, { show: 0, duration: 2, ease: 'none' }, 8);
       gsap.from('[data-chakra-head] > *', { y: 40, opacity: 0, stagger: 0.08, scrollTrigger: { ...ranges.enter(el), end: 'top 25%' } });
     },
     { scope: root },
