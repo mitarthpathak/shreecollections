@@ -8,7 +8,7 @@ export default function BagPage() {
   return (
     <Page>
       <PageHeading eyebrow="Checkout on WhatsApp" title="Your Bag" titleHi="आपका बैग" />
-      <div className="mx-auto flex max-w-[1200px] px-4 pb-20 md:px-8">
+      <div className="mx-auto flex w-full min-w-0 max-w-[1200px] px-4 pb-20 md:px-8">
         <BagContents variant="page" />
       </div>
     </Page>

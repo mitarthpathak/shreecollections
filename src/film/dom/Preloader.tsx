@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { gsap, prefersReducedMotion } from '@/lib/gsap';
-import { lockScroll } from '@/lib/clock';
+import { holdScroll } from '@/lib/clock';
 
 const MIN = 1500;
 const MAX = 2500;
@@ -14,6 +14,7 @@ const MAX = 2500;
 export function Preloader({ progress, onDone }: { progress: () => number; onDone: () => void }) {
   const root = useRef<HTMLDivElement>(null);
   const done = useRef(false);
+  const release = useRef<() => void>(() => {});
 
   useEffect(() => {
     const el = root.current!;
@@ -26,7 +27,10 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
       onDone();
       return;
     }
-    lockScroll(true);
+    // Taken before the clock starts (this effect runs before Providers'); clock.ts applies it
+    // to Lenis when Lenis is created, so the wheel can't scroll the film under the intro.
+    const unlock = holdScroll();
+    release.current = unlock;
     const t0 = performance.now();
     const fill = el.querySelector<SVGRectElement>('[data-fill]')!;
     const ring = el.querySelector('[data-ring]')!;
@@ -49,7 +53,7 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
         gsap.timeline({
           onComplete: () => {
             el.remove();
-            lockScroll(false);
+            unlock();
           },
         })
           .to(fill, { attr: { y: 30 }, duration: 0.25 })
@@ -63,6 +67,8 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
     gsap.ticker.add(tick);
     return () => {
       gsap.ticker.remove(tick);
+      // Leaving the page mid-intro (e.g. the "Skip to shop" link) must not leave it locked.
+      unlock();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -73,7 +79,7 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
     try {
       sessionStorage.setItem('sc-intro', '1');
     } catch {}
-    lockScroll(false);
+    release.current();
     gsap.to(root.current, { opacity: 0, duration: 0.3, onComplete: () => root.current?.remove() });
     onDone();
   };

@@ -9,7 +9,7 @@ export function buildWhatsAppOrder(lines: OrderLine[], customer: { name?: string
   const total = lines.reduce((n, l) => n + l.product.price * l.qty, 0);
   const rows = lines.map(
     (l, i) =>
-      `${i + 1}. ${l.product.name} (${l.product.id})${l.size ? ` · Size ${l.size}` : l.product.stitched ? '' : ' · Unstitched'} · Qty ${l.qty} · ${formatINR(l.product.price * l.qty)}`,
+      `${i + 1}. ${l.product.name} (${l.product.id})${l.size ? ` · Size ${l.size}` : l.product.category === 'suit' && !l.product.stitched ? ' · Unstitched' : ''} · Qty ${l.qty} · ${formatINR(l.product.price * l.qty)}`,
   );
   const text = [
     `Namaste ${brand.name}! I would like to order:`,
