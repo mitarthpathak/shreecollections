@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['@react-three/drei', 'gsap'],
+    // ~17 KB of Tailwind CSS arrives with the HTML instead of a render-blocking request:
+    // first paint no longer waits one more round trip on slow mobile networks.
+    inlineCss: true,
   },
 };
 

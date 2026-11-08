@@ -22,6 +22,7 @@ export function Matki({ coins = 48 }: { coins?: number }) {
     ];
     return new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), 72);
   }, []);
+  useEffect(() => () => geo.dispose(), [geo]);
   const pot = useRef<THREE.Group>(null);
   const coinMesh = useRef<THREE.InstancedMesh>(null);
   const dropMesh = useRef<THREE.InstancedMesh>(null);

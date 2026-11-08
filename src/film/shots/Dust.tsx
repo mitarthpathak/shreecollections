@@ -1,6 +1,6 @@
 'use client';
 import * as THREE from 'three';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { film } from '../state';
 import { useShader } from '../useShader';
@@ -33,6 +33,7 @@ export function Dust({ count }: { count: number }) {
     g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
     return g;
   }, [count]);
+  useEffect(() => () => geo.dispose(), [geo]);
   const uniforms = useMemo(
     () => ({ uTime: { value: 0 }, uVel: { value: 0 }, uPx: { value: 1 }, uColor: { value: new THREE.Vector3() }, uAlpha: { value: 1 }, uLight: { value: 0 } }),
     [],

@@ -1,6 +1,6 @@
 'use client';
 import * as THREE from 'three';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { film } from '../state';
 import { useShader } from '../useShader';
@@ -11,6 +11,8 @@ import { sceneTheme } from '../sceneTheme';
 export function Thread({ segments = 1400, glowSprite }: { segments?: number; glowSprite?: THREE.Texture | null }) {
   const curve = useMemo(() => buildThreadCurve(film.mobile), []);
   const geo = useMemo(() => new THREE.TubeGeometry(curve, segments, 0.016, 6, false), [curve, segments]);
+  // a rebuild (new coin slot) must free the old tube's GPU buffers
+  useEffect(() => () => geo.dispose(), [geo]);
   const head = useRef<THREE.Sprite>(null);
   const glow = useRef<THREE.SpriteMaterial>(null);
   const uniforms = useMemo(

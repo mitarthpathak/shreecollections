@@ -79,7 +79,8 @@ function HeroVideo({ media }: { media: NonNullable<HeroMedia> }) {
 /** Fit the coin into the space the hero copy leaves free (screen px at rest, scroll 0). */
 function placeCoin(root: HTMLElement) {
   const W = window.innerWidth;
-  const H = window.innerHeight;
+  // the sticky stage is 100svh: stable while a phone's URL bar comes and goes
+  const H = root.querySelector<HTMLElement>('[data-hero-stage]')?.offsetHeight || window.innerHeight;
   const copy = root.querySelector<HTMLElement>('[data-hero-copy]');
   const eyebrow = root.querySelector<HTMLElement>('[data-hero-eyebrow]');
   if (!copy || !eyebrow || !W || !H) return null;
@@ -189,7 +190,7 @@ export function Hero({ introDone, media = null }: { introDone: boolean; media?: 
 
   return (
     <Section index={0} ref={root}>
-      <div className="sticky top-0 h-svh overflow-hidden">
+      <div data-hero-stage className="sticky top-0 h-svh overflow-hidden">
         {media && <HeroVideo media={media} />}
         {/* copy sits at the bottom on portrait screens (the coin above it), centred beside the coin on landscape ones */}
         <div

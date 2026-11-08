@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { TickerDriver } from '@/film/TickerDriver';
 import { getThemeColor } from '@/lib/theme';
+import { dprCap } from '@/lib/tier';
 
 const MAX = 6;
 
@@ -113,9 +114,10 @@ export default function FabricViewer({ src, label }: { src: string; label: strin
     <div ref={wrap} className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-[radial-gradient(circle_at_50%_40%,var(--surface-2),var(--bg)_70%)]" data-cursor="Drag">
       <Canvas
         frameloop="never"
-        dpr={[1, 1.5]}
+        dpr={[1, dprCap()]}
         camera={{ position: [0, 0, 2.6], fov: 40 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+        onCreated={({ gl }) => void (gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production')}
         aria-hidden
         // Vertical swipes scroll the page; taps and sideways drags ripple the cloth.
         style={{ touchAction: 'pan-y pinch-zoom' }}

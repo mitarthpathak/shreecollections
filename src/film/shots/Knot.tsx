@@ -1,6 +1,6 @@
 'use client';
 import * as THREE from 'three';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -25,8 +25,10 @@ export function Knot() {
     const s = 2.3 / (glyph.box.maxX - glyph.box.minX);
     merged.scale(s, -s, s); // SVG y-down → three y-up
     merged.computeVertexNormals();
+    if (merged !== g) g.dispose();
     return merged;
   }, []);
+  useEffect(() => () => geo.dispose(), [geo]);
   const shri = useRef<THREE.Mesh>(null);
   const ring = useRef<THREE.Mesh>(null);
   const light = useRef<THREE.PointLight>(null);
