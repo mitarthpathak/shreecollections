@@ -1,0 +1,460 @@
+@import 'tailwindcss';
+
+/* ───────────────────────── Vrindavan Noir tokens ───────────────────────── */
+:root {
+  --raat: #07060a;
+  --lacquer: #120e0a;
+  --lacquer-2: #1a140e;
+  --gold-100: #fff1c1;
+  --gold-300: #e9c46a;
+  --gold-500: #c9962e;
+  --gold-700: #8a6418;
+  --ivory: #f3ead8;
+  --ivory-dim: #c9bfab;
+  --neel: #4c7bd9;
+  --neel-text: #8fb0f0;
+  --mor: #0e7c7b;
+  --pitambar: #f2b705;
+  --sindoor: #b3122b;
+  --matki: #8c3b2a;
+  /* Set by the Rang Chakra; tints accents across the page. */
+  --accent: var(--gold-300);
+
+  --header-h: 64px;
+  --tabbar-h: 56px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-ui: cubic-bezier(0.33, 1, 0.68, 1);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-raat: var(--raat);
+  --color-lacquer: var(--lacquer);
+  --color-lacquer-2: var(--lacquer-2);
+  --color-gold-100: var(--gold-100);
+  --color-gold-300: var(--gold-300);
+  --color-gold-500: var(--gold-500);
+  --color-gold-700: var(--gold-700);
+  --color-ivory: var(--ivory);
+  --color-ivory-dim: var(--ivory-dim);
+  --color-neel: var(--neel);
+  --color-neel-text: var(--neel-text);
+  --color-mor: var(--mor);
+  --color-pitambar: var(--pitambar);
+  --color-sindoor: var(--sindoor);
+  --color-matki: var(--matki);
+  --color-accent: var(--accent);
+
+  --font-display: var(--font-cinzel), 'Cinzel', serif;
+  --font-editorial: var(--font-cormorant), 'Cormorant Garamond', serif;
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-hindi-display: var(--font-tiro), var(--font-mukta), serif;
+  --font-hindi: var(--font-mukta), var(--font-manrope), sans-serif;
+
+  --breakpoint-xs: 380px;
+}
+
+/* ───────────────────────── Base ───────────────────────── */
+html {
+  background: var(--raat);
+  -webkit-text-size-adjust: 100%;
+  scrollbar-color: var(--gold-700) var(--raat);
+}
+
+body {
+  background: var(--raat);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'tnum' 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+@layer base {
+  :lang(hi),
+  [lang='hi'] {
+    font-family: var(--font-hindi);
+    line-height: 1.6;
+  }
+}
+@layer components {
+  .font-hindi-display {
+    font-family: var(--font-hindi-display);
+    line-height: 1.5;
+  }
+}
+
+::selection {
+  background: var(--gold-300);
+  color: var(--raat);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-300);
+  outline-offset: 3px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--neel) 35%, transparent);
+}
+
+img {
+  -webkit-user-drag: none;
+}
+
+@layer components {
+/* ───────────────────────── Gold ───────────────────────── */
+.text-gold {
+  background-image: linear-gradient(170deg, var(--gold-100) 0%, var(--gold-300) 38%, var(--gold-500) 68%, var(--gold-700) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* A glint that travels across a gold heading. */
+.text-gold-glint {
+  background-image:
+    linear-gradient(110deg, transparent 40%, rgb(255 248 220 / 0.95) 50%, transparent 60%),
+    linear-gradient(170deg, var(--gold-100) 0%, var(--gold-300) 38%, var(--gold-500) 68%, var(--gold-700) 100%);
+  background-size: 250% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: glint 6s var(--ease-ui) infinite;
+}
+@keyframes glint {
+  0% { background-position: 160% 0, 0 0; }
+  45%, 100% { background-position: -60% 0, 0 0; }
+}
+
+.text-outline-gold {
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in oklab, var(--gold-300) 70%, transparent);
+}
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-500), transparent);
+}
+
+.label {
+  font-family: var(--font-display);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.chapter-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 12vw, 14rem);
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+}
+
+/* ───────────────────────── Buttons ───────────────────────── */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 160ms var(--ease-ui), background-color 300ms var(--ease-ui), color 300ms var(--ease-ui);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 246 214 / 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 700ms var(--ease-out-expo);
+}
+@media (hover: hover) {
+  .btn:hover::after {
+    transform: translateX(120%);
+  }
+}
+.btn-gold {
+  color: var(--raat);
+  background: linear-gradient(170deg, var(--gold-100), var(--gold-300) 40%, var(--gold-500));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4), 0 10px 30px -12px rgb(233 196 106 / 0.6);
+}
+.btn-ghost {
+  color: var(--gold-100);
+  background: rgb(18 14 10 / 0.55);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gold-500) 70%, transparent);
+}
+.btn-ghost:hover {
+  background: rgb(26 20 14 / 0.8);
+}
+.btn[disabled],
+.btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--ivory);
+  background: rgb(255 241 193 / 0.04);
+  box-shadow: inset 0 0 0 1px rgb(201 150 46 / 0.35);
+  transition: background-color 200ms var(--ease-ui), box-shadow 200ms var(--ease-ui), color 200ms var(--ease-ui);
+}
+.chip[aria-pressed='true'],
+.chip[aria-checked='true'],
+.chip[data-on='true'] {
+  color: var(--raat);
+  background: var(--gold-300);
+  box-shadow: inset 0 0 0 1px var(--gold-100);
+}
+.chip:disabled {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.panel {
+  background: color-mix(in oklab, var(--lacquer) 92%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(201 150 46 / 0.22), 0 30px 80px -30px rgb(0 0 0 / 0.8);
+}
+.glass {
+  background: rgb(18 14 10 / 0.86);
+}
+[data-tier='2'] .glass,
+[data-tier='3'] .glass {
+  background: rgb(18 14 10 / 0.55);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+}
+
+/* ───────────────────────── Film grain & vignette ───────────────────────── */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain 0.9s steps(6) infinite;
+  will-change: transform;
+}
+@keyframes grain {
+  0% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-7%, 4%, 0); }
+  40% { transform: translate3d(5%, -9%, 0); }
+  60% { transform: translate3d(-3%, 8%, 0); }
+  80% { transform: translate3d(9%, 2%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(0 0 0 / 0.55) 100%);
+}
+
+@layer components {
+/* ───────────────────────── TODO(brand) ───────────────────────── */
+.todo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--pitambar);
+  background: rgb(242 183 5 / 0.08);
+  border: 1px dashed rgb(242 183 5 / 0.55);
+}
+
+}
+
+/* ───────────────────────── Page transition (gold thread curtain) ───────────────────────── */
+.vt-thread {
+  position: fixed;
+  top: 0;
+  left: -6px;
+  width: 3px;
+  height: 100lvh;
+  z-index: 100;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--gold-100) 20%, var(--gold-300) 50%, var(--gold-100) 80%, transparent);
+  box-shadow: 0 0 18px 2px rgb(233 196 106 / 0.65);
+  view-transition-name: vt-thread;
+}
+::view-transition-group(vt-thread) {
+  animation: vt-thread-sweep 720ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+::view-transition-old(vt-thread),
+::view-transition-new(vt-thread) {
+  animation: none;
+}
+@keyframes vt-thread-sweep {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(100vw + 12px)); }
+}
+::view-transition-old(.page) {
+  animation: 520ms cubic-bezier(0.65, 0, 0.35, 1) both vt-page-out;
+}
+::view-transition-new(.page) {
+  animation: 720ms cubic-bezier(0.65, 0, 0.35, 1) both vt-page-in;
+}
+@keyframes vt-page-out {
+  to { opacity: 0.2; transform: translateX(-2%); filter: brightness(0.6); }
+}
+@keyframes vt-page-in {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+::view-transition-group(.morph) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+::view-transition-image-pair(.morph) {
+  animation-name: vt-via-blur;
+}
+@keyframes vt-via-blur {
+  30% { filter: blur(3px); }
+}
+
+@layer components {
+/* ───────────────────────── Utilities ───────────────────────── */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.pb-tabbar {
+  padding-bottom: calc(var(--tabbar-h) + var(--safe-b) + 1rem);
+}
+@media (min-width: 768px) {
+  .pb-tabbar {
+    padding-bottom: 0;
+  }
+}
+.mask-line {
+  display: block;
+  overflow: clip;
+  padding-bottom: 0.08em;
+}
+
+}
+
+/* Fine-pointer cursor */
+@media (hover: hover) and (pointer: fine) {
+  html[data-custom-cursor='on'],
+  html[data-custom-cursor='on'] a,
+  html[data-custom-cursor='on'] button {
+    cursor: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .grain {
+    animation: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Dual-thumb price slider (touch): two stacked ranges, only the thumbs take input. */
+.dual-thumb::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold-700), var(--gold-300), var(--gold-700));
+}
+.dual-thumb::-moz-range-track {
+  height: 2px;
+  background: var(--gold-500);
+}
+.dual-thumb::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold-100), var(--gold-300) 45%, var(--gold-700));
+  box-shadow: 0 0 0 4px rgb(7 6 10 / 0.8), 0 4px 12px rgb(0 0 0 / 0.5);
+}
+.dual-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold-100), var(--gold-300) 45%, var(--gold-700));
+}
+
+/* Captured posters crossfade with the active chapter (tier 0, and until the stage is ready). */
+html:not([data-chapter-active]) [data-poster='hero'],
+html[data-chapter-active='hero'] [data-poster='hero'],
+html[data-chapter-active='thread'] [data-poster='thread'],
+html[data-chapter-active='weave'] [data-poster='weave'],
+html[data-chapter-active='sarees'] [data-poster='sarees'],
+html[data-chapter-active='mor'] [data-poster='mor'],
+html[data-chapter-active='suits'] [data-poster='suits'],
+html[data-chapter-active='chakra'] [data-poster='chakra'],
+html[data-chapter-active='picks'] [data-poster='picks'],
+html[data-chapter-active='lookbook'] [data-poster='lookbook'],
+html[data-chapter-active='visit'] [data-poster='visit'],
+html[data-chapter-active='knot'] [data-poster='knot'] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-poster] {
+    filter: brightness(0.5);
+  }
+}
