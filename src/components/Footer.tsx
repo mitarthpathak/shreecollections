@@ -30,8 +30,8 @@ export function FooterContent() {
         <div className="flex items-center gap-4">
           <BadgeMark size={64} />
           <div className="min-w-0">
-            <p className="font-display text-lg tracking-[0.2em] text-gold-text">{brand.name.toUpperCase()}</p>
-            <p className="label text-[0.7rem] text-fg-muted">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
+            <p className="font-editorial text-2xl font-medium text-fg">{brand.name}</p>
+            <p className="label text-fg-muted">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
           </div>
         </div>
         <form
@@ -88,7 +88,7 @@ export function FooterContent() {
         </div>
         <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
           <p className="text-xs text-fg-muted">© {new Date().getFullYear()} {brand.name}, {brand.location.city}</p>
-          <p className="text-gold-glint font-display text-xl tracking-[0.18em]">
+          <p className="font-editorial text-2xl font-medium italic text-gold-text">
             {brand.signOff} · <span lang="hi" className="font-hindi-display">{brand.signOffHi}</span>
           </p>
         </div>

@@ -37,8 +37,8 @@ export function KnotChapter() {
     <>
       <Section index={10} ref={root} label="The knot">
         <div className="sticky top-0 grid h-svh place-items-center">
-          <p data-signoff className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+2rem)] whitespace-nowrap font-display text-lg tracking-[0.22em] text-gold-text sm:text-xl sm:tracking-[0.3em] md:bottom-12 short:bottom-[calc(var(--tabbar-h)+var(--safe-b)+0.75rem)] md:short:bottom-4">
-            {brand.signOff.toUpperCase()}
+          <p data-signoff className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+2rem)] whitespace-nowrap font-editorial text-2xl font-medium italic text-gold-text sm:text-3xl md:bottom-12 short:bottom-[calc(var(--tabbar-h)+var(--safe-b)+0.75rem)] md:short:bottom-4">
+            {brand.signOff}
           </p>
         </div>
       </Section>

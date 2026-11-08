@@ -67,7 +67,7 @@ export function Cursor() {
     <div aria-hidden className="pointer-events-none fixed left-0 top-0 z-[250] hidden [@media(hover:hover)_and_(pointer:fine)]:block">
       <div ref={dot} className="fixed left-0 top-0 h-1.5 w-1.5 rounded-full bg-gold-text opacity-0" />
       <div ref={ring} className="fixed left-0 top-0 grid h-9 w-9 place-items-center rounded-full border border-gold-text/70 opacity-0">
-        <span ref={label} className="text-[5px] font-semibold uppercase tracking-[0.2em] text-gold-text opacity-0" />
+        <span ref={label} className="text-[5px] font-medium uppercase tracking-[0.08em] text-gold-text opacity-0" />
       </div>
     </div>
   );

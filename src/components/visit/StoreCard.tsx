@@ -12,7 +12,7 @@ export function StoreCard({ className = '', headingLevel = 3 }: { className?: st
   return (
     <div className={`panel rounded-3xl p-6 md:p-8 ${className}`}>
       <p className="label text-gold-text">{lang === 'hi' ? 'दुकान' : 'The store'}</p>
-      <H className="mt-2 font-display text-3xl text-gold">{brand.name}</H>
+      <H className="mt-2 font-editorial font-medium text-3xl text-gold">{brand.name}</H>
       <p className="mt-1 text-sm text-fg-muted">{lang === 'hi' ? brand.taglineHi : brand.tagline}</p>
       <dl className="mt-6 space-y-4 text-sm">
         <div>
@@ -50,7 +50,7 @@ export function StoreCard({ className = '', headingLevel = 3 }: { className?: st
           <IconInstagram size={18} /> @{brand.instagram.handle}
         </a>
       </div>
-      {!brand.contact.phone && <p className="mt-2 text-[11px] text-fg-muted"><Todo label="phone & WhatsApp number" /></p>}
+      {!brand.contact.phone && <p className="mt-2 text-xs text-fg-muted"><Todo label="phone & WhatsApp number" /></p>}
     </div>
   );
 }

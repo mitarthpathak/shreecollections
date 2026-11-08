@@ -15,7 +15,7 @@ export function TabBar() {
   const setSearchOpen = useUI((s) => s.setSearchOpen);
   const setBagOpen = useUI((s) => s.setBagOpen);
   const item =
-    'relative flex min-h-[var(--tabbar-h)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] leading-tight tracking-wide text-fg-muted aria-[current=page]:text-gold-text';
+    'relative flex min-h-[var(--tabbar-h)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-xs leading-tight text-fg-muted aria-[current=page]:text-gold-text';
 
   return (
     <nav

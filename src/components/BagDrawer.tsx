@@ -104,7 +104,7 @@ export function BagContents({ variant = 'drawer' }: { variant?: 'drawer' | 'page
               <Image src={l.product.images[0]} alt={l.product.name} width={84} height={112} className="h-28 w-[84px] rounded-xl object-cover" />
             </Link>
             <div className="flex min-w-0 flex-1 flex-col">
-              <p className="truncate text-sm text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
+              <p className="truncate font-editorial text-lg font-medium leading-snug text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
                 {lang === 'hi' ? l.product.nameHi : l.product.name}
               </p>
               <p className="mt-0.5 text-xs text-fg-muted">
@@ -120,7 +120,7 @@ export function BagContents({ variant = 'drawer' }: { variant?: 'drawer' | 'page
                     <IconPlus size={16} />
                   </button>
                 </div>
-                <p className="text-sm font-semibold tabular-nums text-gold-text">{formatINR(l.product.price * l.qty)}</p>
+                <p className="text-sm font-medium tabular-nums text-gold-text">{formatINR(l.product.price * l.qty)}</p>
               </div>
               <button
                 type="button"
@@ -187,7 +187,7 @@ export function BagContents({ variant = 'drawer' }: { variant?: 'drawer' | 'page
         </div>
         <div className="flex items-baseline justify-between">
           <span className="label text-fg-muted">{t('subtotal')}</span>
-          <span className="text-xl font-semibold tabular-nums text-gold-text">{formatINR(subtotal)}</span>
+          <span className="text-xl font-medium tabular-nums text-gold-text">{formatINR(subtotal)}</span>
         </div>
         <p className="text-xs text-fg-muted">{t('shippingNote')}</p>
         <a
@@ -199,14 +199,14 @@ export function BagContents({ variant = 'drawer' }: { variant?: 'drawer' | 'page
           <IconWhatsApp size={18} /> {t('checkoutWhatsApp')}
         </a>
         {!brand.contact.whatsapp && (
-          <p className="text-[11px] text-fg-muted">
+          <p className="text-xs text-fg-muted">
             <span className="todo">TODO(brand): WhatsApp number</span> — until it is set, WhatsApp asks which chat to send to.
           </p>
         )}
         <button type="button" className="btn btn-ghost w-full" disabled aria-describedby={`pay-${variant}`}>
           {t('payOnline')}
         </button>
-        <p id={`pay-${variant}`} className="-mt-2 text-center text-[11px] text-fg-muted">{t('comingSoon')}</p>
+        <p id={`pay-${variant}`} className="-mt-2 text-center text-xs text-fg-muted">{t('comingSoon')}</p>
         {variant === 'drawer' && (
           <Link href="/bag" onClick={() => setBagOpen(false)} className="block py-2 text-center text-xs text-gold-text underline underline-offset-4">
             {t('viewBag')}
@@ -265,7 +265,7 @@ export function BagDrawer() {
         className="absolute inset-y-0 right-0 flex w-full max-w-[440px] flex-col bg-surface pr-[env(safe-area-inset-right,0px)] pt-[env(safe-area-inset-top,0px)] shadow-[-30px_0_80px_-20px_var(--shadow)] outline-none"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-divider px-5 py-4">
-          <h2 className="font-display text-lg tracking-[0.2em] text-gold-text">{t('bag')}</h2>
+          <h2 className="font-editorial text-2xl font-medium text-fg">{t('bag')}</h2>
           <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-fg hover:text-gold-text" onClick={() => setOpen(false)} aria-label={t('close')}>
             <IconClose />
           </button>

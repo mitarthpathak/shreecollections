@@ -59,7 +59,7 @@ function Slide({ p, i }: { p: Product; i: number }) {
             add(p.slug);
             threadToBag(media.current);
           }}
-          className="glass absolute bottom-3 right-3 flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-text ring-1 ring-field-line hover:bg-cta-bg hover:text-cta-text"
+          className="glass absolute bottom-3 right-3 flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium uppercase tracking-[0.08em] text-gold-text ring-1 ring-field-line hover:bg-cta-bg hover:text-cta-text"
           aria-label={`${t('quickAdd')}: ${p.name}`}
           data-cursor="Add"
         >
@@ -68,8 +68,8 @@ function Slide({ p, i }: { p: Product; i: number }) {
       </div>
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <p className="label text-[0.6rem] text-gold-text">{p.fabric}</p>
-          <h3 className="mt-1 text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
+          <p className="label text-gold-text">{p.fabric}</p>
+          <h3 className="mt-1 font-editorial text-xl font-medium text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
             <Link href={`/product/${p.slug}`} className="hover:text-gold-text">{lang === 'hi' ? p.nameHi : p.name}</Link>
           </h3>
         </div>
@@ -121,7 +121,7 @@ export function Sarees() {
   const head = (
     <header className="mx-auto mb-8 max-w-[1600px] px-5 md:mb-10 md:px-12">
       <p className="label mb-3 text-gold-text">{t('sarees')} · {SAREES.length}+</p>
-      <h2 className="font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.sarees.en}</h2>
+      <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.sarees.en}</h2>
       <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">{brand.copy.sarees.hi}</p>
     </header>
   );
@@ -135,7 +135,7 @@ export function Sarees() {
           {SAREES.map((p, i) => <Slide key={p.slug} p={p} i={i} />)}
           <Link href="/shop/sarees" className="grid aspect-[3/4] w-[22vw] min-w-[240px] shrink-0 place-items-center rounded-[18px] text-center ring-1 ring-field-line transition-colors hover:bg-surface" data-cursor="View">
             <span>
-              <span className="font-display block text-3xl text-gold">{t('viewAll')}</span>
+              <span className="font-editorial font-medium block text-3xl text-gold">{t('viewAll')}</span>
               <span className="label mt-2 block text-fg-muted">{t('sarees')} →</span>
             </span>
           </Link>

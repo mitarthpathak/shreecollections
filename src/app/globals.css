@@ -294,7 +294,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-feature-settings: 'ss01', 'tnum' 0;
+  font-feature-settings: 'ss01';
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: clip;
@@ -379,20 +379,47 @@ img {
   background: linear-gradient(90deg, transparent, var(--gold-line), transparent);
 }
 
+/* Short labels: Manrope, uppercase, at most 0.08em tracking, never under 12px. */
 .label {
-  font-family: var(--font-display);
-  letter-spacing: 0.28em;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.75rem;
 }
 
+/* Section headings: Cormorant Garamond 500, mixed case. */
 .chapter-title {
-  font-family: var(--font-display);
+  font-family: var(--font-editorial);
+  font-weight: 500;
   /* by width, but never taller than the screen allows (landscape phones) */
   font-size: clamp(2.4rem, min(12vw, 21svh), 14rem);
   line-height: 0.92;
   letter-spacing: -0.01em;
 }
+/*
+ * The hero heading is the one place Cinzel sets text, and only at 48px or more: where the
+ * fluid size would fall below that (narrow or short phones) it is Cormorant instead.
+ */
+.hero-title {
+  font-family: var(--font-editorial);
+  font-weight: 500;
+}
+@media (min-width: 370px) and (min-height: 632px), (min-width: 768px) and (min-height: 343px) {
+  .hero-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+}
+
+/* One accent word per heading: italic Cormorant in --gold-text. */
+.accent-word {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--gold-text);
+}
+
 @media (orientation: landscape) and (max-height: 500px) {
   .chapter-title {
     font-size: clamp(2rem, min(12vw, 15svh), 14rem);
@@ -409,10 +436,10 @@ img {
   min-height: 48px;
   padding: 0 1.4rem;
   border-radius: 999px;
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
   overflow: hidden;
   isolation: isolate;
   transition: transform 160ms var(--ease-ui), background-color 300ms var(--ease-ui), color 300ms var(--ease-ui);

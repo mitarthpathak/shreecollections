@@ -116,7 +116,7 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
           श्री
         </text>
       </svg>
-      <button type="button" onClick={skip} className="absolute bottom-[calc(2rem+var(--safe-b))] min-h-11 rounded-full px-4 text-xs uppercase tracking-[0.25em] text-fg-muted hover:text-gold-text">
+      <button type="button" onClick={skip} className="absolute bottom-[calc(2rem+var(--safe-b))] min-h-11 rounded-full px-4 text-xs uppercase tracking-[0.08em] text-fg-muted hover:text-gold-text">
         Skip intro
       </button>
     </div>

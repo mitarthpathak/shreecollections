@@ -235,7 +235,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
           <div className="ml-auto flex items-center gap-2">
             <button ref={filtersBtn} type="button" className="chip lg:hidden" aria-haspopup="dialog" aria-expanded={sheet} onClick={() => setSheet(true)}>
               <IconFilter size={18} /> {t('filters')}
-              {active > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-cta-bg px-1 text-[11px] font-semibold text-cta-text">{active}</span>}
+              {active > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-cta-bg px-1 text-xs font-medium text-cta-text">{active}</span>}
             </button>
             <label className="sr-only" htmlFor="sort">{t('sort')}</label>
             <span className="relative">
@@ -277,7 +277,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
         <div className="absolute inset-0 bg-scrim" onClick={() => setSheet(false)} />
         <div data-sheet className="absolute inset-x-0 bottom-0 flex max-h-[88svh] flex-col rounded-t-3xl bg-surface">
           <div className="flex items-center justify-between border-b border-divider px-5 py-3">
-            <h2 className="font-display tracking-[0.2em] text-gold-text">{t('filters')}</h2>
+            <h2 className="font-editorial text-2xl font-medium text-fg">{t('filters')}</h2>
             <button type="button" data-autofocus onClick={() => setSheet(false)} className="grid h-11 w-11 place-items-center rounded-full" aria-label={t('close')}>
               <IconClose />
             </button>

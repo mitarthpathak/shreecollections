@@ -33,7 +33,7 @@ export function Visit() {
           <figcaption className="mt-2 text-center text-xs text-fg-muted">{MAP_CREDIT}</figcaption>
         </figure>
         <div>
-          <h2 className="font-display text-[clamp(2.2rem,5.5vw,5.5rem)] leading-[0.98] text-gold">{brand.copy.visit.en}</h2>
+          <h2 className="font-editorial font-medium text-[clamp(2.2rem,5.5vw,5.5rem)] leading-[0.98] text-gold">{brand.copy.visit.en}</h2>
           <p lang="hi" className="font-hindi-display mb-8 mt-3 text-xl text-fg/80 md:text-2xl">{brand.copy.visit.hi}</p>
           <StoreCard />
         </div>

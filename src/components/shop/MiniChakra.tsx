@@ -40,8 +40,8 @@ export function MiniChakra({
           );
         })}
         <circle r="28" strokeWidth="0.6" style={{ fill: 'var(--surface)', stroke: 'var(--gold-line)' }} />
-        <text textAnchor="middle" dy="4" fontSize="9" style={{ fill: 'var(--gold-text)', fontFamily: 'var(--font-cinzel)', letterSpacing: 1.5 }}>
-          RANG
+        <text textAnchor="middle" dy="5" fontSize="15" style={{ fill: 'var(--gold-text)', fontFamily: 'var(--font-cormorant)', fontWeight: 500 }}>
+          Rang
         </text>
       </svg>
       <div role="group" aria-label={label} className="flex flex-wrap gap-1.5">

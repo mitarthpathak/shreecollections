@@ -56,8 +56,8 @@ function ArchCard({ p }: { p: Product }) {
       </div>
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <p className="label text-[0.6rem] text-gold-text">{p.subcategory}</p>
-          <h3 className="mt-1 text-fg group-hover:text-gold-text" lang={lang === 'hi' ? 'hi' : undefined}>{lang === 'hi' ? p.nameHi : p.name}</h3>
+          <p className="label text-gold-text">{p.subcategory}</p>
+          <h3 className="mt-1 font-editorial text-xl font-medium text-fg group-hover:text-gold-text" lang={lang === 'hi' ? 'hi' : undefined}>{lang === 'hi' ? p.nameHi : p.name}</h3>
         </div>
         <Price price={p.price} mrp={p.mrp} size="sm" />
       </div>
@@ -100,7 +100,7 @@ export function Suits() {
       <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-[20svh] md:px-12">
         <header data-suits-head className="mb-10 md:mb-16">
           <p className="label mb-3 text-gold-text">{t('suits')}</p>
-          <h2 className="font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.suits.en}</h2>
+          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.suits.en}</h2>
           <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">{brand.copy.suits.hi}</p>
         </header>
         <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:gap-16">
@@ -109,7 +109,7 @@ export function Suits() {
             <ul className="no-scrollbar flex gap-3 overflow-x-auto whitespace-nowrap md:block md:space-y-1 md:overflow-visible">
               {WORDS.map((w, i) => (
                 <li key={w} data-word data-on={i === 0 ? '' : undefined} className="group/w">
-                  <span className="font-display text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-outline-gold transition-colors duration-500 group-data-[on]/w:text-gold-text group-data-[on]/w:[-webkit-text-stroke:0] md:text-[clamp(3rem,7vw,8rem)]">
+                  <span className="font-editorial font-medium text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-outline-gold transition-colors duration-500 group-data-[on]/w:text-gold-text group-data-[on]/w:[-webkit-text-stroke:0] md:text-[clamp(3rem,7vw,8rem)]">
                     {w}
                   </span>
                   <span lang="hi" className="font-hindi-display ml-3 hidden text-lg text-fg-muted opacity-0 transition-opacity duration-500 group-data-[on]/w:opacity-100 md:inline">

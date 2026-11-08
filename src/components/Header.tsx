@@ -89,7 +89,7 @@ export function Count({ n, label }: { n: number; label: string }) {
     <span
       data-count
       aria-label={`${n} ${label}`}
-      className="absolute -right-1.5 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-cta-bg px-1 text-[11px] font-semibold leading-none text-cta-text [transform-style:preserve-3d]"
+      className="absolute -right-1.5 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-cta-bg px-1 text-xs font-medium leading-none text-cta-text [transform-style:preserve-3d]"
     >
       {n}
     </span>
@@ -297,7 +297,7 @@ function SiteMenu({ open, onClose, opener }: { open: boolean; onClose: () => voi
         <div className="flex items-center justify-between gap-3 border-b border-divider py-3 pl-5 pr-3">
           <div className="flex items-center gap-3">
             <BadgeMark size={36} />
-            <h2 className="font-display text-lg tracking-[0.2em] text-gold-text">{t('menu')}</h2>
+            <h2 className="font-editorial text-2xl font-medium text-fg">{t('menu')}</h2>
           </div>
           <button type="button" data-autofocus className="grid h-11 w-11 place-items-center rounded-full text-fg hover:text-gold-text" onClick={onClose} aria-label={t('close')}>
             <IconClose />
@@ -314,7 +314,7 @@ function SiteMenu({ open, onClose, opener }: { open: boolean; onClose: () => voi
                     onClick={onClose}
                     aria-current={l.on ? 'page' : undefined}
                     className={`group flex min-h-[52px] items-center justify-between gap-4 border-b border-divider text-fg transition-colors hover:text-gold-text aria-[current=page]:text-gold-text ${
-                      hi ? 'text-xl' : 'font-display text-[1.02rem] uppercase tracking-[0.18em]'
+                      hi ? 'text-xl' : 'font-editorial text-2xl font-medium'
                     }`}
                   >
                     <span lang={hi ? 'hi' : undefined}>{l.label}</span>
@@ -363,7 +363,7 @@ function SiteMenu({ open, onClose, opener }: { open: boolean; onClose: () => voi
                 <SoundToggle className="grid ring-1 ring-field-line" />
               </div>
             )}
-            <p className="text-gold-glint pt-3 font-display text-sm tracking-[0.18em]">
+            <p className="pt-3 font-editorial text-lg font-medium italic text-gold-text">
               {brand.signOff} · <span lang="hi" className="font-hindi-display">{brand.signOffHi}</span>
             </p>
           </div>

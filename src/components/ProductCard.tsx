@@ -19,7 +19,7 @@ export function BadgeList({ badges }: { badges?: Product['badges'] }) {
       {badges.map((b) => (
         <li
           key={b}
-          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.12em] ${
+          className={`rounded-full px-2.5 py-1 text-xs font-medium uppercase leading-none tracking-[0.08em] ${
             b === 'bestseller' ? 'bg-badge-bg text-badge-text' : 'bg-surface-2 text-fg'
           }`}
         >
@@ -175,7 +175,7 @@ export function ProductCard({
                 type="button"
                 data-cursor="Add"
                 onClick={() => (p.sizes ? setPicking(true) : quickAdd())}
-                className="glass flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-text ring-1 ring-field-line hover:bg-cta-bg hover:text-cta-text"
+                className="glass flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium uppercase tracking-[0.08em] text-gold-text ring-1 ring-field-line hover:bg-cta-bg hover:text-cta-text"
                 aria-label={`${t('quickAdd')}: ${name}`}
               >
                 <IconPlus size={16} />
@@ -186,12 +186,12 @@ export function ProductCard({
         )}
       </div>
       <div className="mt-3 space-y-1 px-0.5">
-        <p className="label text-[0.7rem] text-gold-text">
+        <p className="label text-gold-text">
           {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric}
           {p.subcategory !== p.fabric && ` · ${p.subcategory}`}
           {p.category === 'suit' && !p.stitched && ` · ${t('unstitched')}`}
         </p>
-        <h3 className="text-[0.95rem] leading-snug text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
+        <h3 className="font-editorial text-xl font-medium leading-snug text-fg" lang={lang === 'hi' ? 'hi' : undefined}>
           <Link href={`/product/${p.slug}`} className="hover:text-gold-text">
             {name}
           </Link>

@@ -58,7 +58,7 @@ export function FilmNav() {
                 aria-label={lang === 'hi' ? c.labelHi : c.label}
               >
                 <span className="mt-0.5 block h-1.5 w-px bg-gold-line transition-all group-hover/tick:h-2 group-hover/tick:bg-gold-text group-data-[on]/tick:h-2 group-data-[on]/tick:bg-gold-text" />
-                <span className="label pointer-events-none absolute left-1/2 top-3.5 -translate-x-1/2 whitespace-nowrap rounded-full bg-bg/90 px-2.5 py-1 text-[0.6rem] text-gold-text opacity-0 shadow-[inset_0_0_0_1px_var(--divider)] transition-opacity group-hover/tick:opacity-100 group-focus-visible/tick:opacity-100">
+                <span className="label pointer-events-none absolute left-1/2 top-3.5 -translate-x-1/2 whitespace-nowrap rounded-full bg-bg/90 px-2.5 py-1 text-xs text-gold-text opacity-0 shadow-[inset_0_0_0_1px_var(--divider)] transition-opacity group-hover/tick:opacity-100 group-focus-visible/tick:opacity-100">
                   {lang === 'hi' ? c.labelHi : c.label}
                 </span>
               </button>

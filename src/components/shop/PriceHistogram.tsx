@@ -144,7 +144,7 @@ export function PriceHistogram({
         </defs>
         <line x1={PAD} x2={W - PAD} y1={H - 4} y2={H - 4} style={{ stroke: 'var(--metal-lo)' }} />
         {TICKS.map((t) => (
-          <text key={t} x={x(t)} y={H + 12} textAnchor="middle" fontSize="9" style={{ fill: 'var(--text-muted)' }} >
+          <text key={t} x={x(t)} y={H + 12} textAnchor="middle" fontSize="12" style={{ fill: 'var(--text-muted)' }} >
             {short(t)}
           </text>
         ))}

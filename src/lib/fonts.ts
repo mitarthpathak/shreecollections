@@ -1,31 +1,37 @@
 import { Cinzel, Cormorant_Garamond, Manrope, Tiro_Devanagari_Hindi, Mukta } from 'next/font/google';
 
-// next/font downloads these at build time and serves them from our own origin:
-// no runtime request to Google. Only the display faces are preloaded.
+// next/font downloads these at build time and serves them from our own origin: no runtime
+// request to Google. Only the weights the design uses are loaded, and only the two faces that
+// set most of the text (Cormorant Garamond, Manrope) are preloaded.
+//
+//   Cinzel 400            logo wordmark and the hero heading (48px and up)
+//   Cormorant Garamond 500 + italic   headings, product names, accent words
+//   Manrope 400 / 500     body, labels, filters, prices, buttons
+//   Tiro Devanagari Hindi Hindi headings · Mukta 400 / 500 Hindi body
 
 export const cinzel = Cinzel({
   subsets: ['latin'],
-  weight: 'variable',
+  weight: '400',
   variable: '--font-cinzel',
   display: 'swap',
-  preload: true,
+  preload: false,
 });
 
 export const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['400', '500'],
+  weight: '500',
   style: ['normal', 'italic'],
   variable: '--font-cormorant',
   display: 'swap',
-  preload: false,
+  preload: true,
 });
 
 export const manrope = Manrope({
   subsets: ['latin'],
-  weight: 'variable',
+  weight: ['400', '500'],
   variable: '--font-manrope',
   display: 'swap',
-  preload: false,
+  preload: true,
 });
 
 export const tiro = Tiro_Devanagari_Hindi({
@@ -34,12 +40,12 @@ export const tiro = Tiro_Devanagari_Hindi({
   style: 'normal',
   variable: '--font-tiro',
   display: 'swap',
-  preload: true,
+  preload: false,
 });
 
 export const mukta = Mukta({
   subsets: ['devanagari'],
-  weight: ['400', '600'],
+  weight: ['400', '500'],
   variable: '--font-mukta',
   display: 'swap',
   preload: false,

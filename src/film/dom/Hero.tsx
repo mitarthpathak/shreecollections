@@ -129,12 +129,12 @@ export function Hero({ introDone }: { introDone: boolean }) {
           data-hero-copy
           className="relative z-10 mx-auto flex h-full max-w-[1600px] flex-col justify-end px-safe pb-[calc(var(--tabbar-h)+var(--safe-b)+clamp(1rem,3.5svh,2.25rem))] md:justify-center md:px-safe-12 md:pb-0 md:portrait:justify-end md:portrait:pb-[13svh] md:short:pt-[var(--header-h)]"
         >
-          <p data-hero-eyebrow className="label mb-3 text-gold-text md:mb-5 short:mb-2 short:text-[0.62rem] short:tracking-[0.2em] md:short:mb-2">
+          <p data-hero-eyebrow className="label mb-3 text-gold-text md:mb-5 short:mb-2 short:text-xs short:tracking-[0.08em] md:short:mb-2">
             {brand.tagline} · {brand.location.city}
           </p>
           <h1
             data-hero-title
-            className="chapter-title max-w-[11ch] text-gold-glint text-[length:clamp(2.4rem,min(13vw,7.6svh),11.5rem)] md:text-[length:clamp(2.4rem,min(11vw,20svh),11.5rem)] short:text-[length:clamp(2.2rem,12svh,11.5rem)] md:short:text-[length:clamp(2.2rem,min(11vw,14svh),11.5rem)]"
+            className="hero-title chapter-title max-w-[11ch] text-gold-glint text-[length:clamp(2.4rem,min(13vw,7.6svh),11.5rem)] md:text-[length:clamp(2.4rem,min(11vw,20svh),11.5rem)] short:text-[length:clamp(2.2rem,12svh,11.5rem)] md:short:text-[length:clamp(2.2rem,min(11vw,14svh),11.5rem)]"
           >
             {brand.copy.hero.en}
           </h1>
@@ -146,14 +146,14 @@ export function Hero({ introDone }: { introDone: boolean }) {
             {brand.copy.hero.hi}
           </p>
           <div data-hero-cta className="mt-[clamp(1rem,4svh,2rem)] flex flex-wrap items-center gap-x-3 gap-y-2 md:mt-8 short:mt-3 md:short:mt-3">
-            <Link href="/shop/sarees" className="btn btn-gold max-xs:px-4 max-xs:tracking-[0.16em] short:min-h-11" data-magnetic>{t('shopSarees')}</Link>
-            <Link href="/shop/suits" className="btn btn-ghost max-xs:px-4 max-xs:tracking-[0.16em] short:min-h-11" data-magnetic>{t('shopSuits')}</Link>
-            <Link href="/shop" className="ml-1 inline-flex min-h-11 items-center rounded-full px-3 text-xs uppercase tracking-[0.2em] text-fg-muted underline decoration-gold-line underline-offset-[6px] hover:text-gold-text">
+            <Link href="/shop/sarees" className="btn btn-gold max-xs:px-4 max-xs:tracking-[0.08em] short:min-h-11" data-magnetic>{t('shopSarees')}</Link>
+            <Link href="/shop/suits" className="btn btn-ghost max-xs:px-4 max-xs:tracking-[0.08em] short:min-h-11" data-magnetic>{t('shopSuits')}</Link>
+            <Link href="/shop" className="label ml-1 inline-flex min-h-11 items-center rounded-full px-3 text-fg-muted underline decoration-gold-line underline-offset-[6px] hover:text-gold-text">
               {t('skipToShop')} →
             </Link>
           </div>
         </div>
-        <div data-scroll-cue aria-hidden className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+1rem)] left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-fg-muted md:bottom-8 md:flex md:short:hidden">
+        <div data-scroll-cue aria-hidden className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+1rem)] left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-xs uppercase tracking-[0.08em] text-fg-muted md:bottom-8 md:flex md:short:hidden">
           Scroll
           <span className="h-10 w-px animate-pulse bg-gradient-to-b from-gold-text to-transparent" />
         </div>

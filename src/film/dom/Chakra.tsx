@@ -37,8 +37,8 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
     const gInner = rot.append('g');
     const gOuter = rot.append('g');
     const center = svg.append('g').attr('pointer-events', 'none');
-    const cTitle = center.append('text').attr('text-anchor', 'middle').attr('dy', -4).style('fill', 'var(--gold-text)').attr('font-size', 22).style('font-family', 'var(--font-cinzel)').style('letter-spacing', '3px');
-    const cSub = center.append('text').attr('text-anchor', 'middle').attr('dy', 22).style('fill', 'var(--text-muted)').attr('font-size', 13);
+    const cTitle = center.append('text').attr('text-anchor', 'middle').attr('dy', -4).style('fill', 'var(--gold-text)').attr('font-size', 30).style('font-family', 'var(--font-cormorant)').style('font-weight', '500');
+    const cSub = center.append('text').attr('text-anchor', 'middle').attr('dy', 22).style('fill', 'var(--text-muted)').attr('font-size', 16);
     const products = getAllProducts();
     let cat: Category | null = null;
     let color: string | null = null;
@@ -93,7 +93,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
         .attr('text-anchor', 'middle')
         .attr('dy', 4)
         .style('fill', 'var(--ivory)')
-        .attr('font-size', 11)
+        .attr('font-size', 16)
         .attr('pointer-events', 'none')
         .style('letter-spacing', '2px')
         .style('font-family', L === 'hi' ? 'var(--font-mukta)' : 'var(--font-cinzel)')
@@ -120,7 +120,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
           return tweenArc(color === d.data.key ? outerOn : outerArc).call(this, d);
         });
 
-      cTitle.text(color ? (L === 'hi' ? COLOR_FAMILIES[color].hi : color.toUpperCase()) : 'RANG');
+      cTitle.text(color ? (L === 'hi' ? COLOR_FAMILIES[color].hi : color) : 'Rang');
       cSub.text(cat ? (cat === 'saree' ? (L === 'hi' ? 'साड़ियाँ' : 'Sarees') : L === 'hi' ? 'सूट' : 'Suits') : L === 'hi' ? 'रंग चुनें' : 'Choose a colour');
     };
     redraw.current = draw;
@@ -244,7 +244,7 @@ export function Chakra() {
       <div className="mx-auto grid max-w-[1600px] items-center gap-10 px-5 py-[16svh] md:grid-cols-[1fr_1.1fr] md:px-12">
         <header data-chakra-head>
           <p className="label mb-3 text-gold-text">Rang Chakra</p>
-          <h2 className="font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{t('findColour')}</h2>
+          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{t('findColour')}</h2>
           <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">अपना रंग चुनें</p>
           <p className="mt-6 max-w-md text-fg-muted">
             {lang === 'hi'

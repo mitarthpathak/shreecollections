@@ -136,7 +136,7 @@ export function ProductView({ slug }: { slug: string }) {
             {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric}
             {p.subcategory !== p.fabric && ` · ${p.subcategory}`}
           </p>
-          <h1 className="mt-2 font-display text-[clamp(2rem,4vw,3.4rem)] leading-[1.02] text-gold" lang={lang === 'hi' ? 'hi' : undefined}>
+          <h1 className="mt-2 font-editorial font-medium text-[clamp(2rem,4vw,3.4rem)] leading-[1.02] text-gold" lang={lang === 'hi' ? 'hi' : undefined}>
             {name}
           </h1>
           {lang === 'en' && <p lang="hi" className="font-hindi-display mt-1 text-lg text-fg-muted">{p.nameHi}</p>}
@@ -271,7 +271,7 @@ export function ProductView({ slug }: { slug: string }) {
       </div>
 
       <section className="mt-24" aria-labelledby="look">
-        <h2 id="look" className="mb-8 font-display text-3xl text-gold md:text-5xl">{t('completeLook')}</h2>
+        <h2 id="look" className="mb-8 font-editorial font-medium text-3xl text-gold md:text-5xl">{t('completeLook')}</h2>
         <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-4">
           {look.map((q) => <ProductCard key={q.slug} product={q} sizes="(min-width: 768px) 24vw, 46vw" />)}
         </div>
@@ -279,7 +279,7 @@ export function ProductView({ slug }: { slug: string }) {
 
       {recent.length > 0 && (
         <section className="mt-20 pb-10" aria-labelledby="recent">
-          <h2 id="recent" className="mb-8 font-display text-2xl text-gold md:text-4xl">{t('recentlyViewed')}</h2>
+          <h2 id="recent" className="mb-8 font-editorial font-medium text-2xl text-gold md:text-4xl">{t('recentlyViewed')}</h2>
           <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-4">
             {recent.map((q) => <ProductCard key={q.slug} product={q} sizes="(min-width: 768px) 24vw, 46vw" />)}
           </div>
@@ -296,7 +296,7 @@ export function ProductView({ slug }: { slug: string }) {
         <div className="glass flex items-center gap-3 border-t border-divider py-2 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:pb-[calc(0.5rem+var(--safe-b))]">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm leading-snug text-fg" lang={lang === 'hi' ? 'hi' : undefined}>{name}</p>
-            <p className="text-sm font-semibold tabular-nums leading-snug text-gold-text">
+            <p className="text-sm font-medium tabular-nums leading-snug text-gold-text">
               {formatINR(p.price)}
               {size && <span className="font-normal text-fg-muted"> · {t('size')} {size}</span>}
             </p>
