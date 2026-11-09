@@ -5,6 +5,7 @@ import { Section, ranges } from './Section';
 import { CHAPTERS } from '../chapters';
 import { WEAVE_FABRICS } from '../fabrics';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
+import '@/lib/gsap-silk';
 import { film } from '../state';
 import { useT } from '@/lib/i18n';
 
@@ -57,7 +58,7 @@ export function Weave() {
   return (
     <Section index={2} ref={root} label="The Weave: six fabrics" className="motion-reduce:!h-auto">
       <div className="sticky top-0 h-svh overflow-hidden motion-reduce:static motion-reduce:h-auto">
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[55svh] bg-gradient-to-t from-raat via-raat/70 to-transparent motion-reduce:hidden" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[55svh] bg-gradient-to-t from-bg via-bg/70 to-transparent motion-reduce:hidden" />
         <div className="relative mx-auto h-full max-w-[1600px] px-safe md:px-safe-12 motion-reduce:h-auto motion-reduce:space-y-20 motion-reduce:py-24">
           {WEAVE_FABRICS.map((f, i) => (
             <article
@@ -65,19 +66,19 @@ export function Weave() {
               data-fabric
               className="absolute bottom-[calc(var(--tabbar-h)+var(--safe-b)+2rem)] left-[max(1.25rem,var(--safe-l))] right-[max(1.25rem,var(--safe-r))] md:bottom-16 md:left-[max(3rem,var(--safe-l))] md:right-[max(3rem,var(--safe-r))] short:bottom-[calc(var(--tabbar-h)+var(--safe-b)+0.75rem)] md:short:bottom-5 motion-reduce:relative motion-reduce:inset-auto"
             >
-              <p className="label mb-3 text-gold-500 tabular-nums short:mb-1">
+              <p className="label mb-3 text-gold-text tabular-nums short:mb-1">
                 {String(i + 1).padStart(2, '0')} / {String(WEAVE_FABRICS.length).padStart(2, '0')} · The Weave
               </p>
               <h2 className="flex flex-wrap items-baseline gap-x-6">
                 <span className="mask-line">
-                  <span data-rise className="chapter-title block text-gold">{f.kind}</span>
+                  <span data-rise className="chapter-title block text-fg">{f.kind}</span>
                 </span>
                 <span className="mask-line">
-                  <span data-rise lang="hi" className="font-hindi-display block text-[length:clamp(1.6rem,min(5vw,9svh),5rem)] text-ivory/80">{f.hi}</span>
+                  <span data-rise lang="hi" className="font-hindi-display block text-[length:clamp(1.6rem,min(5vw,9svh),5rem)] text-fg/80">{f.hi}</span>
                 </span>
               </h2>
               <p className="mask-line mt-3 max-w-xl short:mt-1">
-                <span data-rise className="block font-editorial text-[clamp(1.2rem,2vw,1.7rem)] italic text-ivory/90">{f.line}</span>
+                <span data-rise className="block font-editorial text-[clamp(1.2rem,2vw,1.7rem)] italic text-fg/90">{f.line}</span>
               </p>
               <Link href={`/shop?fabric=${f.kind}`} className="btn btn-ghost mt-6 short:mt-2 short:min-h-11" data-magnetic>
                 {t('shopThisFabric')} →

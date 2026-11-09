@@ -5,6 +5,7 @@ import { range } from 'd3-array';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
+import '@/lib/gsap-draw';
 import { film } from '../state';
 
 /** Procedural mandala + paisley line-art, drawn with d3.lineRadial + curveCardinalClosed. */
@@ -45,9 +46,9 @@ function Mandala() {
     <svg viewBox="-320 -320 640 640" className="h-[min(92vw,86svh)] w-[min(92vw,86svh)]" aria-hidden>
       <defs>
         <linearGradient id="mandala-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FFF1C1" />
-          <stop offset="0.5" stopColor="#E9C46A" />
-          <stop offset="1" stopColor="#8A6418" />
+          <stop offset="0" style={{ stopColor: 'var(--metal-hi)' }} />
+          <stop offset="0.5" style={{ stopColor: 'var(--metal)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--metal-lo)' }} />
         </linearGradient>
       </defs>
       {paths.map((p, i) => (
@@ -87,17 +88,18 @@ export function Dhaaga() {
         </div>
       </div>
       <div className="relative -mt-[100svh] flex min-h-full flex-col justify-center px-safe py-[26svh] md:px-safe-12 short:py-[14svh]">
-        <h2 className="mx-auto max-w-[1600px] font-display text-[length:clamp(2.5rem,min(12vw,20svh),13rem)] leading-[0.95] tracking-tight short:text-[length:clamp(2rem,min(12vw,15svh),13rem)]">
+        <h2 className="mx-auto max-w-[1600px] font-editorial font-medium text-[length:clamp(2.5rem,min(12vw,20svh),13rem)] leading-[0.95] tracking-tight short:text-[length:clamp(2rem,min(12vw,15svh),13rem)]">
           {words.map((w, i) => (
-            <span key={i} className="relative mr-[0.25em] inline-block">
+            <span key={i} className={`relative mr-[0.25em] inline-block ${w.startsWith('thread') ? 'italic' : ''}`}>
               <span className="text-outline-gold">{w}</span>
-              <span data-fill aria-hidden className="text-gold absolute inset-0" style={{ clipPath: 'inset(0 0 0 0)' }}>
+              {/* the one accent word fills in italic gold; the rest fill in --text */}
+              <span data-fill aria-hidden className={`absolute inset-0 ${w.startsWith('thread') ? 'accent-word' : 'text-fg'}`} style={{ clipPath: 'inset(0 0 0 0)' }}>
                 {w}
               </span>
             </span>
           ))}
         </h2>
-        <p lang="hi" className="font-hindi-display mx-auto mt-8 w-full max-w-[1600px] text-[length:clamp(1.3rem,min(3vw,6svh),2.6rem)] text-ivory/85 short:mt-3">
+        <p lang="hi" className="font-hindi-display mx-auto mt-8 w-full max-w-[1600px] text-[length:clamp(1.3rem,min(3vw,6svh),2.6rem)] text-fg/85 short:mt-3">
           {brand.copy.thread.hi}
         </p>
       </div>

@@ -29,8 +29,8 @@ export function RouteCurtain() {
     <>
       <div className="vt-thread" aria-hidden />
       <div ref={curtain} aria-hidden className="pointer-events-none invisible fixed inset-0 z-[100]">
-        <div className="absolute inset-y-0 right-0 w-full bg-gradient-to-r from-transparent via-raat/70 to-raat" />
-        <div className="absolute inset-y-0 right-0 w-[3px] bg-gold-300 shadow-[0_0_18px_2px_rgba(233,196,106,.65)]" />
+        <div className="absolute inset-y-0 right-0 w-full bg-gradient-to-r from-transparent via-bg/70 to-bg" />
+        <div className="absolute inset-y-0 right-0 w-[3px] bg-gold-text shadow-[0_0_18px_2px_color-mix(in_srgb,var(--metal)_65%,transparent)]" />
       </div>
     </>
   );

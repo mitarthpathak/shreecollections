@@ -8,10 +8,19 @@ import { anchor } from '../rail';
 import { SNOISE } from '../glsl';
 import { fabricTexture } from '../textures';
 import { WEAVE_FABRICS } from '../fabrics';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
+import { sceneTheme } from '../sceneTheme';
+import { flatNormal, loadFabricPhoto } from '../fabricPhotos';
 
 const W = 5.6;
 const H = 3.6;
+/**
+ * Rang Chakra sheet in the dark theme: deeper and a little more see-through than the Weave's, so
+ * the copy and cards over it stay legible (a bright cream sheet sat behind ivory text). On Kagaz
+ * the sheet is already darker than the text's page, so it keeps its full colour.
+ */
+const TINT_SHADE_DARK = 0.62;
+const TINT_ALPHA = 0.8;
 
 const vertex = /* glsl */ `
   uniform float uTime; uniform float uWind;
@@ -37,7 +46,7 @@ const vertex = /* glsl */ `
 const fragment = /* glsl */ `
   uniform sampler2D uTexA; uniform sampler2D uTexB;
   uniform float uMix; uniform float uAlpha; uniform float uTime;
-  uniform vec3 uTint; uniform float uTintAmt;
+  uniform vec3 uTint; uniform float uTintAmt; uniform vec3 uEdge; uniform float uShade;
   varying vec2 vUv2;
   ${SNOISE}
   void main(){
@@ -49,9 +58,9 @@ const fragment = /* glsl */ `
     float edge = 1.0 - smoothstep(0.0, 0.025, abs(n - m));
     vec3 col = n < m ? b : a;
     float l = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt);
+    col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt) * uShade;
     csm_DiffuseColor = vec4(col, uAlpha);
-    csm_Emissive = vec3(1.0, 0.78, 0.35) * edge * 2.4 * step(0.001, uMix) * step(uMix, 0.999);
+    csm_Emissive = uEdge * edge * 2.4 * step(0.001, uMix) * step(uMix, 0.999);
   }
 `;
 
@@ -62,21 +71,46 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
     () =>
       mode === 'weave'
         ? WEAVE_FABRICS.map((f) => fabricTexture(f.kind, f.base, 512, 1))
-        : [fabricTexture('Chanderi', '#EDE6D6', 512, 1)],
+        : [fabricTexture('Chanderi', getThemeColor('--pigment-chanderi'), 512, 1)],
     [mode],
   );
   useEffect(() => () => textures.forEach((t) => t.dispose()), [textures]);
+
+  // Real fabric photos replace the procedural textures where the owner has added them.
+  const live = useRef<THREE.Texture[] | null>(null);
+  const normals = useRef<(THREE.Texture | null)[]>([]);
+  const flat = useMemo(() => flatNormal(), []);
+  const mat = useRef<THREE.MeshPhysicalMaterial | null>(null);
+  useEffect(() => {
+    if (mode !== 'weave') return;
+    let alive = true;
+    const loaded: THREE.Texture[] = [];
+    Promise.all(WEAVE_FABRICS.map((f) => loadFabricPhoto(f.kind).catch(() => null))).then((photos) => {
+      photos.forEach((ph) => ph && loaded.push(ph.albedo, ...(ph.normal ? [ph.normal] : [])));
+      if (!alive) return loaded.forEach((t) => t.dispose());
+      if (!photos.some(Boolean)) return;
+      live.current = textures.map((t, i) => photos[i]?.albedo ?? t);
+      normals.current = photos.map((ph) => ph?.normal ?? null);
+    });
+    return () => {
+      alive = false;
+      loaded.forEach((t) => t.dispose());
+    };
+  }, [mode, textures]);
+  useEffect(() => () => flat.dispose(), [flat]);
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
       uWind: { value: 1 },
-      uTexA: { value: textures[0] },
-      uTexB: { value: textures[Math.min(1, textures.length - 1)] },
+      uTexA: { value: textures[0] as THREE.Texture },
+      uTexB: { value: textures[Math.min(1, textures.length - 1)] as THREE.Texture },
       uMix: { value: 0 },
       uAlpha: { value: 0 },
-      uTint: { value: new THREE.Color(palette.gold300) },
+      uTint: { value: new THREE.Color(getThemeColor('--gold-300')) },
       uTintAmt: { value: 0 },
+      uEdge: { value: new THREE.Color() },
+      uShade: { value: 1 },
     }),
     [textures],
   );
@@ -87,11 +121,21 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
 
   useFrame((s, dt) => {
     uniforms.uTime.value += dt;
+    (uniforms.uEdge.value as THREE.Color).copy(sceneTheme.glint);
+    const tm = threads.current?.material as THREE.MeshBasicMaterial | undefined;
+    if (tm) {
+      // gold light on Raat; a printed gold line on Kagaz (additive gold vanishes on ivory)
+      tm.blending = sceneTheme.light > 0.5 ? THREE.NormalBlending : THREE.AdditiveBlending;
+      tm.color.copy(sceneTheme.coinRim);
+    }
     if (mode === 'weave') {
       const { fabric, sheet, assemble } = film.u.weave;
-      const a = Math.min(textures.length - 1, Math.floor(fabric));
-      uniforms.uTexA.value = textures[a];
-      uniforms.uTexB.value = textures[Math.min(textures.length - 1, a + 1)];
+      const tx = live.current ?? textures;
+      const a = Math.min(tx.length - 1, Math.floor(fabric));
+      uniforms.uTexA.value = tx[a];
+      uniforms.uTexB.value = tx[Math.min(tx.length - 1, a + 1)];
+      const nm = normals.current[Math.round(fabric)] ?? flat;
+      if (mat.current && mat.current.normalMap !== nm) mat.current.normalMap = nm;
       uniforms.uMix.value = fabric - a;
       uniforms.uAlpha.value = sheet;
       // warp and weft fly in from the thread and settle into a grid, then hand over to the sheet
@@ -116,7 +160,8 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       }
     } else {
       const c = film.u.chakra;
-      uniforms.uAlpha.value = c.show * 0.9;
+      uniforms.uAlpha.value = c.show * TINT_ALPHA;
+      uniforms.uShade.value = THREE.MathUtils.lerp(TINT_SHADE_DARK, 1, sceneTheme.light);
       (uniforms.uTint.value as THREE.Color).setRGB(...c.tint);
       uniforms.uTintAmt.value = 0.55 + c.tintAmt * 0.4;
     }
@@ -132,7 +177,9 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       <mesh ref={mesh} rotation={[-0.08, 0, 0.04]}>
         <planeGeometry args={[W, H, seg, Math.round(seg * 0.66)]} />
         <CustomShaderMaterial
+          ref={(m) => void (mat.current = m as unknown as THREE.MeshPhysicalMaterial | null)}
           baseMaterial={THREE.MeshPhysicalMaterial}
+          normalMap={flat}
           vertexShader={vertex}
           fragmentShader={fragment}
           uniforms={uniforms}
@@ -141,16 +188,15 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
           roughness={0.42}
           sheen={1}
           sheenRoughness={0.3}
-          sheenColor={palette.gold100}
+          sheenColor={getThemeColor('--gold-100')}
           anisotropy={0.6}
-          emissive="#000000"
           depthWrite={false}
         />
       </mesh>
       {mode === 'weave' && (
         <instancedMesh ref={threads} args={[undefined, undefined, N * 2]} frustumCulled={false}>
           <boxGeometry args={[0.006, 1, 0.006]} />
-          <meshBasicMaterial color={palette.gold500} transparent blending={THREE.AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color={getThemeColor('--gold-500')} transparent blending={THREE.AdditiveBlending} depthWrite={false} />
         </instancedMesh>
       )}
     </group>

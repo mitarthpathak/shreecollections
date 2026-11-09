@@ -28,7 +28,7 @@ export function WishlistButton({ slug, className = '', size = 20 }: { slug: stri
           if (nowOn) goldBurst(ref.current);
         }
       }}
-      className={`grid h-11 w-11 place-items-center rounded-full bg-raat/55 transition-colors ${active ? 'text-sindoor' : 'text-ivory hover:text-gold-100'} ${className}`}
+      className={`grid h-11 w-11 place-items-center rounded-full bg-bg/55 transition-colors ${active ? 'text-danger' : 'text-fg hover:text-gold-text'} ${className}`}
     >
       <IconHeart size={size} filled={active} />
     </button>

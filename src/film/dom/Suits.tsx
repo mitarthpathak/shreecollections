@@ -1,10 +1,11 @@
 'use client';
 import Image from 'next/image';
+import { Accent } from '@/components/Accent';
 import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
-import { getByCategory, type Product } from '@/lib/catalog';
+import { getByCategory, type Product, productMedia } from '@/lib/catalog';
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { useLang, useT } from '@/lib/i18n';
 import { Price } from '@/components/Price';
@@ -36,7 +37,7 @@ function ArchCard({ p }: { p: Product }) {
     <Link href={`/product/${p.slug}`} data-arch className="group block" data-cursor="View">
       <div className="relative">
         <div data-arch-img className="relative aspect-[3/4] overflow-hidden" style={{ clipPath: archPolygon(1) }}>
-          <Image src={p.images[0]} alt={`${p.name} — ${p.subcategory}`} fill sizes="(min-width: 768px) 40vw, 90vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+          <Image src={productMedia(p)[0]} alt={`${p.name} — ${p.subcategory}`} fill sizes="(min-width: 768px) 40vw, 90vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
         </div>
         <svg viewBox="0 0 100 133" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
           <polygon
@@ -48,16 +49,16 @@ function ArchCard({ p }: { p: Product }) {
           />
           <defs>
             <linearGradient id="arch-gold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#FFF1C1" />
-              <stop offset="1" stopColor="#8A6418" />
+              <stop offset="0" style={{ stopColor: 'var(--metal-hi)' }} />
+              <stop offset="1" style={{ stopColor: 'var(--metal-lo)' }} />
             </linearGradient>
           </defs>
         </svg>
       </div>
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <p className="label text-[0.6rem] text-gold-500">{p.subcategory}</p>
-          <h3 className="mt-1 text-ivory group-hover:text-gold-100" lang={lang === 'hi' ? 'hi' : undefined}>{lang === 'hi' ? p.nameHi : p.name}</h3>
+          <p className="label text-gold-text">{p.subcategory}</p>
+          <h3 className="mt-1 font-editorial text-xl font-medium text-fg group-hover:text-gold-text" lang={lang === 'hi' ? 'hi' : undefined}>{lang === 'hi' ? p.nameHi : p.name}</h3>
         </div>
         <Price price={p.price} mrp={p.mrp} size="sm" />
       </div>
@@ -99,20 +100,22 @@ export function Suits() {
     <Section index={5} ref={root} label="Suits" className="!h-auto">
       <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-[20svh] md:px-12">
         <header data-suits-head className="mb-10 md:mb-16">
-          <p className="label mb-3 text-gold-500">{t('suits')}</p>
-          <h2 className="font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.suits.en}</h2>
-          <p lang="hi" className="font-hindi-display mt-2 text-xl text-ivory/80 md:text-2xl">{brand.copy.suits.hi}</p>
+          <p className="label mb-3 text-gold-text">{t('suits')}</p>
+          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-fg"><Accent text={brand.copy.suits.en} word="tailored" /></h2>
+          <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">{brand.copy.suits.hi}</p>
         </header>
         <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:gap-16">
           {/* left: sticky giant words (a sticky top band on phones) */}
-          <div className="sticky top-[var(--header-h)] z-10 -mx-5 bg-gradient-to-b from-raat via-raat/90 to-transparent px-5 pb-6 pt-2 md:top-[calc(var(--header-h)+10svh)] md:mx-0 md:h-fit md:bg-none md:px-0">
+          <div className="sticky top-[var(--header-h)] z-10 -mx-5 bg-gradient-to-b from-bg via-bg/90 to-transparent px-5 pb-6 pt-2 md:top-[calc(var(--header-h)+10svh)] md:mx-0 md:h-fit md:bg-none md:px-0">
             <ul className="no-scrollbar flex gap-3 overflow-x-auto whitespace-nowrap md:block md:space-y-1 md:overflow-visible">
               {WORDS.map((w, i) => (
                 <li key={w} data-word data-on={i === 0 ? '' : undefined} className="group/w">
-                  <span className="font-display text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-outline-gold transition-colors duration-500 group-data-[on]/w:text-gold-300 group-data-[on]/w:[-webkit-text-stroke:0] md:text-[clamp(3rem,7vw,8rem)]">
+                  {/* Phones: at ~17px a 1px outline reads bolder than a fill, so inactive words are a
+                      muted fill and the active one turns gold; the giant desktop words keep the outline. */}
+                  <span className="font-editorial font-medium text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-fg-muted transition-colors duration-500 group-data-[on]/w:text-gold-text md:text-[clamp(3rem,7vw,8rem)] md:text-transparent md:[-webkit-text-stroke:1px_var(--text-muted)] md:group-data-[on]/w:text-gold-text md:group-data-[on]/w:[-webkit-text-stroke:0]">
                     {w}
                   </span>
-                  <span lang="hi" className="font-hindi-display ml-3 hidden text-lg text-ivory-dim opacity-0 transition-opacity duration-500 group-data-[on]/w:opacity-100 md:inline">
+                  <span lang="hi" className="font-hindi-display ml-3 hidden text-lg text-fg-muted opacity-0 transition-opacity duration-500 group-data-[on]/w:opacity-100 md:inline">
                     {WORDS_HI[w]}
                   </span>
                 </li>

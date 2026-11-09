@@ -2,7 +2,8 @@
 /** three.js wrappers around the cached canvases in canvases.ts (only loaded with the 3D chunk). */
 import * as THREE from 'three';
 import { brand } from '@/brand.config';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
+import { PEACOCK_EYE } from './peacock';
 import type { FabricKind } from './fabrics';
 import { make, goldFill, fabricCanvas, sareeCanvas, featherCanvas, matkiCanvas, glowCanvas } from './canvases';
 export { WEAVE_FABRICS } from './fabrics';
@@ -41,8 +42,8 @@ export async function badgeTexture(size = 1024): Promise<THREE.Texture> {
   const [c, ctx] = make(size, size);
   const m = size / 2;
   const bg = ctx.createRadialGradient(m, m * 0.8, 10, m, m, m);
-  bg.addColorStop(0, '#1c140c');
-  bg.addColorStop(1, '#07060A');
+  bg.addColorStop(0, getThemeColor('--pigment-coin-core'));
+  bg.addColorStop(1, getThemeColor('--raat'));
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, size, size);
   ctx.strokeStyle = goldFill(ctx, 0, 0, size, size);
@@ -55,15 +56,14 @@ export async function badgeTexture(size = 1024): Promise<THREE.Texture> {
   ctx.arc(m, m, m * 0.84, 0, Math.PI * 2);
   ctx.stroke();
   // mor pankh eye
-  const eye = ctx.createRadialGradient(m, size * 0.26, 2, m, size * 0.26, size * 0.11);
-  eye.addColorStop(0, '#1B2C7A');
-  eye.addColorStop(0.45, palette.mor);
-  eye.addColorStop(0.75, palette.gold300);
-  eye.addColorStop(1, 'rgba(14,124,123,0)');
-  ctx.fillStyle = eye;
-  ctx.beginPath();
-  ctx.ellipse(m, size * 0.26, size * 0.07, size * 0.1, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // crisp rings, the same eye as the logo badge and the Mor Pankh chapter (peacock.ts)
+  const ex = m, ey = size * 0.26, ew = size * 0.07, eh = size * 0.1;
+  for (const r of PEACOCK_EYE) {
+    ctx.fillStyle = getThemeColor(r.token);
+    ctx.beginPath();
+    ctx.ellipse(ex, ey + r.dy * eh, r.rx * ew, r.ry * eh, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.fillStyle = goldFill(ctx, m - 200, m - 100, m + 200, m + 200);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';

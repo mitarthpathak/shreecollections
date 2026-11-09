@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Page } from '@/components/Page';
 import { ProductView } from '@/components/product/ProductView';
-import { getAllProducts, getProduct } from '@/lib/catalog';
+import { getAllProducts, getProduct, productMedia } from '@/lib/catalog';
 import { breadcrumbJsonLd, productJsonLd, ld } from '@/lib/seo';
 import { formatINR } from '@/lib/format';
 
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps<'/product/[slug]'>)
     title: p.name,
     description,
     alternates: { canonical: `/product/${p.slug}` },
-    openGraph: { title: p.name, description, images: [{ url: p.images[0], width: 900, height: 1200, alt: p.name }] },
+    openGraph: { title: p.name, description, images: [{ url: productMedia(p)[0], alt: p.name }] },
   };
 }
 

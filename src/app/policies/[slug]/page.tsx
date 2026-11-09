@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Page, PageHeading } from '@/components/Page';
 import { brand } from '@/brand.config';
-import { Todo } from '@/components/Todo';
 
 const POLICIES = {
   shipping: {
@@ -48,9 +47,8 @@ export default async function PolicyPage({ params }: PageProps<'/policies/[slug]
     <Page>
       <PageHeading eyebrow="Policies" title={p.title} titleHi={p.titleHi} />
       <div className="mx-auto max-w-3xl space-y-5 px-4 pb-20 md:px-8">
-        {!p.body && <Todo label={`${p.title.toLowerCase()} policy`} />}
         {body.map((para) => (
-          <p key={para} className="text-lg leading-relaxed text-ivory/90">{para}</p>
+          <p key={para} className="text-lg leading-relaxed text-fg/90">{para}</p>
         ))}
       </div>
     </Page>

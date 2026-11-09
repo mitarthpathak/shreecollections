@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Accent } from '@/components/Accent';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { select } from 'd3-selection';
 import 'd3-transition';
@@ -7,9 +8,11 @@ import { pie, arc, type PieArcDatum } from 'd3-shape';
 import { interpolate } from 'd3-interpolate';
 import { Section, ranges } from './Section';
 import { getAllProducts, COLOR_FAMILIES, type Category } from '@/lib/catalog';
-import { gsap, Flip, useGSAP, prefersReducedMotion } from '@/lib/gsap';
+import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
+import { Flip } from '@/lib/gsap-flip';
+import '@/lib/gsap-silk';
 import { film } from '../state';
-import { hexToRgb01 } from '@/lib/palette';
+import { hexToRgb01, themeRGB01 } from '@/lib/theme';
 import { useLang, useT } from '@/lib/i18n';
 import { ProductCard } from '@/components/ProductCard';
 
@@ -17,6 +20,8 @@ type Seg = { key: string; value: number; color: string; label: string };
 type Arc = PieArcDatum<Seg> & { _cur?: { startAngle: number; endAngle: number } };
 
 const R = 200;
+/** A soft pool of page colour behind copy that sits over the silk sheet (positioned by the caller). */
+const SCRIM = 'pointer-events-none absolute -z-10 rounded-[40px] bg-bg/80 blur-2xl';
 
 /**
  * Rang Chakra: inner ring = Sarees / Suits, outer ring = colour families sized by real counts.
@@ -37,8 +42,8 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
     const gInner = rot.append('g');
     const gOuter = rot.append('g');
     const center = svg.append('g').attr('pointer-events', 'none');
-    const cTitle = center.append('text').attr('text-anchor', 'middle').attr('dy', -4).attr('fill', '#E9C46A').attr('font-size', 22).style('font-family', 'var(--font-cinzel)').style('letter-spacing', '3px');
-    const cSub = center.append('text').attr('text-anchor', 'middle').attr('dy', 22).attr('fill', '#C9BFAB').attr('font-size', 13);
+    const cTitle = center.append('text').attr('text-anchor', 'middle').attr('dy', -4).style('fill', 'var(--gold-text)').attr('font-size', 30).style('font-family', 'var(--font-cormorant)').style('font-weight', '500');
+    const cSub = center.append('text').attr('text-anchor', 'middle').attr('dy', 22).style('fill', 'var(--text-muted)').attr('font-size', 16);
     const products = getAllProducts();
     let cat: Category | null = null;
     let color: string | null = null;
@@ -60,7 +65,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
       const inner: Seg[] = (['saree', 'suit'] as Category[]).map((k) => ({
         key: k,
         value: products.filter((x) => x.category === k).length,
-        color: k === 'saree' ? '#8A1F2E' : '#14505A',
+        color: k === 'saree' ? 'var(--pigment-saree)' : 'var(--pigment-suit)',
         label: k === 'saree' ? (L === 'hi' ? 'साड़ियाँ' : 'SAREES') : L === 'hi' ? 'सूट' : 'SUITS',
       }));
       const counts = new Map<string, number>();
@@ -79,7 +84,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
         .attr('aria-label', (d) => d.data.label)
         .attr('aria-pressed', (d) => String(cat === d.data.key))
         .attr('fill', (d) => d.data.color)
-        .attr('stroke', (d) => (cat === d.data.key ? '#FFF1C1' : '#07060A'))
+        .style('stroke', (d) => (cat === d.data.key ? 'var(--text)' : 'var(--bg)'))
         .attr('stroke-width', 1.5)
         .attr('opacity', (d) => (cat && cat !== d.data.key ? 0.45 : 1))
         .style('cursor', 'pointer')
@@ -92,8 +97,8 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
       il.join('text')
         .attr('text-anchor', 'middle')
         .attr('dy', 4)
-        .attr('fill', '#F3EAD8')
-        .attr('font-size', 11)
+        .style('fill', 'var(--ivory)')
+        .attr('font-size', 16)
         .attr('pointer-events', 'none')
         .style('letter-spacing', '2px')
         .style('font-family', L === 'hi' ? 'var(--font-mukta)' : 'var(--font-cinzel)')
@@ -109,7 +114,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
         .attr('aria-label', (d) => `${d.data.label}: ${d.data.value}`)
         .attr('aria-pressed', (d) => String(color === d.data.key))
         .attr('fill', (d) => d.data.color)
-        .attr('stroke', (d) => (color === d.data.key ? '#FFF1C1' : '#07060A'))
+        .style('stroke', (d) => (color === d.data.key ? 'var(--text)' : 'var(--bg)'))
         .attr('stroke-width', (d) => (color === d.data.key ? 2 : 1))
         .attr('opacity', (d) => (color && color !== d.data.key ? 0.4 : 1))
         .style('cursor', 'pointer')
@@ -120,7 +125,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
           return tweenArc(color === d.data.key ? outerOn : outerArc).call(this, d);
         });
 
-      cTitle.text(color ? (L === 'hi' ? COLOR_FAMILIES[color].hi : color.toUpperCase()) : 'RANG');
+      cTitle.text(color ? (L === 'hi' ? COLOR_FAMILIES[color].hi : color) : 'Rang');
       cSub.text(cat ? (cat === 'saree' ? (L === 'hi' ? 'साड़ियाँ' : 'Sarees') : L === 'hi' ? 'सूट' : 'Suits') : L === 'hi' ? 'रंग चुनें' : 'Choose a colour');
     };
     redraw.current = draw;
@@ -156,6 +161,8 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
       if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 8) pick(e.target as Element);
       start = null;
     };
+    // touch-action: pan-y hands vertical swipes to the page; the browser then cancels the pointer
+    const cancel = () => void (start = null);
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -165,14 +172,18 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
     node.addEventListener('pointerdown', down);
     node.addEventListener('pointermove', move);
     node.addEventListener('pointerup', up);
+    node.addEventListener('pointercancel', cancel);
     node.addEventListener('keydown', key);
     draw();
     return () => {
       node.removeEventListener('pointerdown', down);
       node.removeEventListener('pointermove', move);
       node.removeEventListener('pointerup', up);
+      node.removeEventListener('pointercancel', cancel);
       node.removeEventListener('keydown', key);
-      svg.selectAll('*').remove();
+      redraw.current = () => {};
+      // stop in-flight d3 transitions (their timers hold the nodes) before dropping the nodes
+      svg.selectAll('*').interrupt().remove();
     };
   }, [onChange]);
 
@@ -180,7 +191,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
     <svg
       ref={ref}
       viewBox={`${-R - 20} ${-R - 20} ${2 * R + 40} ${2 * R + 40}`}
-      className="aspect-square w-full max-w-[560px] touch-none select-none"
+      className="aspect-square w-full max-w-[560px] touch-pan-y select-none"
       role="group"
       aria-label="Rang Chakra colour wheel"
     />
@@ -191,6 +202,7 @@ export function Chakra() {
   const root = useRef<HTMLElement>(null);
   const strip = useRef<HTMLDivElement>(null);
   const flip = useRef<Flip.FlipState | null>(null);
+  const flipTl = useRef<gsap.core.Timeline | null>(null);
   const lang = useLang();
   const t = useT();
   const [sel, setSel] = useState<{ cat: Category | null; color: string | null }>({ cat: null, color: null });
@@ -205,7 +217,7 @@ export function Chakra() {
       setSel({ cat, color });
       const hex = color ? COLOR_FAMILIES[color].hex : null;
       document.documentElement.style.setProperty('--accent', hex ?? 'var(--gold-300)');
-      const [r, g, b] = hexToRgb01(hex ?? '#E9C46A');
+      const [r, g, b] = hex ? hexToRgb01(hex) : themeRGB01('--gold-300');
       gsap.to(film.u.chakra.tint, { 0: r, 1: g, 2: b, duration: 0.9, ease: 'silk' });
       gsap.to(film.u.chakra, { tintAmt: hex ? 0.85 : 0, duration: 0.9, ease: 'silk' });
     },
@@ -216,7 +228,8 @@ export function Chakra() {
     const s = flip.current;
     if (!s || !strip.current) return;
     flip.current = null;
-    Flip.from(s, {
+    flipTl.current?.progress(1).kill();
+    flipTl.current = Flip.from(s, {
       targets: strip.current.querySelectorAll(':scope > [data-strip]'),
       duration: 0.6,
       ease: 'power2.inOut',
@@ -225,7 +238,20 @@ export function Chakra() {
     });
   }, [items]);
 
-  useEffect(() => () => void document.documentElement.style.removeProperty('--accent'), []);
+  // Leaving the page: stop the selection tweens and put the accent and the silk's tint back, so a
+  // return visit starts from an unselected wheel and an untinted sheet.
+  useEffect(
+    () => () => {
+      flipTl.current?.kill();
+      flipTl.current = null;
+      gsap.killTweensOf(film.u.chakra.tint);
+      gsap.killTweensOf(film.u.chakra, 'tintAmt');
+      Object.assign(film.u.chakra.tint, themeRGB01('--gold-300'));
+      film.u.chakra.tintAmt = 0;
+      document.documentElement.style.removeProperty('--accent');
+    },
+    [],
+  );
 
   useGSAP(
     () => {
@@ -234,7 +260,9 @@ export function Chakra() {
       gsap.timeline({ scrollTrigger: ranges.pass(el) })
         .fromTo(film.u.chakra, { show: 0 }, { show: 1, duration: 2.5, ease: 'none' }, 0)
         .to(film.u.chakra, { show: 0, duration: 2, ease: 'none' }, 8);
-      gsap.from('[data-chakra-head] > *', { y: 40, opacity: 0, stagger: 0.08, scrollTrigger: { ...ranges.enter(el), end: 'top 25%' } });
+      const head = { ...ranges.enter(el), end: 'top 25%' };
+      gsap.from('[data-chakra-scrim]', { opacity: 0, ease: 'none', scrollTrigger: head });
+      gsap.from('[data-chakra-head] > *', { y: 40, opacity: 0, stagger: 0.08, scrollTrigger: head });
     },
     { scope: root },
   );
@@ -242,26 +270,30 @@ export function Chakra() {
   return (
     <Section index={6} ref={root} label="Rang Chakra: find your colour" className="!h-auto min-h-[var(--m)] md:min-h-[var(--d)]">
       <div className="mx-auto grid max-w-[1600px] items-center gap-10 px-5 py-[16svh] md:grid-cols-[1fr_1.1fr] md:px-12">
-        <header data-chakra-head>
-          <p className="label mb-3 text-gold-500">Rang Chakra</p>
-          <h2 className="font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{t('findColour')}</h2>
-          <p lang="hi" className="font-hindi-display mt-2 text-xl text-ivory/80 md:text-2xl">अपना रंग चुनें</p>
-          <p className="mt-6 max-w-md text-ivory-dim">
-            {lang === 'hi'
-              ? 'भीतरी घेरा: साड़ी या सूट। बाहरी घेरा: रंग। फ़ोन पर पहिया घुमाइए, टैप करके चुनिए।'
-              : 'Inner ring: sarees or suits. Outer ring: colours, sized by how many pieces we have. On a phone, spin the wheel and tap to choose.'}
-          </p>
-        </header>
+        {/* The tinted silk passes behind this copy: a soft scrim in the page colour keeps it legible. */}
+        <div className="relative isolate">
+          <div data-chakra-scrim aria-hidden className={`${SCRIM} -inset-x-6 -inset-y-8 md:-inset-x-12 md:-inset-y-12`} />
+          <header data-chakra-head className="text-halo">
+            <p className="label mb-3 text-gold-text">Rang Chakra</p>
+            <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-fg"><Accent text={t('findColour')} word="colour" /></h2>
+            <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">अपना रंग चुनें</p>
+            <p className="mt-6 max-w-md text-fg-muted">
+              {lang === 'hi'
+                ? 'भीतरी घेरा: साड़ी या सूट। बाहरी घेरा: रंग। फ़ोन पर पहिया दाएँ-बाएँ घुमाइए, टैप करके चुनिए।'
+                : 'Inner ring: sarees or suits. Outer ring: colours, sized by how many pieces we have. On a phone, swipe sideways to spin the wheel and tap to choose.'}
+            </p>
+          </header>
+        </div>
         <div className="grid place-items-center">
           <Wheel onChange={onChange} lang={lang} />
         </div>
       </div>
       <div className="mx-auto max-w-[1600px] px-5 pb-[14svh] md:px-12">
-        <div className="mb-5 flex items-baseline justify-between">
-          <p className="text-sm text-ivory-dim" aria-live="polite">
+        <div className="text-halo mb-5 flex items-baseline justify-between">
+          <p className="text-sm text-fg-muted" aria-live="polite">
             <span className="text-[color:var(--accent)]">●</span> {items.length} {t('results')}
           </p>
-          <Link href={`/shop${sel.cat ? (sel.cat === 'saree' ? '/sarees' : '/suits') : ''}${sel.color ? `?color=${sel.color}` : ''}`} className="text-sm text-gold-300 underline underline-offset-4">
+          <Link href={`/shop${sel.cat ? (sel.cat === 'saree' ? '/sarees' : '/suits') : ''}${sel.color ? `?color=${sel.color}` : ''}`} className="text-sm text-gold-text underline underline-offset-4">
             {t('viewAll')} →
           </Link>
         </div>

@@ -45,7 +45,7 @@ export default async function CategoryPage({ params }: PageProps<'/shop/[categor
         dangerouslySetInnerHTML={ld(breadcrumbJsonLd([{ name: 'Shop', path: '/shop' }, { name: c.title, path: `/shop/${category}` }]))}
       />
       <PageHeading eyebrow="Shree Collection · Banswara" title={c.title} titleHi={c.titleHi}>
-        <p className="mt-4 max-w-xl font-editorial text-xl italic text-ivory-dim">{c.line}</p>
+        <p className="mt-4 max-w-xl font-editorial text-xl italic text-fg-muted">{c.line}</p>
       </PageHeading>
       <Suspense fallback={<ShopViewStatic category={c.category} />}>
         <ShopView category={c.category} />
