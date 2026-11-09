@@ -32,8 +32,13 @@ const encodePath = (p: string) => p.split('/').map(encodeURIComponent).join('/')
 function githubStore(): Store | null {
   const token = process.env.ADMIN_GITHUB_TOKEN;
   if (!token) return null;
-  const repo = process.env.ADMIN_GITHUB_REPO || 'mitarthpathak/shreecollections';
-  const branch = process.env.ADMIN_GITHUB_BRANCH || 'main';
+  const env = process.env;
+  const repo =
+    env.ADMIN_GITHUB_REPO || (env.VERCEL_GIT_REPO_OWNER && env.VERCEL_GIT_REPO_SLUG ? `${env.VERCEL_GIT_REPO_OWNER}/${env.VERCEL_GIT_REPO_SLUG}` : 'mitarthpathak/shreecollections');
+  // Save to the branch this deployment was built from (Vercel sets it), so a save always lands
+  // where the live site is built: production saves go to the production branch, a preview's
+  // to its own branch. ADMIN_GITHUB_BRANCH overrides it.
+  const branch = env.ADMIN_GITHUB_BRANCH || env.VERCEL_GIT_COMMIT_REF || 'main';
   const api = (process.env.ADMIN_GITHUB_API || 'https://api.github.com').replace(/\/$/, '');
 
   async function gh<T>(method: string, url: string, body?: unknown, accept = 'application/vnd.github+json'): Promise<{ status: number; data: T }> {

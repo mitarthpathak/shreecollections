@@ -3,7 +3,7 @@
 `/admin` lets the shop add, edit and remove sarees and suits from a phone or a computer:
 log in with the admin password, then use **+ Add saree** / **+ Add suit**, **Edit** or **Remove**.
 
-Each save is one commit to this repository's `main` branch (`data/products.json` and the photos in
+Each save is one commit to the branch the live site is built from (Vercel's production branch) (`data/products.json` and the photos in
 `public/products/<slug>/`). Vercel rebuilds the site from it, so a change is live about two
 minutes later; the panel shows when it is.
 
@@ -19,8 +19,8 @@ minutes later; the panel shows when it is.
    - Permissions → Repository permissions → **Contents: Read and write** (nothing else).
    - Expiration: up to a year; put a reminder to renew it.
    - Add it in Vercel as `ADMIN_GITHUB_TOKEN`.
-3. Optional: `ADMIN_GITHUB_BRANCH` (default `main`) and `ADMIN_GITHUB_REPO`
-   (default `mitarthpathak/shreecollections`).
+3. Optional: `ADMIN_GITHUB_BRANCH` and `ADMIN_GITHUB_REPO`. By default the panel saves to the
+   branch the live deployment was built from (Vercel's production branch), in this repository.
 4. Redeploy (Deployments → ⋯ → Redeploy) so the new variables are picked up, then open
    `https://<your site>/admin`.
 
