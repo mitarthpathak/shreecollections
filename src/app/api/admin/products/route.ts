@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { isAdmin, json, sameOrigin } from '@/lib/admin/auth';
 import { getStore, StoreError } from '@/lib/admin/store';
-import { InputError, NewPhotoSchema, ProductInputSchema, remove, upsert } from '@/lib/admin/products';
+import { BulkPatchSchema, InputError, NewPhotoSchema, ProductInputSchema, bulkUpdate, remove, upsert } from '@/lib/admin/products';
 
 export const maxDuration = 60;
 
@@ -24,7 +24,8 @@ export async function GET() {
 
 const Body = z.discriminatedUnion('op', [
   z.object({ op: z.literal('upsert'), product: ProductInputSchema, uploads: z.array(NewPhotoSchema).max(8) }),
-  z.object({ op: z.literal('delete'), slugs: z.array(z.string().regex(/^[a-z0-9-]+$/)).min(1).max(200) }),
+  z.object({ op: z.literal('delete'), slugs: z.array(z.string().regex(/^[a-z0-9-]+$/)).min(1).max(5000) }),
+  z.object({ op: z.literal('bulk'), slugs: z.array(z.string().regex(/^[a-z0-9-]+$/)).min(1).max(5000), patch: BulkPatchSchema }),
 ]);
 
 export async function POST(req: Request) {
@@ -39,7 +40,12 @@ export async function POST(req: Request) {
     // apply the change to the latest catalogue; if someone saved meanwhile, re-read and re-apply
     for (let attempt = 0; attempt < 4; attempt++) {
       const { products, version } = await store.read();
-      const result = body.op === 'upsert' ? upsert(products, body.product, body.uploads) : { ...remove(products, body.slugs), product: undefined };
+      const result =
+        body.op === 'upsert'
+          ? upsert(products, body.product, body.uploads)
+          : body.op === 'delete'
+            ? { ...remove(products, body.slugs), product: undefined }
+            : { ...bulkUpdate(products, body.slugs, body.patch), product: undefined };
       const w = await store.write(version, result.files, result.message);
       if (w.ok) return json({ ok: true, version: w.version, products: result.products, slug: result.product?.slug, store: store.kind });
     }

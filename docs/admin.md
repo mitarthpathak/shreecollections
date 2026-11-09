@@ -28,6 +28,15 @@ Changing `ADMIN_PASSWORD` signs everyone out. Never put the password or the toke
 
 ## How it behaves
 
+- **Finding things** (built for thousands of products): the left column (chips on a phone) lists
+  Sarees and Suits with every type under them (Anarkali, Sharara, Banarasi…) and how many each
+  has. Filter by fabric, colour, stock, photos and badge; search by name, ID, fabric, colour or
+  price; sort or group by type. The four numbers at the top (sarees, suits, out of stock, without
+  photos) are shortcuts. Filters stay in the address, so a refresh or a bookmark keeps them. The
+  list shows 60 at a time (**Show more**), with small thumbnails.
+- **Many at once**: tick products (or a whole type, or **Select all matching**), then use the bar
+  at the bottom: In stock, Out of stock, add or remove a badge, Remove. Each row also has a quick
+  In stock / Out of stock switch.
 - **Photos** are cropped to 4:5 from the centre and resized to at most 1600 × 2000 in the browser
   before upload (WebP, or JPEG on Safari). Shoot them as in `docs/photo-guide.md`. The first photo
   is the cover; up to 8 per product.

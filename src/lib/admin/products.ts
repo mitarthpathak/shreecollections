@@ -159,3 +159,30 @@ export function remove(products: Product[], slugs: string[]) {
   const message = gone.length === 1 ? `Remove ${gone[0].category}: ${gone[0].name} (admin)` : `Remove ${gone.length} products (admin)`;
   return { products: next, files, message };
 }
+
+/** Quick changes to many products at once (stock, badges), from the list's bulk bar. */
+export const BulkPatchSchema = z
+  .object({ inStock: z.boolean().optional(), addBadge: z.enum(BADGES).optional(), removeBadge: z.enum(BADGES).optional() })
+  .refine((p) => p.inStock !== undefined || p.addBadge || p.removeBadge, 'nothing to change');
+export type BulkPatch = z.infer<typeof BulkPatchSchema>;
+
+export function bulkUpdate(products: Product[], slugs: string[], patch: BulkPatch) {
+  const set = new Set(slugs);
+  const hit = products.filter((p) => set.has(p.slug));
+  if (!hit.length) throw new InputError('Those products no longer exist.');
+  const next = products.map((p) => {
+    if (!set.has(p.slug)) return p;
+    const q: Product = { ...p };
+    if (patch.inStock !== undefined) q.inStock = patch.inStock;
+    let badges = [...(p.badges ?? [])];
+    if (patch.addBadge && !badges.includes(patch.addBadge)) badges.push(patch.addBadge);
+    if (patch.removeBadge) badges = badges.filter((b) => b !== patch.removeBadge);
+    if (badges.length) q.badges = badges;
+    else delete q.badges;
+    return q;
+  });
+  const what =
+    patch.inStock !== undefined ? (patch.inStock ? 'in stock' : 'out of stock') : patch.addBadge ? `badge ${patch.addBadge} added` : `badge ${patch.removeBadge} removed`;
+  const message = hit.length === 1 ? `${hit[0].name}: ${what} (admin)` : `${hit.length} products: ${what} (admin)`;
+  return { products: next, files: [catalogFile(next)], message };
+}
