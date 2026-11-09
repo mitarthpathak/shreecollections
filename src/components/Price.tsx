@@ -8,13 +8,13 @@ export function Price({ price, mrp, size = 'md' }: { price: number; mrp?: number
   const cls = size === 'lg' ? 'text-2xl' : size === 'sm' ? 'text-sm' : 'text-base';
   return (
     <p className={`flex flex-wrap items-baseline gap-x-2 ${cls}`}>
-      <span className="font-semibold text-gold-100 tabular-nums">{formatINR(price)}</span>
+      <span className="font-medium text-fg tabular-nums">{formatINR(price)}</span>
       {off > 0 && (
         <>
-          <s className="text-[0.8em] text-ivory-dim tabular-nums" aria-label={`${t('mrp')} ${formatINR(mrp!)}`}>
+          <s className="text-[length:max(0.8em,12px)] text-fg-muted tabular-nums" aria-label={`${t('mrp')} ${formatINR(mrp!)}`}>
             {formatINR(mrp!)}
           </s>
-          <span className="text-[length:max(0.75em,11px)] font-semibold text-pitambar">
+          <span className="text-[length:max(0.75em,12px)] font-medium text-sale">
             {off}% {t('off')}
           </span>
         </>

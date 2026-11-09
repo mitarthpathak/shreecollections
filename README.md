@@ -16,10 +16,10 @@ Node 20.9+ is required. `npm run lint` and `npm run typecheck` should both be cl
 
 ## Before launch: what the owner still needs to provide
 
-Every unknown fact is a visible `TODO(brand)` on the site and lives in
-[`src/brand.config.ts`](src/brand.config.ts). Fill it in once and it updates the header,
-footer, Visit page, product pages, JSON-LD and the WhatsApp checkout. `/about` lists whatever
-is still missing.
+Every brand fact lives in [`src/brand.config.ts`](src/brand.config.ts). Unknown values stay
+empty and the site never shows a placeholder for them: the row or button is hidden (no address
+line, no hours, no Call button). Fill a value in once and it appears in the header, footer, Visit
+page, product pages, JSON-LD and checkout. `brandTodos` in that file lists what is still missing.
 
 | Missing | Where it goes |
 | --- | --- |
@@ -29,12 +29,14 @@ is still missing.
 | Opening hours | `hours` |
 | Owner story | `ownerStory` |
 | Shipping, returns and privacy policies | `policies.*` |
-| Production domain | `NEXT_PUBLIC_SITE_URL` |
-| Real product photos | `public/products/<slug>/1.webp` … (see below) |
+| Production domain (if not the Vercel URL) | `NEXT_PUBLIC_SITE_URL`; otherwise Vercel's production URL, else `https://shreecollections.vercel.app` |
+| Real product photos | `public/products/<slug>/photo-*.webp` + `photos` in the data (see below) |
 | Optional sound | `public/audio/` (see its README) |
 
-Until the WhatsApp number is set, "Order on WhatsApp" opens WhatsApp's contact picker with
-the order already written. The **Pay online** button is reserved for Razorpay and disabled.
+Until the WhatsApp number is set (international format, digits only, no "+"), every WhatsApp
+button becomes "Order on Instagram" / "Message on Instagram" (`https://ig.me/m/shreecollectionsbsw`)
+and copies the order text so it can be pasted into the chat (`whatsappLink()` in
+`src/lib/whatsapp.ts`). The **Pay online** button is reserved for Razorpay and disabled.
 
 Until `logo.png` exists, the site shows a typographic badge (gold ring, mor pankh eye,
 श्री COLLECTION). It never redraws the Krishna artwork, and the logo is only ever floated,
@@ -66,11 +68,13 @@ directly. Each product:
 The JSON is validated with Zod on every build (`src/lib/catalog.server.ts`); a typo fails
 the build with a readable message instead of shipping a broken page.
 
-**Photos.** Drop real photos (3:4, at least 1200 px tall, WebP or AVIF) over the placeholders
-in `public/products/<slug>/` with the same names. `next/image` serves the right size and
-format to each device. The current images are procedural placeholders (textile pattern,
-drape shading, gold frame) from `npm run assets` — **that command overwrites
-`public/products/` and `public/lookbook/`**, so don't run it after adding real photos.
+**Photos.** Add real photos (4:5, 1600 × 2000 px) as `public/products/<slug>/photo-1.webp` …
+and list them in the product's `photos` array; see [`docs/photo-guide.md`](docs/photo-guide.md).
+Products without `photos` keep the drawn placeholders; `next/image` serves the right size and
+format to each device. The placeholders (textile pattern and drape on an ivory wall, 4:5) come
+from `npm run assets` — **that command overwrites `1.webp`–`3.webp` and `fabric.webp` in
+`public/products/` and the files in `public/lookbook/`** (`npm run assets -- --products-only`
+leaves the lookbook alone). It never touches `photo-*.webp`.
 
 **Lookbook.** Curated images in `public/lookbook/look-1.webp` … `look-8.webp`. Instagram is a
 link only: no embed, no scraping.

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import type * as THREE from 'three';
 import { film } from './state';
@@ -43,5 +43,9 @@ export function Shot({ index, children, near = 1 }: { index: number; children: R
   });
 
   if (!mounted) return null;
-  return <group ref={group}>{children}</group>;
+  return (
+    <group ref={group}>
+      <Suspense fallback={null}>{children}</Suspense>
+    </group>
+  );
 }

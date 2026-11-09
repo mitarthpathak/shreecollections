@@ -22,6 +22,10 @@ export const getByCategory = (c: Category) => products.filter((p) => p.category 
 export const getBestsellers = (n = 6) => products.filter((p) => p.badges?.includes('bestseller')).slice(0, n);
 export const getByFabric = (f: string) => products.filter((p) => p.fabric === f);
 
+/** What to show for a product: its photos when it has any, otherwise the drawn placeholders. */
+export const productMedia = (p: Product) => (p.photos?.length ? p.photos : p.images);
+export const hasPhotos = (p: Product) => Boolean(p.photos?.length);
+
 /** Display colours for each colour family (the Rang Chakra ring and filter swatches). */
 export const COLOR_FAMILIES: Record<string, { hex: string; hi: string }> = {
   Red: { hex: '#B3122B', hi: 'लाल' },

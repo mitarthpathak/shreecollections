@@ -10,6 +10,7 @@ import { gsap, ScrollTrigger, prefersReducedMotion } from '@/lib/gsap';
 import { lockScroll } from '@/lib/clock';
 import { setAmbience, SOUND_AVAILABLE } from '@/lib/sound';
 import { brand } from '@/brand.config';
+import { ThemeChoice, ThemeToggle } from './Theme';
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
@@ -44,7 +45,7 @@ export function LangToggle({ className = '' }: { className?: string }) {
   const setLang = useShop((s) => s.setLang);
   const t = useT();
   return (
-    <div role="group" aria-label={t('language')} className={`flex shrink-0 items-center rounded-full p-0.5 text-[0.75rem] ring-1 ring-gold-500/40 ${className}`}>
+    <div role="group" aria-label={t('language')} className={`flex shrink-0 items-center rounded-full p-0.5 text-[0.75rem] ring-1 ring-field-line ${className}`}>
       {(['en', 'hi'] as const).map((l) => (
         <button
           key={l}
@@ -52,7 +53,7 @@ export function LangToggle({ className = '' }: { className?: string }) {
           aria-pressed={lang === l}
           aria-label={l === 'en' ? 'English' : 'हिंदी'}
           onClick={() => setLang(l)}
-          className={`min-h-11 min-w-11 rounded-full px-2 transition-colors ${lang === l ? 'bg-gold-300 text-raat' : 'text-ivory-dim hover:text-gold-100'}`}
+          className={`min-h-11 min-w-11 rounded-full px-2 transition-colors ${lang === l ? 'bg-cta-bg text-cta-text' : 'text-fg-muted hover:text-gold-text'}`}
         >
           {l === 'en' ? 'EN' : <span lang="hi">हिं</span>}
         </button>
@@ -68,7 +69,7 @@ function SoundToggle({ className = '' }: { className?: string }) {
   return (
     <button
       type="button"
-      className={`relative h-11 w-11 shrink-0 place-items-center rounded-full text-ivory-dim hover:text-gold-100 ${className}`}
+      className={`relative h-11 w-11 shrink-0 place-items-center rounded-full text-fg-muted hover:text-gold-text ${className}`}
       aria-pressed={sound}
       aria-label={t('sound')}
       onClick={() => {
@@ -88,7 +89,7 @@ export function Count({ n, label }: { n: number; label: string }) {
     <span
       data-count
       aria-label={`${n} ${label}`}
-      className="absolute -right-1.5 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-gold-300 px-1 text-[11px] font-semibold leading-none text-raat [transform-style:preserve-3d]"
+      className="absolute -right-1.5 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-cta-bg px-1 text-xs font-medium leading-none text-cta-text [transform-style:preserve-3d]"
     >
       {n}
     </span>
@@ -142,7 +143,7 @@ export function Header() {
     { href: '/lookbook', label: t('lookbook') },
     { href: '/visit', label: t('visit') },
   ];
-  const icon = 'relative h-11 w-11 shrink-0 place-items-center rounded-full text-ivory hover:text-gold-100';
+  const icon = 'relative h-11 w-11 shrink-0 place-items-center rounded-full text-fg hover:text-gold-text';
 
   return (
     <>
@@ -179,7 +180,7 @@ export function Header() {
                 key={n.href}
                 href={n.href}
                 aria-current={pathname.startsWith(n.href) ? 'page' : undefined}
-                className="label whitespace-nowrap rounded-full px-3 py-3 text-ivory-dim transition-colors hover:text-gold-100 aria-[current=page]:text-gold-300"
+                className="label whitespace-nowrap rounded-full px-3 py-3 text-fg-muted transition-colors hover:text-gold-text aria-[current=page]:text-gold-text"
               >
                 {n.label}
               </Link>
@@ -188,6 +189,7 @@ export function Header() {
 
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <LangToggle className="mr-1" />
+            <ThemeToggle />
             {SOUND_AVAILABLE && <SoundToggle className="hidden md:grid" />}
             <button type="button" className={`${icon} grid`} aria-label={t('search')} aria-keyshortcuts="/" onClick={() => setSearchOpen(true)}>
               <IconSearch />
@@ -283,21 +285,21 @@ function SiteMenu({ open, onClose, opener }: { open: boolean; onClose: () => voi
 
   return (
     <div ref={root} id="site-menu" className="fixed inset-0 z-[72] lg:hidden" style={{ visibility: 'hidden' }}>
-      <div ref={scrim} className="absolute inset-0 bg-raat/70 opacity-0" onClick={onClose} aria-hidden />
+      <div ref={scrim} className="absolute inset-0 bg-scrim opacity-0" onClick={onClose} aria-hidden />
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
         aria-label={t('menu')}
         tabIndex={-1}
-        className="absolute inset-y-0 left-0 flex w-[min(86vw,380px)] flex-col bg-lacquer pb-[var(--safe-b)] pl-[env(safe-area-inset-left,0px)] pt-[env(safe-area-inset-top,0px)] shadow-[30px_0_80px_-20px_rgba(0,0,0,.8)] outline-none"
+        className="absolute inset-y-0 left-0 flex w-[min(86vw,380px)] flex-col bg-surface pb-[var(--safe-b)] pl-[env(safe-area-inset-left,0px)] pt-[env(safe-area-inset-top,0px)] shadow-[30px_0_80px_-20px_var(--shadow)] outline-none"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-gold-700/40 py-3 pl-5 pr-3">
+        <div className="flex items-center justify-between gap-3 border-b border-divider py-3 pl-5 pr-3">
           <div className="flex items-center gap-3">
             <BadgeMark size={36} />
-            <h2 className="font-display text-lg tracking-[0.2em] text-gold-300">{t('menu')}</h2>
+            <h2 className="font-editorial text-2xl font-medium text-fg">{t('menu')}</h2>
           </div>
-          <button type="button" data-autofocus className="grid h-11 w-11 place-items-center rounded-full text-ivory hover:text-gold-100" onClick={onClose} aria-label={t('close')}>
+          <button type="button" data-autofocus className="grid h-11 w-11 place-items-center rounded-full text-fg hover:text-gold-text" onClick={onClose} aria-label={t('close')}>
             <IconClose />
           </button>
         </div>
@@ -311,12 +313,12 @@ function SiteMenu({ open, onClose, opener }: { open: boolean; onClose: () => voi
                     href={l.href}
                     onClick={onClose}
                     aria-current={l.on ? 'page' : undefined}
-                    className={`group flex min-h-[52px] items-center justify-between gap-4 border-b border-gold-700/20 text-ivory transition-colors hover:text-gold-100 aria-[current=page]:text-gold-300 ${
-                      hi ? 'text-xl' : 'font-display text-[1.02rem] uppercase tracking-[0.18em]'
+                    className={`group flex min-h-[52px] items-center justify-between gap-4 border-b border-divider text-fg transition-colors hover:text-gold-text aria-[current=page]:text-gold-text ${
+                      hi ? 'text-xl' : 'font-editorial text-2xl font-medium'
                     }`}
                   >
                     <span lang={hi ? 'hi' : undefined}>{l.label}</span>
-                    <span aria-hidden className="h-px w-6 bg-gold-500/50 transition-all duration-300 group-hover:w-10 group-aria-[current=page]:w-10 group-aria-[current=page]:bg-gold-300" />
+                    <span aria-hidden className="h-px w-6 bg-gold-line/50 transition-all duration-300 group-hover:w-10 group-aria-[current=page]:w-10 group-aria-[current=page]:bg-gold-text" />
                   </Link>
                 </li>
               ))}
@@ -349,18 +351,19 @@ function SiteMenu({ open, onClose, opener }: { open: boolean; onClose: () => voi
             </button>
           </div>
 
-          <div className="mt-6 space-y-3 border-t border-gold-700/40 px-5 py-5">
+          <div className="mt-6 space-y-3 border-t border-divider px-5 py-5">
             <div className="flex items-center justify-between gap-3">
-              <span className="label text-gold-500">{t('language')}</span>
+              <span className="label text-gold-text">{t('language')}</span>
               <LangToggle />
             </div>
+            <ThemeChoice className="justify-between [&>legend]:hidden" />
             {SOUND_AVAILABLE && (
               <div className="flex items-center justify-between gap-3">
-                <span className="label text-gold-500">{t('sound')}</span>
-                <SoundToggle className="grid ring-1 ring-gold-500/40" />
+                <span className="label text-gold-text">{t('sound')}</span>
+                <SoundToggle className="grid ring-1 ring-field-line" />
               </div>
             )}
-            <p className="text-gold-glint pt-3 font-display text-sm tracking-[0.18em]">
+            <p className="pt-3 font-editorial text-lg font-medium italic text-gold-text">
               {brand.signOff} · <span lang="hi" className="font-hindi-display">{brand.signOffHi}</span>
             </p>
           </div>

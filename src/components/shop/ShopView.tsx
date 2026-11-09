@@ -18,7 +18,8 @@ import { PriceHistogram } from './PriceHistogram';
 import { MiniChakra } from './MiniChakra';
 import { IconChevron, IconClose, IconFilter } from '../icons';
 import { useLang, useT } from '@/lib/i18n';
-import { gsap, Flip, prefersReducedMotion } from '@/lib/gsap';
+import { gsap, prefersReducedMotion } from '@/lib/gsap';
+import { Flip } from '@/lib/gsap-flip';
 import { lockScroll } from '@/lib/clock';
 import { trapFocus } from '../Header';
 
@@ -158,7 +159,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
   const panel = (
     <div className="space-y-8">
       <fieldset>
-        <legend className="label mb-3 text-gold-500">{t('category')}</legend>
+        <legend className="label mb-3 text-gold-text">{t('category')}</legend>
         <div className="flex flex-wrap gap-2">
           {([['/shop', t('all')], ['/shop/sarees', t('sarees')], ['/shop/suits', t('suits')]] as const).map(([href, l]) => (
             <Link key={href} href={href + qs} scroll={false} className="chip" data-on={pathname === href} aria-current={pathname === href ? 'page' : undefined} onClick={() => setSheet(false)}>
@@ -168,7 +169,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
         </div>
       </fieldset>
       <fieldset>
-        <legend className="label mb-3 text-gold-500">{t('price')}</legend>
+        <legend className="label mb-3 text-gold-text">{t('price')}</legend>
         <PriceHistogram
           prices={base.map((p) => p.price)}
           value={f.price}
@@ -187,7 +188,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
         />
       </fieldset>
       <fieldset>
-        <legend className="label mb-3 text-gold-500">{t('fabric')}</legend>
+        <legend className="label mb-3 text-gold-text">{t('fabric')}</legend>
         <div className="flex flex-wrap gap-2">
           {FABRICS.filter((fb) => base.some((p) => p.fabric === fb)).map((fb) => (
             <button key={fb} type="button" className="chip" aria-pressed={f.fabric.includes(fb)} onClick={() => toggle('fabric', fb)}>
@@ -197,11 +198,11 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
         </div>
       </fieldset>
       <fieldset>
-        <legend className="label mb-3 text-gold-500">{t('colour')}</legend>
+        <legend className="label mb-3 text-gold-text">{t('colour')}</legend>
         <MiniChakra counts={colorCounts} selected={f.color} onToggle={(c) => toggle('color', c)} label={t('colour')} />
       </fieldset>
       <fieldset>
-        <legend className="label mb-3 text-gold-500">{t('occasion')}</legend>
+        <legend className="label mb-3 text-gold-text">{t('occasion')}</legend>
         <div className="flex flex-wrap gap-2">
           {OCCASIONS.map((o) => (
             <button key={o} type="button" className="chip" aria-pressed={f.occasion.includes(o)} onClick={() => toggle('occasion', o)}>
@@ -211,7 +212,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
         </div>
       </fieldset>
       {active > 0 && (
-        <button type="button" className="text-sm text-gold-300 underline underline-offset-4" onClick={() => update((q) => ['fabric', 'color', 'occasion', 'min', 'max'].forEach((k) => q.delete(k)))}>
+        <button type="button" className="text-sm text-gold-text underline underline-offset-4" onClick={() => update((q) => ['fabric', 'color', 'occasion', 'min', 'max'].forEach((k) => q.delete(k)))}>
           {t('clear')}
         </button>
       )}
@@ -229,13 +230,13 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
       <section aria-labelledby="products-h">
         <h2 id="products-h" className="sr-only">Products</h2>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
-          <p className="whitespace-nowrap text-sm text-ivory-dim" aria-live="polite">
-            <span className="text-gold-100 tabular-nums">{filtered.length}</span> {t(filtered.length === 1 ? 'piece' : 'results')}
+          <p className="whitespace-nowrap text-sm text-fg-muted" aria-live="polite">
+            <span className="text-gold-text tabular-nums">{filtered.length}</span> {t(filtered.length === 1 ? 'piece' : 'results')}
           </p>
           <div className="ml-auto flex items-center gap-2">
             <button ref={filtersBtn} type="button" className="chip lg:hidden" aria-haspopup="dialog" aria-expanded={sheet} onClick={() => setSheet(true)}>
               <IconFilter size={18} /> {t('filters')}
-              {active > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold-300 px-1 text-[11px] font-semibold text-raat">{active}</span>}
+              {active > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-cta-bg px-1 text-xs font-medium text-cta-text">{active}</span>}
             </button>
             <label className="sr-only" htmlFor="sort">{t('sort')}</label>
             <span className="relative">
@@ -244,7 +245,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
                 id="sort"
                 value={f.sort}
                 onChange={(e) => update((q) => (e.target.value === 'new' ? q.delete('sort') : q.set('sort', e.target.value)))}
-                className="chip appearance-none bg-lacquer pr-9 text-base md:text-[0.85rem]"
+                className="chip appearance-none bg-surface pr-9 text-base md:text-[0.85rem]"
               >
                 {(Object.keys(SORTS) as SortKey[]).map((k) => (
                   <option key={k} value={k}>
@@ -252,7 +253,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
                   </option>
                 ))}
               </select>
-              <IconChevron size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gold-300" />
+              <IconChevron size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gold-text" />
             </span>
           </div>
         </div>
@@ -274,10 +275,10 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
       </section>
 
       <div ref={sheetRef} className="fixed inset-0 z-[72] lg:hidden" style={{ visibility: 'hidden' }} role="dialog" aria-modal="true" aria-label={t('filters')}>
-        <div className="absolute inset-0 bg-raat/70" onClick={() => setSheet(false)} />
-        <div data-sheet className="absolute inset-x-0 bottom-0 flex max-h-[88svh] flex-col rounded-t-3xl bg-lacquer">
-          <div className="flex items-center justify-between border-b border-gold-700/40 px-5 py-3">
-            <h2 className="font-display tracking-[0.2em] text-gold-300">{t('filters')}</h2>
+        <div className="absolute inset-0 bg-scrim" onClick={() => setSheet(false)} />
+        <div data-sheet className="absolute inset-x-0 bottom-0 flex max-h-[88svh] flex-col rounded-t-3xl bg-surface">
+          <div className="flex items-center justify-between border-b border-divider px-5 py-3">
+            <h2 className="font-editorial text-2xl font-medium text-fg">{t('filters')}</h2>
             <button type="button" data-autofocus onClick={() => setSheet(false)} className="grid h-11 w-11 place-items-center rounded-full" aria-label={t('close')}>
               <IconClose />
             </button>
@@ -285,7 +286,7 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6" data-lenis-prevent>
             {panel}
           </div>
-          <div className="border-t border-gold-700/40 p-4 pb-[calc(1rem+var(--safe-b))]">
+          <div className="border-t border-divider p-4 pb-[calc(1rem+var(--safe-b))]">
             <button type="button" className="btn btn-gold w-full" onClick={() => setSheet(false)}>
               {filtered.length} {t(filtered.length === 1 ? 'piece' : 'results')}
             </button>

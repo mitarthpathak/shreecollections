@@ -1,22 +1,30 @@
 'use client';
 import * as THREE from 'three';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { film } from '../state';
 import { useShader } from '../useShader';
 import { buildThreadCurve } from '../rail';
+import { sceneTheme } from '../sceneTheme';
 
 /** Ek Dhaaga: one gold thread from the coin rim to the knot, revealed ahead of the camera. */
 export function Thread({ segments = 1400, glowSprite }: { segments?: number; glowSprite?: THREE.Texture | null }) {
   const curve = useMemo(() => buildThreadCurve(film.mobile), []);
   const geo = useMemo(() => new THREE.TubeGeometry(curve, segments, 0.016, 6, false), [curve, segments]);
+  // a rebuild (new coin slot) must free the old tube's GPU buffers
+  useEffect(() => () => geo.dispose(), [geo]);
   const head = useRef<THREE.Sprite>(null);
+  const glow = useRef<THREE.SpriteMaterial>(null);
   const uniforms = useMemo(
     () => ({
       uReveal: { value: 0 },
       uTime: { value: 0 },
       uGlow: { value: 0 },
       uLength: { value: curve.getLength() },
+      uLo: { value: new THREE.Vector3() },
+      uHi: { value: new THREE.Vector3() },
+      uHead: { value: new THREE.Vector3() },
+      uLight: { value: 0 },
     }),
     [curve],
   );
@@ -25,7 +33,10 @@ export function Thread({ segments = 1400, glowSprite }: { segments?: number; glo
     uniforms: uniforms,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    // premultiplied: additive glow in Raat (alpha 0), a solid gold line on Kagaz (alpha 1)
+    blending: THREE.CustomBlending,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneMinusSrcAlphaFactor,
     vertexShader: /* glsl */ `
             varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vDepth;
             void main(){
@@ -38,6 +49,7 @@ export function Thread({ segments = 1400, glowSprite }: { segments?: number; glo
             }`,
     fragmentShader: /* glsl */ `
             uniform float uReveal; uniform float uTime; uniform float uGlow; uniform float uLength;
+            uniform vec3 uLo; uniform vec3 uHi; uniform vec3 uHead; uniform float uLight;
             varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vDepth;
             void main(){
               if (vUv.x > uReveal) discard;
@@ -47,9 +59,11 @@ export function Thread({ segments = 1400, glowSprite }: { segments?: number; glo
               float headGlow = exp(-behind * 1.4);
               float after = 0.55 + 0.45 * exp(-behind * 0.05);       // faint afterglow trail
               float glint = pow(0.5 + 0.5 * sin(vUv.x * uLength * 2.2 - uTime * 3.0), 18.0);
-              vec3 gold = mix(vec3(0.54, 0.39, 0.09), vec3(0.91, 0.77, 0.42), 0.5 + 0.5 * fres);
-              vec3 col = gold * (0.8 + fres) * after + vec3(1.0, 0.95, 0.8) * (headGlow * 1.4 + glint * 0.4);
-              gl_FragColor = vec4(col * uGlow * near, 1.0);
+              vec3 gold = mix(uLo, uHi, 0.5 + 0.5 * fres);
+              vec3 col = gold * (0.8 + fres) * after + uHead * (headGlow * 1.4 + glint * 0.4) * (1.0 - 0.6 * uLight);
+              float a = clamp(near * mix(1.0, after, 0.5), 0.0, 1.0);
+              vec3 lit = col * mix(uGlow, 1.0, uLight); // no glow boost on paper
+              gl_FragColor = vec4(mix(lit * near, min(lit, vec3(1.0)) * a, uLight), a * uLight); // unclamped in Raat: bloom needs > 1
             }`,
     },
   );
@@ -65,6 +79,11 @@ export function Thread({ segments = 1400, glowSprite }: { segments?: number; glo
     const target = Math.min(1, Math.max(fromTurn, film.chapter >= 1 ? fromCam : fromTurn, film.u.knot.tie));
     reveal.current = THREE.MathUtils.damp(reveal.current, target, 3, dt);
     uniforms.uReveal.value = reveal.current;
+    uniforms.uLo.value.copy(sceneTheme.threadLo);
+    uniforms.uHi.value.copy(sceneTheme.thread);
+    uniforms.uHead.value.copy(sceneTheme.head);
+    uniforms.uLight.value = sceneTheme.light;
+    if (glow.current) glow.current.opacity = 1 - sceneTheme.light * 0.75;
     uniforms.uGlow.value = 0.6 + film.u.thread.glow * 0.8 + Math.min(1, Math.abs(film.velocity) / 3000) * 0.6;
     if (head.current) {
       curve.getPointAt(Math.max(0.0005, reveal.current), tmp);
@@ -79,7 +98,7 @@ export function Thread({ segments = 1400, glowSprite }: { segments?: number; glo
       </mesh>
       {glowSprite && (
         <sprite ref={head} scale={[0.5, 0.5, 0.5]}>
-          <spriteMaterial map={glowSprite} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+          <spriteMaterial ref={glow} map={glowSprite} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
         </sprite>
       )}
     </group>

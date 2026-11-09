@@ -49,10 +49,6 @@ export const RajasthanMap = forwardRef<SVGSVGElement, { className?: string; onRe
   ref,
 ) {
   const [g, setG] = useState<MapGeometry | null>(null);
-  const readyRef = useRef(onReady);
-  useEffect(() => {
-    readyRef.current = onReady;
-  }, [onReady]);
   useEffect(() => {
     let alive = true;
     loadMap().then((m) => alive && setG(m));
@@ -60,10 +56,14 @@ export const RajasthanMap = forwardRef<SVGSVGElement, { className?: string; onRe
       alive = false;
     };
   }, []);
-  // Tell the parent once the paths are in the DOM (next frame); never after unmount.
+  // Tell the parent once the paths are in the DOM (next frame) — never after unmount.
+  const ready = useRef(onReady);
+  useEffect(() => {
+    ready.current = onReady;
+  });
   useEffect(() => {
     if (!g) return;
-    const id = requestAnimationFrame(() => readyRef.current?.());
+    const id = requestAnimationFrame(() => ready.current?.());
     return () => cancelAnimationFrame(id);
   }, [g]);
 
@@ -71,32 +71,32 @@ export const RajasthanMap = forwardRef<SVGSVGElement, { className?: string; onRe
     <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className={className} role="img" aria-label="Map of Rajasthan with a pin on Banswara, in the south">
       <defs>
         <linearGradient id="map-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FFF1C1" />
-          <stop offset="0.5" stopColor="#E9C46A" />
-          <stop offset="1" stopColor="#8A6418" />
+          <stop offset="0" style={{ stopColor: 'var(--metal-hi)' }} />
+          <stop offset="0.5" style={{ stopColor: 'var(--metal)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--metal-lo)' }} />
         </linearGradient>
         <radialGradient id="map-glow">
-          <stop offset="0" stopColor="#E9C46A" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#E9C46A" stopOpacity="0" />
+          <stop offset="0" stopOpacity="0.55" style={{ stopColor: 'var(--metal)' }} />
+          <stop offset="1" stopOpacity="0" style={{ stopColor: 'var(--metal)' }} />
         </radialGradient>
       </defs>
       {g && (
         <g data-map-zoom style={{ transformOrigin: '0 0' }} data-cx={g.banswara.c[0]} data-cy={g.banswara.c[1]} data-w={W} data-h={H}>
           <g>
             {g.districts.map((d) => (
-              <path key={d.name} data-district d={d.d} fill="rgba(233,196,106,0.035)" stroke="rgba(201,150,46,0.45)" strokeWidth={0.6} vectorEffect="non-scaling-stroke">
+              <path key={d.name} data-district d={d.d} strokeWidth={0.6} vectorEffect="non-scaling-stroke" style={{ fill: 'color-mix(in srgb, var(--gold-line) 6%, transparent)', stroke: 'color-mix(in srgb, var(--gold-line) 55%, transparent)' }}>
                 <title>{d.name}</title>
               </path>
             ))}
           </g>
-          <path data-banswara d={g.banswara.d} fill="rgba(233,196,106,0.22)" stroke="url(#map-gold)" strokeWidth={1.4} vectorEffect="non-scaling-stroke" />
+          <path data-banswara d={g.banswara.d} style={{ fill: 'color-mix(in srgb, var(--metal) 24%, transparent)' }} stroke="url(#map-gold)" strokeWidth={1.4} vectorEffect="non-scaling-stroke" />
           <path data-map-outline d={g.state} fill="none" stroke="url(#map-gold)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
           <g data-pin transform={`translate(${g.pin[0]} ${g.pin[1]})`}>
-            <circle data-pulse r={14} fill="none" stroke="#E9C46A" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+            <circle data-pulse r={14} fill="none" strokeWidth={1.2} vectorEffect="non-scaling-stroke" style={{ stroke: 'var(--metal)' }} />
             <circle r={22} fill="url(#map-glow)" />
             <g data-pin-head>
-              <path d="M0 0 C -6 -8 -9 -12 -9 -16 a 9 9 0 0 1 18 0 c 0 4 -3 8 -9 16Z" fill="url(#map-gold)" stroke="#8A6418" strokeWidth={0.6} />
-              <circle cy={-16} r={3.2} fill="#07060A" />
+              <path d="M0 0 C -6 -8 -9 -12 -9 -16 a 9 9 0 0 1 18 0 c 0 4 -3 8 -9 16Z" fill="url(#map-gold)" strokeWidth={0.6} style={{ stroke: 'var(--metal-lo)' }} />
+              <circle cy={-16} r={3.2} style={{ fill: 'var(--bg)' }} />
             </g>
           </g>
         </g>

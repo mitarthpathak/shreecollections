@@ -13,8 +13,13 @@ import sharp from 'sharp';
 const root = new URL('../', import.meta.url);
 const products = JSON.parse(readFileSync(new URL('data/products.json', root), 'utf8'));
 
-const W = 900;
+// 4:5, the shape of the product photos (docs/photo-guide.md).
+const W = 960;
 const H = 1200;
+/** Product placeholders sit on an ivory wall: lighter floor shadows and arch (see wrap). */
+let PAPER = false;
+const shadowA = (a) => (PAPER ? +(a * 0.4).toFixed(2) : a);
+
 const GOLD = { g100: '#FFF1C1', g300: '#E9C46A', g500: '#C9962E', g700: '#8A6418' };
 
 // ---------- tiny utils ----------
@@ -71,6 +76,11 @@ const goldDefs = `
     <stop offset="0" stop-color="#2a1d12"/>
     <stop offset="0.55" stop-color="#120E0A"/>
     <stop offset="1" stop-color="#07060A"/>
+  </radialGradient>
+  <radialGradient id="paper" cx="0.5" cy="0.36" r="0.8">
+    <stop offset="0" stop-color="#F7F0E2"/>
+    <stop offset="0.6" stop-color="#EFE4CF"/>
+    <stop offset="1" stop-color="#E2D3B6"/>
   </radialGradient>
   <radialGradient id="spot" cx="0.5" cy="0.3" r="0.6">
     <stop offset="0" stop-color="#FFE7B0" stop-opacity="0.22"/>
@@ -247,25 +257,31 @@ function frame() {
 function arch() {
   const x0 = 140, x1 = W - 140, top = 150, bottom = H - 120, mid = W / 2;
   const d = `M${x0},${bottom} L${x0},${top + 260} C${x0},${top + 120} ${mid - 140},${top + 60} ${mid},${top} C${mid + 140},${top + 60} ${x1},${top + 120} ${x1},${top + 260} L${x1},${bottom}`;
-  return `<path d="${d}" fill="#000" fill-opacity="0.25" stroke="${GOLD.g500}" stroke-opacity="0.45" stroke-width="2"/>
+  return `<path d="${d}" fill="#000" fill-opacity="${PAPER ? 0.04 : 0.25}" stroke="${GOLD.g500}" stroke-opacity="0.45" stroke-width="2"/>
     <path d="${d}" transform="translate(${W / 2},${H / 2}) scale(0.96) translate(${-W / 2},${-H / 2})" fill="none" stroke="${GOLD.g700}" stroke-opacity="0.5" stroke-width="1"/>`;
 }
 
-function wrap(inner, defs = '') {
+/**
+ * Lookbook art: the dark studio with a gold frame. Product placeholders (`paper: true`): the
+ * piece on an ivory wall in daylight, no frame — the way the real product photos are shot
+ * (docs/photo-guide.md), so placeholders and photos sit together in both themes.
+ */
+function wrap(inner, defs = '', { paper = false } = {}) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>${goldDefs}${defs}</defs>
-  <rect width="${W}" height="${H}" fill="url(#bg)"/>
-  <rect width="${W}" height="${H}" fill="url(#spot)"/>
+  <rect width="${W}" height="${H}" fill="url(#${paper ? 'paper' : 'bg'})"/>
+  ${paper ? '' : `<rect width="${W}" height="${H}" fill="url(#spot)"/>`}
   ${inner}
   <rect width="${W}" height="${H}" filter="url(#grain)"/>
-  ${frame()}
+  ${paper ? '' : frame()}
 </svg>`;
 }
 
 // ---------- compositions ----------
 function hangingSaree(p, ox = 0, scale = 1, idp = '') {
   // Fabric hung from a gold rod, falling in folds, with a wavy hem and a zari pallu band.
-  const L = 210 * scale + ox, R = 690 * scale + ox;
+  const cx = (W - 900) / 2; // drawn on a 900px-wide grid; centre it on the canvas
+  const L = 210 * scale + ox + cx, R = 690 * scale + ox + cx;
   const top = 230 * scale + (1 - scale) * 200, hem = top + 760 * scale;
   const r = rng(p.slug + 'hem' + idp);
   let hemPath = `L${R},${hem}`;
@@ -281,7 +297,7 @@ function hangingSaree(p, ox = 0, scale = 1, idp = '') {
     <defs>${patternDef(p, 'fab' + idp)}${foldsGradient('folds' + idp, p.slug, 11)}
       <linearGradient id="rodShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0.45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
       <clipPath id="clip${idp}"><path d="${body}"/></clipPath></defs>
-    <ellipse cx="${(L + R) / 2}" cy="${hem + 40 * scale}" rx="${(R - L) * 0.55}" ry="${26 * scale}" fill="#000" opacity="0.6" filter="url(#soft)"/>
+    <ellipse cx="${(L + R) / 2}" cy="${hem + 40 * scale}" rx="${(R - L) * 0.55}" ry="${26 * scale}" fill="#000" opacity="${shadowA(0.6)}" filter="url(#soft)"/>
     <g clip-path="url(#clip${idp})">
       <rect x="${L - 20}" y="${top}" width="${R - L + 40}" height="${hem - top + 60}" fill="url(#fab${idp})"/>
       ${zariBand(L - 20, bandY, R - L + 40, 120 * scale, p, 'band' + idp)}
@@ -338,7 +354,8 @@ function garmentFlat(p) {
       <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.16"/><stop offset="0.5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.3"/></linearGradient>
     </defs>
     ${arch()}
-    <ellipse cx="450" cy="1150" rx="250" ry="22" fill="#000" opacity="0.7" filter="url(#soft)"/>
+    <ellipse cx="${W / 2}" cy="1150" rx="250" ry="22" fill="#000" opacity="${shadowA(0.7)}" filter="url(#soft)"/>
+    <g transform="translate(${(W - 900) / 2} 0)">
     <g clip-path="url(#legs)"><rect x="200" y="600" width="500" height="560" fill="${p.subcategory === 'Sharara' || p.subcategory === 'Co-ord' ? 'url(#fab)' : legFill}"/><rect x="200" y="600" width="500" height="560" fill="url(#folds)"/></g>
     <g clip-path="url(#g)">
       <rect x="200" y="200" width="500" height="900" fill="url(#fab)"/>
@@ -352,7 +369,9 @@ function garmentFlat(p) {
     <path d="M352,252 C300,420 282,700 316,1010 L384,1020 C350,720 364,440 404,262 Z" fill="${mix(p.colorHex, GOLD.g300, 0.25)}" fill-opacity="0.5"/>
     <path d="M352,252 C300,420 282,700 316,1010" fill="none" stroke="url(#gold)" stroke-width="3"/>
     <path d="M404,262 C364,440 350,720 384,1020" fill="none" stroke="url(#gold)" stroke-width="2" stroke-dasharray="3 7"/>
-    <path d="M316,1010 L384,1020" stroke="url(#gold)" stroke-width="6"/>`;
+    <path d="M316,1010 L384,1020" stroke="url(#gold)" stroke-width="6"/>
+    </g>
+  `;
 }
 
 function fabricDetail(p) {
@@ -378,7 +397,7 @@ function foldedStack(list, unstitched = false) {
     const x = (W - w) / 2 + (i % 2 ? 16 : -12);
     const y = 900 - (i + 1) * (h + 12) + (n < 4 ? -40 : 150);
     out += `
-      <ellipse cx="${x + w / 2}" cy="${y + h + 8}" rx="${w * 0.52}" ry="14" fill="#000" opacity="0.55" filter="url(#soft)"/>
+      <ellipse cx="${x + w / 2}" cy="${y + h + 8}" rx="${w * 0.52}" ry="14" fill="#000" opacity="${shadowA(0.55)}" filter="url(#soft)"/>
       <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="url(#fab${i})"/>
       ${zariBand(x, y + h - 34, w, 34, p, 'b' + i)}
       <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="url(#bg)" opacity="0.18"/>
@@ -416,17 +435,22 @@ async function write(svg, path, w = W, h = H) {
 }
 
 async function main() {
+  PAPER = true;
   for (const p of products) {
     const dir = new URL(`public/products/${p.slug}/`, root);
     mkdirSync(dir, { recursive: true });
     const first = p.category === 'saree' ? hangingSaree(p) : garmentFlat(p);
-    await write(wrap(first), new URL('1.webp', dir).pathname);
-    await write(wrap(fabricDetail(p)), new URL('2.webp', dir).pathname);
-    await write(wrap(foldedStack([p, { ...p, colorHex: shade(p.colorHex, -0.15), slug: p.slug + 'x' }, p])), new URL('3.webp', dir).pathname);
+    const paper = { paper: true };
+    await write(wrap(first, '', paper), new URL('1.webp', dir).pathname);
+    await write(wrap(fabricDetail(p), '', paper), new URL('2.webp', dir).pathname);
+    await write(wrap(foldedStack([p, { ...p, colorHex: shade(p.colorHex, -0.15), slug: p.slug + 'x' }, p]), '', paper), new URL('3.webp', dir).pathname);
     const tile = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><defs>${goldDefs}${patternDef(p)}</defs><rect width="512" height="512" fill="url(#fab)"/></svg>`;
     await write(tile, new URL('fabric.webp', dir).pathname, 512, 512);
     process.stdout.write('.');
   }
+  // `npm run assets -- --products-only` leaves the lookbook images as they are.
+  PAPER = false;
+  if (process.argv.includes('--products-only')) return console.log('\nDone (products only)');
   const lb = new URL('public/lookbook/', root);
   mkdirSync(lb, { recursive: true });
   for (let i = 0; i < 8; i++) await write(lookbook(i, products), new URL(`look-${i + 1}.webp`, lb).pathname);

@@ -111,3 +111,14 @@ export const IconFilter = ({ size, ...p }: P) => (
     <path d="M4 6h16M7 12h10M10 18h4" />
   </svg>
 );
+export const IconSun = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+  </svg>
+);
+export const IconMoon = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M19.5 14.8A7.8 7.8 0 0 1 9.2 4.5a7.8 7.8 0 1 0 10.3 10.3Z" />
+  </svg>
+);

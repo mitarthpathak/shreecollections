@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Lightformer, PerformanceMonitor } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { easing } from 'maath';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { film } from './state';
 import { rail, railT, cameraFov } from './rail';
 import { TickerDriver } from './TickerDriver';
@@ -12,16 +12,24 @@ import { Shot } from './Shot';
 import { HeroCoin } from './shots/HeroCoin';
 import { Thread } from './shots/Thread';
 import { Dust } from './shots/Dust';
-import { Silk } from './shots/Silk';
-import { Ribbon } from './shots/Ribbon';
-import { Feather } from './shots/Feather';
-import { Matki } from './shots/Matki';
-import { LookbookWall } from './shots/LookbookWall';
-import { Knot } from './shots/Knot';
 import { glowTexture } from './textures';
-import { TIER_SETTINGS } from '@/lib/tier';
+import { TIER_SETTINGS, dprCap } from '@/lib/tier';
 import { useUI, type Tier } from '@/lib/store';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
+import type { BloomEffect } from 'postprocessing';
+import { onThemeChange, readSceneTheme, sceneTheme, setSceneBg, stepSceneTheme } from './sceneTheme';
+
+// Each chapter's scene is its own chunk, loaded when its Shot mounts (two chapters ahead).
+const Silk = lazy(() => import('./shots/Silk').then((m) => ({ default: m.Silk })));
+const Ribbon = lazy(() => import('./shots/Ribbon').then((m) => ({ default: m.Ribbon })));
+const Feather = lazy(() => import('./shots/Feather').then((m) => ({ default: m.Feather })));
+const Matki = lazy(() => import('./shots/Matki').then((m) => ({ default: m.Matki })));
+const LookbookWall = lazy(() => import('./shots/LookbookWall').then((m) => ({ default: m.LookbookWall })));
+const Knot = lazy(() => import('./shots/Knot').then((m) => ({ default: m.Knot })));
+
+/** The viewport height, cached: reading innerHeight every frame can force a layout. */
+const viewport = { h: typeof window === 'undefined' ? 0 : window.innerHeight };
+if (typeof window !== 'undefined') window.addEventListener('resize', () => (viewport.h = window.innerHeight), { passive: true });
 
 /** How far the knot sits in front of the camera at the end of the film (see shots/Knot). */
 const KNOT_DEPTH = 6.5;
@@ -61,7 +69,9 @@ function CameraRig() {
  * When that layout settles somewhere new (resize, fonts, language), rebuild the thread.
  */
 function useCoinLayoutKey() {
-  const sig = () => `${Math.round(film.coin.x)}|${Math.round(film.coin.y)}|${Math.round(film.coin.r)}|${window.innerWidth}|${window.innerHeight}`;
+  // Coin slot only. Not the viewport height: a phone's URL bar showing / hiding changes it on
+  // every scroll, and each change rebuilt the 1,200–1,800-segment thread.
+  const sig = () => `${Math.round(film.coin.x)}|${Math.round(film.coin.y)}|${Math.round(film.coin.r)}`;
   const [key, setKey] = useState(sig);
   useEffect(() => {
     let last = key;
@@ -77,6 +87,28 @@ function useCoinLayoutKey() {
   }, []);
   return key;
 }
+
+/**
+ * Follows the theme: clear colour, fog and bloom ease to the active theme's values in place
+ * (the renderer and scenes are never recreated). Mounted first, so shots read eased values.
+ */
+function ThemeDriver({ bloom }: { bloom: React.RefObject<BloomEffect | null> }) {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    readSceneTheme();
+    return onThemeChange(readSceneTheme);
+  }, []);
+  useFrame((_, dt) => {
+    if (film.bgReady) setSceneBg(film.bg);
+    stepSceneTheme(dt);
+    gl.setClearColor(sceneTheme.bg, 1);
+    if (scene.fog) (scene.fog as THREE.Fog).color.copy(sceneTheme.bg);
+    if (bloom.current) bloom.current.intensity = BLOOM * sceneTheme.bloom;
+  });
+  return null;
+}
+
+const BLOOM = 0.7;
 
 function ExposeForDebug() {
   const state = useThree();
@@ -141,11 +173,14 @@ function Ready({ onReady }: { onReady: () => void }) {
 
 export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => void }) {
   const s = TIER_SETTINGS[tier];
-  const [dpr, setDpr] = useState(s.dpr[1]);
+  const [dpr, setDpr] = useState(() => Math.min(s.dpr[1], dprCap()));
+  // phones: fewer particles, a lighter thread and fewer coins
+  const m = film.mobile;
   const glow = useMemo(() => (tier === 2 ? glowTexture() : null), [tier]);
   // Film remounts the stage when film.mobile flips (rotation), so these are read once per mount.
   const lookbook3D = tier >= 2 && !film.mobile;
   const threadKey = useCoinLayoutKey();
+  const bloom = useRef<BloomEffect | null>(null);
 
   return (
     <Canvas
@@ -155,14 +190,20 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
       gl={{ antialias: !film.mobile && tier >= 2, powerPreference: 'high-performance', stencil: false, alpha: false }}
       camera={{ fov: cameraFov(film.mobile), near: 0.1, far: 60, position: [0, 0, 5.6] }}
       onCreated={({ gl }) => {
-        gl.setClearColor(palette.raat, 1);
+        gl.setClearColor(getThemeColor('--chapter-bg', { fresh: true }), 1);
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
+        // three.js reads every shader's info log right after compiling it, which forces the
+        // compile to finish on the main thread (~1 s of stalls while scrolling into new
+        // chapters). In production let the driver compile in parallel instead.
+        gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production';
       }}
       aria-hidden
       style={{ pointerEvents: 'none' }}
     >
-      <TickerDriver active={() => !film.covered} />
+      <ThemeDriver bloom={bloom} />
+      {/* nothing to draw while a drawer covers it, the tab is hidden, or the footer fills the screen */}
+      <TickerDriver active={() => !film.covered && !document.hidden && film.footerRise < viewport.h - 2} />
       <PerformanceMonitor
         flipflops={3}
         onDecline={() => setDpr((d) => Math.max(1, +(d - 0.25).toFixed(2)))}
@@ -176,20 +217,20 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
           }
         }}
       />
-      <fog attach="fog" args={[palette.raat, 9, 26]} />
+      <fog attach="fog" args={[getThemeColor('--chapter-bg', { fresh: true }), 9, 26]} />
       <ambientLight intensity={0.25} />
-      <directionalLight position={[3, 4, 5]} intensity={2.2} color="#FFE2A8" />
-      <directionalLight position={[-4, -1, -3]} intensity={1.4} color={palette.mor} />
+      <directionalLight position={[3, 4, 5]} intensity={2.2} color={getThemeColor('--pigment-light-warm')} />
+      <directionalLight position={[-4, -1, -3]} intensity={1.4} color={getThemeColor('--mor')} />
       <Environment resolution={tier === 3 ? 256 : 64} frames={1}>
-        <Lightformer form="rect" intensity={3} position={[0, 3, 4]} scale={[8, 1.5, 1]} color="#FFE7B0" />
-        <Lightformer form="rect" intensity={1.2} position={[-5, 0, 0]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} color={palette.gold500} />
-        <Lightformer form="ring" intensity={1.5} position={[4, -1, 2]} scale={2} color={palette.mor} />
-        <Lightformer form="rect" intensity={0.6} position={[0, -4, 0]} rotation-x={-Math.PI / 2} scale={[10, 10, 1]} color="#2a1d12" />
+        <Lightformer form="rect" intensity={3} position={[0, 3, 4]} scale={[8, 1.5, 1]} color={getThemeColor('--pigment-light-soft')} />
+        <Lightformer form="rect" intensity={1.2} position={[-5, 0, 0]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} color={getThemeColor('--gold-500')} />
+        <Lightformer form="ring" intensity={1.5} position={[4, -1, 2]} scale={2} color={getThemeColor('--mor')} />
+        <Lightformer form="rect" intensity={0.6} position={[0, -4, 0]} rotation-x={-Math.PI / 2} scale={[10, 10, 1]} color={getThemeColor('--pigment-light-ground')} />
       </Environment>
 
       <CameraRig />
-      <Dust count={s.dust} />
-      <Thread key={threadKey} segments={tier === 3 ? 1800 : tier === 2 ? 1200 : 700} glowSprite={glow} />
+      <Dust count={m ? Math.round(s.dust * 0.4) : s.dust} />
+      <Thread key={threadKey} segments={tier === 3 ? 1800 : tier === 2 ? (m ? 800 : 1200) : 600} glowSprite={glow} />
 
       <Shot index={0} near={1}>
         <HeroCoin />
@@ -207,7 +248,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
         <Silk index={6} mode="tint" segments={Math.round(s.silk * 0.75)} />
       </Shot>
       <Shot index={7}>
-        <Matki coins={tier === 3 ? 64 : tier === 2 ? 40 : 24} />
+        <Matki coins={tier === 3 ? 64 : tier === 2 ? (m ? 28 : 40) : 20} />
       </Shot>
       {lookbook3D && (
         <Shot index={8}>
@@ -220,7 +261,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
 
       {s.post && (
         <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur luminanceThreshold={0.85} luminanceSmoothing={0.2} intensity={0.7} radius={0.7} />
+          <Bloom ref={bloom} mipmapBlur luminanceThreshold={0.85} luminanceSmoothing={0.2} intensity={BLOOM} radius={0.7} />
         </EffectComposer>
       )}
       <Ready onReady={onReady} />

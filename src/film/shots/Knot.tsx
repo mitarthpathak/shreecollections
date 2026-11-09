@@ -1,13 +1,13 @@
 'use client';
 import * as THREE from 'three';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { film } from '../state';
 import { anchor } from '../rail';
 import glyph from '../shri-glyph.json';
-import { palette } from '@/lib/palette';
+import { getThemeColor } from '@/lib/theme';
 
 /**
  * The knot: the thread coils back into the badge ring, and a giant श्री in gold foil —
@@ -25,8 +25,10 @@ export function Knot() {
     const s = 2.3 / (glyph.box.maxX - glyph.box.minX);
     merged.scale(s, -s, s); // SVG y-down → three y-up
     merged.computeVertexNormals();
+    if (merged !== g) g.dispose();
     return merged;
   }, []);
+  useEffect(() => () => geo.dispose(), [geo]);
   const shri = useRef<THREE.Mesh>(null);
   const ring = useRef<THREE.Mesh>(null);
   const light = useRef<THREE.PointLight>(null);
@@ -53,13 +55,13 @@ export function Knot() {
 
   return (
     <group>
-      <pointLight ref={light} intensity={18} distance={8} color="#FFE7B0" />
+      <pointLight ref={light} intensity={18} distance={8} color={getThemeColor('--pigment-light-soft')} />
       <mesh ref={ring} position={pos}>
         <torusGeometry args={[1.75, 0.035, 16, 160]} />
-        <meshPhysicalMaterial color={palette.gold300} metalness={1} roughness={0.18} clearcoat={1} emissive={palette.gold700} emissiveIntensity={0.4} />
+        <meshPhysicalMaterial color={getThemeColor('--gold-300')} metalness={1} roughness={0.18} clearcoat={1} emissive={getThemeColor('--gold-700')} emissiveIntensity={0.4} />
       </mesh>
       <mesh ref={shri} geometry={geo} position={[pos.x, pos.y + 0.05, pos.z]}>
-        <meshPhysicalMaterial color={palette.gold300} metalness={1} roughness={0.16} clearcoat={1} clearcoatRoughness={0.08} envMapIntensity={1.8} />
+        <meshPhysicalMaterial color={getThemeColor('--gold-300')} metalness={1} roughness={0.16} clearcoat={1} clearcoatRoughness={0.08} envMapIntensity={1.8} />
       </mesh>
     </group>
   );
