@@ -155,7 +155,7 @@ export function Sarees() {
         <div className="px-5">
           {SAREES.slice(0, STACK).map((p, i) => (
             <div key={p.slug} data-stack className="sticky pb-6" style={{ top: `calc(var(--header-h) + ${i * STACK_STEP}px)` }}>
-              <div className="mx-auto origin-top rounded-[22px] bg-bg/60 p-2" style={{ maxWidth: STACK_MAX_W }}>
+              <div className="mx-auto origin-top rounded-[22px] bg-bg p-2 shadow-[0_-12px_30px_-18px_var(--shadow)]" style={{ maxWidth: STACK_MAX_W }}>
                 <Slide p={p} />
               </div>
             </div>

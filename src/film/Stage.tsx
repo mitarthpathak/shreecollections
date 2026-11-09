@@ -52,9 +52,11 @@ function CameraRig() {
     rail.getPoint(t.current, pos);
     rail.getPoint(Math.min(1, t.current + 0.03), look);
     if (t.current > 0.97) look.copy(pos).add(new THREE.Vector3(0, 0, -6));
-    const px = film.mobile ? 0 : film.pointer.x * 0.18;
-    const py = film.mobile ? 0 : film.pointer.y * 0.12;
-    easing.damp3(base, [pos.x + px, pos.y + py, pos.z], 0.12, dt);
+    // a gentle parallax with the mouse (desktop); flat again when it leaves the page
+    const follow = !film.mobile && film.pointer.inside;
+    const px = follow ? film.pointer.x * 0.04 : 0;
+    const py = follow ? film.pointer.y * 0.025 : 0;
+    easing.damp3(base, [pos.x + px, pos.y + py, pos.z], 0.3, dt);
     easing.damp3(target, look, 0.18, dt);
     const cam = s.camera as THREE.PerspectiveCamera;
     const rise = film.footerRise > 0 ? (film.footerRise / s.size.height) * 2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * KNOT_DEPTH : 0;
@@ -137,7 +139,8 @@ function Capture() {
           hidden.push(o);
         }
       };
-      if (mode === 'bg' && coin) hide(coin);
+      // hide the coin's meshes, not its group: HeroCoin sets the group's visibility every frame
+      if (mode === 'bg' && coin) coin.traverse((o) => o !== coin && hide(o));
       if (mode === 'coin' && coin) {
         const keep = new Set<THREE.Object3D>();
         coin.traverse((o) => keep.add(o));
@@ -174,6 +177,18 @@ function Ready({ onReady }: { onReady: () => void }) {
 export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => void }) {
   const s = TIER_SETTINGS[tier];
   const [dpr, setDpr] = useState(() => Math.min(s.dpr[1], dprCap()));
+  // A lower resolution resizes every buffer (a visible hitch), so it happens once, straight to
+  // 1x, and only while the page is at rest — never in the middle of a scroll.
+  const wantLowDpr = useRef(false);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (wantLowDpr.current && Math.abs(film.velocity) < 0.05) {
+        wantLowDpr.current = false;
+        setDpr(1);
+      }
+    }, 300);
+    return () => window.clearInterval(id);
+  }, []);
   // phones: fewer particles, a lighter thread and fewer coins
   const m = film.mobile;
   const glow = useMemo(() => (tier === 2 ? glowTexture() : null), [tier]);
@@ -206,7 +221,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
       <TickerDriver active={() => !film.covered && !document.hidden && film.footerRise < viewport.h - 2} />
       <PerformanceMonitor
         flipflops={3}
-        onDecline={() => setDpr((d) => Math.max(1, +(d - 0.25).toFixed(2)))}
+        onDecline={() => void (dpr > 1 && (wantLowDpr.current = true))}
         onFallback={() => {
           const cur = useUI.getState().tier;
           if (cur > 1) {

@@ -49,7 +49,7 @@ export function KnotFooter() {
   });
   useEffect(() => () => void (film.footerRise = 0), []);
   return (
-    <footer ref={foot} className="relative z-10 border-t border-divider bg-bg/80 pb-tabbar">
+    <footer ref={foot} className="relative z-10 border-t border-divider bg-bg pb-tabbar">
       <FooterContent />
     </footer>
   );

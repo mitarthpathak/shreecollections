@@ -1,11 +1,11 @@
 import 'server-only';
 import { z } from 'zod';
 import raw from '../../data/products.json';
-import { ProductSchema } from './catalog.schema';
+import { CatalogProductSchema } from './catalog.schema';
 
 /** Throws at build / render time if data/products.json is malformed. Server-only: Zod never ships to the browser. */
 export function validateCatalog() {
-  const parsed = z.array(ProductSchema).safeParse(raw);
+  const parsed = z.array(CatalogProductSchema).safeParse(raw);
   if (!parsed.success) throw new Error(`data/products.json is invalid:\n${parsed.error.message}`);
   const slugs = new Set<string>();
   for (const p of parsed.data) {

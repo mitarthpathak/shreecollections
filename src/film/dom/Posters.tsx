@@ -6,6 +6,8 @@ import { CHAPTERS, type ChapterId } from '../chapters';
  * Never a blank screen.
  *
  * Raat (dark): the captured renders (made by hand with the debug `?capture` hook; dark only).
+ * The hero's frame has no coin: Hero draws the coin as a still in its slot (PosterCoin), at the
+ * size and place the 3D coin will take on this screen.
  * Kagaz (light): no light renders exist yet, so each chapter shows its tint with a gold line
  * motif instead of a black frame on an ivory page. (Owner / designer TODO: light posters.)
  */
@@ -41,14 +43,7 @@ export function Posters({ hidden }: { hidden: boolean }) {
 
 /** One line drawing per chapter, in the spirit of its 3D shot. */
 const MOTIF: Record<ChapterId, React.ReactNode> = {
-  hero: (
-    <>
-      <circle cx="100" cy="100" r="78" />
-      <circle cx="100" cy="100" r="70" strokeWidth="0.4" />
-      <ellipse cx="100" cy="64" rx="9" ry="13" />
-      <ellipse cx="100" cy="64" rx="4" ry="6" />
-    </>
-  ),
+  hero: null, // the coin itself is drawn by Hero (PosterCoin)
   thread: <path d="M20 150 C 60 40, 90 170, 120 90 S 170 40, 185 70" />,
   weave: (
     <>
