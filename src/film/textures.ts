@@ -31,7 +31,7 @@ export function sareeTexture(size = 1024) {
 /** The badge face. Uses the owner's artwork when available; otherwise a typographic stand-in. */
 export async function badgeTexture(size = 1024): Promise<THREE.Texture> {
   if (brand.logo.hasArtwork) {
-    const t = await new THREE.TextureLoader().loadAsync(brand.logo.src);
+    const t = await new THREE.TextureLoader().loadAsync(brand.logo.coin);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
   }

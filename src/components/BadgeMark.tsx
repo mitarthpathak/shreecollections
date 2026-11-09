@@ -4,10 +4,9 @@ import { brand } from '@/brand.config';
 import { PEACOCK_EYE } from '@/film/peacock';
 
 /**
- * The circular badge. With the owner's corrected artwork in /public/brand/logo.png
- * (brand.logo.hasArtwork = true) it shows that image untouched. Until then it shows a
- * typographic stand-in: gold ring, a mor pankh eye, श्री and COLLECTION. It never
- * redraws the Krishna illustration, and never shows the GARAIENTS tagline.
+ * The circular badge. With the owner's artwork (brand.logo.hasArtwork) it shows that image
+ * untouched; without it, a typographic stand-in: gold ring, a mor pankh eye, श्री and
+ * COLLECTION. It never redraws the Krishna illustration.
  */
 export function BadgeMark({ size = 44, className = '', priority = false }: { size?: number; className?: string; priority?: boolean }) {
   // Per-instance gradient ids: a shared id resolves to the first copy in the document,
