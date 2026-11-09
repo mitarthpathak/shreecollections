@@ -59,6 +59,30 @@ function NewArrivals({
   );
 }
 
+/**
+ * The coin as a still, in the coin's slot, until the 3D stage is up (and for good without WebGL
+ * or with reduced motion): the same face as the 3D coin, in a gold rim. It fades out as the 3D
+ * coin fades in on top of it, so there is only ever one coin.
+ */
+function PosterCoin() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute z-0 rounded-full p-[calc(var(--slot-r,0px)*0.07)] shadow-[0_30px_80px_-30px_var(--shadow)] transition-opacity duration-1000 [[data-stage-ready=true]_&]:opacity-0"
+      style={{
+        left: 'calc(var(--slot-x, 0px) - var(--slot-r, 0px))',
+        top: 'calc(var(--slot-y, 0px) - var(--slot-r, 0px))',
+        width: 'calc(var(--slot-r, 0px) * 2)',
+        height: 'calc(var(--slot-r, 0px) * 2)',
+        background: 'radial-gradient(circle at 35% 30%, var(--gold-100), var(--gold-300) 35%, var(--gold-500) 65%, var(--gold-700))',
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- sized by CSS variables; one small webp */}
+      <img src={brand.logo.coin} alt="" decoding="async" className="h-full w-full rounded-full" />
+    </div>
+  );
+}
+
 /** The hero drape video in the coin's slot: muted, looped, inline; loaded only after the page is up. */
 function HeroVideo({ media }: { media: NonNullable<HeroMedia> }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -228,7 +252,7 @@ export function Hero({ introDone, media = null }: { introDone: boolean; media?: 
   return (
     <Section index={0} ref={root}>
       <div data-hero-stage className="sticky top-0 h-svh overflow-hidden">
-        {media && <HeroVideo media={media} />}
+        {media ? <HeroVideo media={media} /> : brand.logo.hasArtwork && <PosterCoin />}
         {/* copy sits at the bottom on portrait screens (the coin above it), centred beside the coin on landscape ones */}
         <div
           data-hero-copy

@@ -137,7 +137,8 @@ function Capture() {
           hidden.push(o);
         }
       };
-      if (mode === 'bg' && coin) hide(coin);
+      // hide the coin's meshes, not its group: HeroCoin sets the group's visibility every frame
+      if (mode === 'bg' && coin) coin.traverse((o) => o !== coin && hide(o));
       if (mode === 'coin' && coin) {
         const keep = new Set<THREE.Object3D>();
         coin.traverse((o) => keep.add(o));
