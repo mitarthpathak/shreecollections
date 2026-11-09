@@ -5,6 +5,7 @@ import { range } from 'd3-array';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
+import '@/lib/gsap-draw';
 import { film } from '../state';
 
 /** Procedural mandala + paisley line-art, drawn with d3.lineRadial + curveCardinalClosed. */

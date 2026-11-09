@@ -22,7 +22,8 @@ protection, so it asks for a Vercel login).
 | 5 Home film | `57045f5` | Chapter colour journey (`--chapter-bg` + WebGL clear colour), smaller coin with a media slot for `hero-drape.mp4`, one crisp peacock-eye geometry (coin, logo, Mor Pankh), "New arrivals" rail filling the empty beat after the hero, flat headings with one italic gold accent word, fabric texture pipeline (`public/textures/<fabric>/`) and better procedural Bandhani / Leheriya. |
 | 6 Performance | `c89d935` | Fixed the leak behind the frozen home tab, the thread rebuild on every Android URL-bar change (and its undisposed GPU buffers), synchronous shader checks; DPR caps (1.5 / 1.25), lighter 3D on phones, pause when hidden / covered, lazily imported chapter scenes, inlined critical CSS. |
 | 7 Launch fixes | `19f7204` | Site URL from `NEXT_PUBLIC_SITE_URL` → Vercel production URL → `https://shreecollections.vercel.app`; one brand config, unknown values hidden (no placeholders anywhere); `whatsappLink()` with an Instagram DM fallback. |
-| 8 QA + report | this commit | This report; full QA matrix (below). |
+| 8 QA + report | `3ee358e` | This report; full QA matrix (below). |
+| Perf follow-up | see `git log` | Film chapters and GSAP plugins code-split, chapter chunks after first paint, lighter HTML (below). |
 
 ## Performance, before → after
 
@@ -42,6 +43,37 @@ real-device numbers.
 | … CLS | 0.001 | 0.003 |
 | … TBT | ~6.6 s | ~6.5 s |
 | Lighthouse mobile (default simulated throttling): LCP | ~7–9 s | ~8–9 s |
+
+### Follow-up: code-splitting the film for LCP
+
+- Every chapter after the hero is its own lazily loaded chunk (`src/film/dom/lazyChapters.tsx`),
+  requested **after the first frame is painted**. Chapters are still server-rendered in place (no
+  Suspense boundaries, so React doesn't stream them out of order or hide them without
+  JavaScript); the film's scroll triggers attach to stable `data-chapter-slot` wrappers.
+- GSAP keeps only the core, ScrollTrigger and useGSAP in the shared module; Flip, DrawSVG,
+  SplitText and the `silk` CustomEase load where they are used (shop / bag / Rang Chakra,
+  intro / mandala / map / add-to-bag, hero intro, Weave / Rang Chakra). The add-to-bag thread
+  (d3-shape + DrawSVG) loads on the first add.
+- The New arrivals rail mounts its cards just before it rises in (or in idle time after load),
+  so its images aren't requested with the first paint; the hidden light-theme hero poster and a
+  below-the-fold `priority` image no longer compete with it either.
+- Mukta loads at 400 only (−67 KB of font before first paint); image `srcset`s list 10 widths
+  instead of 15 (smaller HTML).
+
+| Measure (home page) | Before | After |
+|---|---|---|
+| First-load JS (uncompressed, `route-bundle-stats`) | 916,740 B | **733,734 B** (−20%) |
+| Script tags in the HTML | 17 | 12 |
+| D3, chapter code, Flip / DrawSVG / SplitText before first paint | yes | none |
+| Real Chrome, Pixel 7 profile, 4x CPU: FCP / LCP | ~0.55 s | ~0.4–0.6 s, chapter chunks only after it |
+| Lighthouse mobile, default simulated, behind Brotli (as on Vercel): LCP | ~7–9 s | **4.4–4.7 s** |
+| … FCP / Speed Index / TBT | 2.7 s / 6.6–7.8 s / 2.3–3.7 s | 2.1 s / 3.8–3.9 s / 1.3–1.8 s |
+| … performance score | ~35 | ~55 |
+| Lighthouse mobile, applied throttling: LCP | 1.9 s | **1.7 s** (2.0 s behind the Brotli proxy) |
+| Film scroll (Pixel 7, 4x CPU, software GL): long tasks / median frame | 21 / 67 ms | 9 / 50 ms |
+
+Inlined CSS was kept: without it the simulated LCP is ~0.3 s lower but the applied-throttling LCP
+rises to 2.5–2.6 s, because the stylesheet becomes a render-blocking request again.
 
 Root causes fixed: the Visit chapter's ScrollTrigger lived outside any GSAP context (a full
 detached copy of the film per visit, plus an infinite tween inside a scrubbed timeline); the
@@ -85,10 +117,12 @@ eye, the knot.
 
 ## Known issues
 
-- **Lighthouse's simulated LCP is still ~8 s.** The observed LCP is 1.0 s (1.9 s with applied
-  mobile throttling); Lighthouse's model charges the ~330 KB (gzipped) of framework, GSAP and
-  Lenis JavaScript that loads before it at 4× CPU. The next step is code-splitting the film's
-  below-the-fold chapters so their JS loads after first paint.
+- **Lighthouse's simulated LCP is 4.4–4.7 s here** (was ~8 s). With applied mobile throttling
+  it is 1.7–2.0 s, and real Chrome paints the hero at ~0.5 s. The simulation works from
+  Lighthouse's own unthrottled pass, which in this container first paints at ~1.1 s (vs ~0.2 s
+  without Lighthouse attached) and counts everything requested before that — React/Next, GSAP,
+  Lenis and the fonts. Re-check with PageSpeed Insights on the deployed URL (the preview is behind
+  Vercel's login); what remains is mostly the framework itself.
 - **TBT is high** (~6.5 s with applied throttling): hydration of the film plus the 3D stage
   booting in idle time after load (deliberately before the first scroll, so scrolling stays smooth).
 - **Frame rate on a real mid-range Android is unmeasured**: this container renders WebGL in

@@ -20,8 +20,10 @@ export function Posters({ hidden }: { hidden: boolean }) {
             <img
               src={`/posters/d-${c.id}.webp`}
               alt=""
-              loading={i === 0 ? 'eager' : 'lazy'}
-              fetchPriority={i === 0 ? 'high' : 'low'}
+              // lazy even for the hero: in the light theme the render is display:none and must not
+              // compete with first paint; in the dark one it is in view and loads at once
+              loading="lazy"
+              fetchPriority={i === 0 ? 'auto' : 'low'}
               decoding="async"
               className="absolute inset-0 h-full w-full object-cover"
             />

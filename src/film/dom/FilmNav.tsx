@@ -28,7 +28,8 @@ export function FilmNav() {
   useEffect(() => () => void delete document.documentElement.dataset.chapterActive, []);
 
   const go = (id: string) => {
-    const el = document.getElementById(`ch-${id}`);
+    // the chapter's slot: present even while a lazily loaded chapter is still a placeholder
+    const el = document.querySelector<HTMLElement>(`[data-chapter-slot="${id}"]`);
     if (!el) return;
     const lenis = getLenis();
     if (lenis) lenis.scrollTo(el, { duration: 1.6 });

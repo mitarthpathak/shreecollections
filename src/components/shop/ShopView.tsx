@@ -18,7 +18,8 @@ import { PriceHistogram } from './PriceHistogram';
 import { MiniChakra } from './MiniChakra';
 import { IconChevron, IconClose, IconFilter } from '../icons';
 import { useLang, useT } from '@/lib/i18n';
-import { gsap, Flip, prefersReducedMotion } from '@/lib/gsap';
+import { gsap, prefersReducedMotion } from '@/lib/gsap';
+import { Flip } from '@/lib/gsap-flip';
 import { lockScroll } from '@/lib/clock';
 import { trapFocus } from '../Header';
 

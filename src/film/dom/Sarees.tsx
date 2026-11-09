@@ -48,7 +48,6 @@ function Slide({ p, i }: { p: Product; i: number }) {
               fill
               sizes="(min-width: 768px) 34vw, 95vw"
               className="scale-[1.18] object-cover"
-              priority={i < 1}
             />
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-bg/80 to-transparent" />
           </div>

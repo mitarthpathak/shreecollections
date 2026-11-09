@@ -10,18 +10,8 @@ import { onFrame, getLenis } from '@/lib/clock';
 import { Preloader } from './dom/Preloader';
 import { FilmNav } from './dom/FilmNav';
 import { Posters } from './dom/Posters';
-import { prewarmCanvases } from './canvases';
 import { Hero } from './dom/Hero';
-import { Dhaaga } from './dom/Dhaaga';
-import { Weave } from './dom/Weave';
-import { Sarees } from './dom/Sarees';
-import { Mor } from './dom/Mor';
-import { Suits } from './dom/Suits';
-import { Chakra } from './dom/Chakra';
-import { Picks } from './dom/Picks';
-import { Lookbook } from './dom/Lookbook';
-import { Visit } from './dom/Visit';
-import { KnotChapter } from './dom/Knot';
+import { ChapterSlot, KnotFooter, chapter } from './dom/lazyChapters';
 
 // three.js and every shot load after first paint, during idle.
 const Stage = dynamic(() => import('./Stage'), { ssr: false });
@@ -72,7 +62,7 @@ export function Film({ heroMedia = null }: { heroMedia?: HeroMedia }) {
       if (started) return;
       started = true;
       off();
-      prewarmCanvases();
+      import('./canvases').then((m) => m.prewarmCanvases());
       ric(() => setLoadStage(true));
     };
     const events = ['pointermove', 'pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'] as const;
@@ -104,7 +94,9 @@ export function Film({ heroMedia = null }: { heroMedia?: HeroMedia }) {
   // Scroll state: ScrollTrigger + Lenis write `film`; nothing here calls setState.
   useGSAP(
     () => {
-      const sections = Array.from(root.current!.querySelectorAll<HTMLElement>('[data-chapter]'));
+      // the slots, not the chapters' own sections: a lazily loaded chapter replaces its
+      // placeholder section, but its slot stays the same element
+      const sections = Array.from(root.current!.querySelectorAll<HTMLElement>('[data-chapter-slot]'));
       const triggers = sections.map((el, i) =>
         ScrollTrigger.create({
           trigger: el,
@@ -242,17 +234,20 @@ export function Film({ heroMedia = null }: { heroMedia?: HeroMedia }) {
       <FilmNav />
       {DEBUG_BUILD && <Debug />}
       <div id="film" ref={root} data-stage-ready={stageReady && tier > 0} className="relative z-10" style={{ ['--chapters' as string]: CHAPTERS.length }}>
-        <Hero introDone={introDone} media={heroMedia} />
-        <Dhaaga />
-        <Weave />
-        <Sarees />
-        <Mor />
-        <Suits />
-        <Chakra />
-        <Picks />
-        <Lookbook wall3D={stageReady && tier >= 2 && !mobile} />
-        <Visit />
-        <KnotChapter />
+        <ChapterSlot index={0}>
+          <Hero introDone={introDone} media={heroMedia} />
+        </ChapterSlot>
+        <ChapterSlot index={1}><chapter.Dhaaga /></ChapterSlot>
+        <ChapterSlot index={2}><chapter.Weave /></ChapterSlot>
+        <ChapterSlot index={3}><chapter.Sarees /></ChapterSlot>
+        <ChapterSlot index={4}><chapter.Mor /></ChapterSlot>
+        <ChapterSlot index={5}><chapter.Suits /></ChapterSlot>
+        <ChapterSlot index={6}><chapter.Chakra /></ChapterSlot>
+        <ChapterSlot index={7}><chapter.Picks /></ChapterSlot>
+        <ChapterSlot index={8}><chapter.Lookbook wall3D={stageReady && tier >= 2 && !mobile} /></ChapterSlot>
+        <ChapterSlot index={9}><chapter.Visit /></ChapterSlot>
+        <ChapterSlot index={10}><chapter.Knot /></ChapterSlot>
+        <KnotFooter />
       </div>
     </>
   );

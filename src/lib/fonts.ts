@@ -7,7 +7,7 @@ import { Cinzel, Cormorant_Garamond, Manrope, Tiro_Devanagari_Hindi, Mukta } fro
 //   Cinzel 400            logo wordmark and the hero heading (48px and up)
 //   Cormorant Garamond 500 + italic   headings, product names, accent words
 //   Manrope 400 / 500     body, labels, filters, prices, buttons
-//   Tiro Devanagari Hindi Hindi headings · Mukta 400 / 500 Hindi body
+//   Tiro Devanagari Hindi Hindi headings · Mukta 400 Hindi body
 
 export const cinzel = Cinzel({
   subsets: ['latin'],
@@ -43,9 +43,11 @@ export const tiro = Tiro_Devanagari_Hindi({
   preload: false,
 });
 
+// One weight: Hindi UI text at 500 uses the 400 face (no synthesis below 600), saving ~67 KB
+// that was requested before first paint (the हिं switch, Hindi labels).
 export const mukta = Mukta({
   subsets: ['devanagari'],
-  weight: ['400', '500'],
+  weight: '400',
   variable: '--font-mukta',
   display: 'swap',
   preload: false,

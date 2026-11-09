@@ -8,7 +8,8 @@ import { formatINR } from '@/lib/format';
 import { useLang, useT } from '@/lib/i18n';
 import { contactChannel, copyForInstagram, orderMessage, whatsappLink } from '@/lib/whatsapp';
 import { ContactIcon } from './ContactIcon';
-import { gsap, Flip, prefersReducedMotion } from '@/lib/gsap';
+import { gsap, prefersReducedMotion } from '@/lib/gsap';
+import { Flip } from '@/lib/gsap-flip';
 import { useModal } from '@/lib/modal';
 import { IconClose, IconMinus, IconPlus } from './icons';
 

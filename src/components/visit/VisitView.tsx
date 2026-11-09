@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { RajasthanMap, MAP_CREDIT } from './RajasthanMap';
 import { StoreCard } from './StoreCard';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
+import '@/lib/gsap-draw';
 
 const K = 2.4;
 

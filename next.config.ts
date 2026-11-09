@@ -25,8 +25,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [360, 414, 640, 768, 1024, 1280, 1536, 1920],
-    imageSizes: [64, 96, 128, 200, 256, 320, 400],
+    // Fewer widths: every image's srcset lists them all, and the home page has dozens of images
+    // (smaller HTML). Phones at 2–3x still get a sharp size: cards ~538px, wide images ~1110px.
+    deviceSizes: [384, 640, 828, 1080, 1440, 1920],
+    imageSizes: [96, 184, 256, 384],
     qualities: [70, 75, 80],
   },
   turbopack: {

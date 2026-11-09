@@ -41,7 +41,10 @@ export function Preloader({ progress, onDone }: { progress: () => number; onDone
     const t0 = performance.now();
     const fill = el.querySelector<SVGRectElement>('[data-fill]')!;
     const ring = el.querySelector('[data-ring]')!;
-    gsap.fromTo(ring, { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.1, ease: 'power2.inOut' });
+    // DrawSVG loads with the intro (first visits only), not with every page
+    import('@/lib/gsap-draw').then(() => {
+      if (!done.current) gsap.fromTo(ring, { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.1, ease: 'power2.inOut' });
+    });
     gsap.fromTo('[data-pre-shri]', { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.9, delay: 0.35, ease: 'expo.out' });
     const shown = { v: 0 };
     const tick = () => {
