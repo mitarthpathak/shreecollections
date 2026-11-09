@@ -302,15 +302,15 @@ export function AdminApp() {
     >
       {/* overview: each number is a shortcut to that view */}
       <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat label="Sarees" value={stats.saree} on={f.cat === 'saree' && !f.type} onClick={() => update({ ...DEFAULTS, sort: f.sort, cat: 'saree' })} />
-        <Stat label="Suits" value={stats.suit} on={f.cat === 'suit' && !f.type} onClick={() => update({ ...DEFAULTS, sort: f.sort, cat: 'suit' })} />
-        <Stat label="Out of stock" value={stats.out} on={f.stock === 'out'} onClick={() => update({ stock: f.stock === 'out' ? 'all' : 'out' })} />
-        <Stat label="Without photos" value={stats.sample} on={f.photo === 'sample'} onClick={() => update({ photo: f.photo === 'sample' ? 'all' : 'sample' })} />
+        <Stat i={0} label="Sarees" value={stats.saree} on={f.cat === 'saree' && !f.type} onClick={() => update({ ...DEFAULTS, sort: f.sort, cat: 'saree' })} />
+        <Stat i={1} label="Suits" value={stats.suit} on={f.cat === 'suit' && !f.type} onClick={() => update({ ...DEFAULTS, sort: f.sort, cat: 'suit' })} />
+        <Stat i={2} label="Out of stock" value={stats.out} on={f.stock === 'out'} onClick={() => update({ stock: f.stock === 'out' ? 'all' : 'out' })} />
+        <Stat i={3} label="Without photos" value={stats.sample} on={f.photo === 'sample'} onClick={() => update({ photo: f.photo === 'sample' ? 'all' : 'sample' })} />
       </div>
 
-      {deploy && <DeployBanner deploy={deploy} />}
+      {deploy && <DeployBanner key={`${deploy.version}-${deploy.state}`} deploy={deploy} />}
       {notice && (
-        <p role={notice.tone === 'error' ? 'alert' : 'status'} className={`mb-4 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ${notice.tone === 'error' ? 'text-danger ring-danger' : 'text-fg ring-divider'}`}>
+        <p key={notice.text} role={notice.tone === 'error' ? 'alert' : 'status'} className={`adm-rise mb-4 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ${notice.tone === 'error' ? 'text-danger ring-danger' : 'text-fg ring-divider'}`}>
           {notice.text}
         </p>
       )}
@@ -397,10 +397,10 @@ export function AdminApp() {
             </span>
           </div>
 
-          <ul className="overflow-clip rounded-2xl bg-surface ring-1 ring-divider">
-            {rows.map((r) =>
+          <ul key={JSON.stringify({ ...f, q: '' })} className="overflow-clip rounded-2xl bg-surface ring-1 ring-divider">
+            {rows.map((r, idx) =>
               r.kind === 'group' ? (
-                <li key={`g-${r.key}`} className="flex items-center gap-3 border-b border-divider bg-surface-2 px-3 py-2">
+                <li key={`g-${r.key}`} style={{ ['--i' as string]: idx }} className="adm-rise flex items-center gap-3 border-b border-divider bg-surface-2 px-3 py-2">
                   <input
                     type="checkbox"
                     aria-label={`Select all ${r.label}`}
@@ -434,6 +434,7 @@ export function AdminApp() {
               ) : (
                 <Row
                   key={r.p.slug}
+                  i={idx}
                   p={r.p}
                   thumb={previews.get(productMedia(r.p)[0])}
                   selected={selected.has(r.p.slug)}
@@ -461,8 +462,8 @@ export function AdminApp() {
       {/* bulk actions for the selection */}
       {selected.size > 0 && (
         <div className="fixed inset-x-0 bottom-[calc(var(--tabbar-h)+var(--safe-b))] z-[60] px-3 pb-3 md:bottom-0">
-          <div className="panel mx-auto flex max-w-4xl flex-wrap items-center gap-2 rounded-3xl p-3">
-            <span className="px-2 text-sm font-medium text-fg">{selected.size} selected</span>
+          <div className="adm-rise adm-glass mx-auto flex max-w-4xl flex-wrap items-center gap-2 rounded-3xl p-3 shadow-[0_24px_60px_-24px_var(--shadow)] ring-1 ring-divider">
+            <span key={selected.size} className="adm-pop px-2 text-sm font-medium text-fg">{selected.size} selected</span>
             <button type="button" className="chip !min-h-10" disabled={busy} onClick={() => void bulk([...selected], { inStock: true }, 'marked in stock')}>In stock</button>
             <button type="button" className="chip !min-h-10" disabled={busy} onClick={() => void bulk([...selected], { inStock: false }, 'marked out of stock')}>Out of stock</button>
             <BadgeMenu busy={busy} onPick={(b, add) => void bulk([...selected], add ? { addBadge: b } : { removeBadge: b }, add ? `badge “${BADGE_LABEL[b]}” added` : `badge “${BADGE_LABEL[b]}” removed`)} />
@@ -491,6 +492,7 @@ export function AdminApp() {
 /* ───────────────────────── pieces ───────────────────────── */
 
 function Row({
+  i,
   p,
   thumb,
   selected,
@@ -500,6 +502,7 @@ function Row({
   onStock,
   onRemove,
 }: {
+  i: number;
   p: Product;
   thumb?: string;
   selected: boolean;
@@ -511,7 +514,7 @@ function Row({
 }) {
   const color = COLOR_FAMILIES[p.colorFamily]?.hex;
   return (
-    <li className={`grid scroll-mt-[calc(var(--header-h)+1rem)] scroll-mb-[calc(var(--tabbar-h)+5rem)] grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-divider p-3 last:border-b-0 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] ${selected ? 'bg-surface-2' : ''}`}>
+    <li style={{ ['--i' as string]: i }} className={`adm-rise adm-row grid scroll-mt-[calc(var(--header-h)+1rem)] scroll-mb-[calc(var(--tabbar-h)+5rem)] grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-divider p-3 last:border-b-0 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] ${selected ? 'bg-surface-2' : ''}`}>
       <input type="checkbox" aria-label={`Select ${p.name}`} className="size-5 accent-[var(--gold-text)]" checked={selected} onChange={(e) => onSelect(e.target.checked)} />
       <Thumb src={thumb ?? productMedia(p)[0]} local={Boolean(thumb)} />
       <div className="min-w-0">
@@ -569,9 +572,9 @@ function Shell({ children, actions, narrow }: { children: React.ReactNode; actio
   );
 }
 
-function Stat({ label, value, on, onClick }: { label: string; value: number; on: boolean; onClick: () => void }) {
+function Stat({ i, label, value, on, onClick }: { i: number; label: string; value: number; on: boolean; onClick: () => void }) {
   return (
-    <button type="button" aria-pressed={on} onClick={onClick} className={`rounded-2xl p-4 text-left ring-1 transition-colors ${on ? 'bg-cta-bg text-cta-text ring-cta-bg' : 'bg-surface text-fg ring-divider hover:bg-surface-2'}`}>
+    <button type="button" aria-pressed={on} onClick={onClick} style={{ ['--i' as string]: i }} className={`adm-rise adm-lift rounded-2xl p-4 text-left ring-1 ${on ? 'bg-cta-bg text-cta-text ring-cta-bg' : 'bg-surface text-fg ring-divider hover:bg-surface-2'}`}>
       <span className="block font-editorial text-3xl font-medium leading-none">{value.toLocaleString('en-IN')}</span>
       <span className={`mt-1 block text-xs ${on ? '' : 'text-fg-muted'}`}>{label}</span>
     </button>
@@ -634,7 +637,7 @@ function Login({ busy, error, onLogin }: { busy: boolean; error?: string; onLogi
   const [password, setPassword] = useState('');
   return (
     <form
-      className="panel grid gap-4 rounded-3xl p-6"
+      className="adm-rise panel grid gap-4 rounded-3xl p-6"
       onSubmit={(e) => {
         e.preventDefault();
         if (password) onLogin(password);
@@ -669,7 +672,7 @@ function DeployBanner({ deploy }: { deploy: Deploy }) {
           ? 'Saved. The site is updating (about 2 minutes)…'
           : 'Saved. The site will show it after the next update (about 2 minutes).';
   return (
-    <p role="status" className={`mb-4 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ${deploy.state === 'failure' ? 'text-danger ring-danger' : 'text-fg ring-divider'}`}>
+    <p role="status" className={`adm-rise mb-4 flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ${deploy.state === 'failure' ? 'text-danger ring-danger' : 'text-fg ring-divider'}`}>
       {text}
     </p>
   );

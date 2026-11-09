@@ -1,6 +1,8 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { holdScroll } from '@/lib/clock';
+import { prefersReducedMotion } from '@/lib/gsap';
 import { BADGES, COLOR_FAMILIES, FABRICS, OCCASIONS, OCCASION_LABEL, type Product } from '@/lib/catalog';
 import { preparePhoto, type PreparedPhoto } from './photos';
 
@@ -91,18 +93,50 @@ export function ProductEditor({
   );
   const uploadBytes = photos.reduce((n, p) => n + (p.upload?.bytes ?? 0), 0);
 
-  // a full-screen sheet: lock the page behind it, close on Escape
+  // Close with a short exit animation; never while a save is in flight.
+  const [closing, setClosing] = useState(false);
+  const live = useRef({ busy, onCancel });
   useEffect(() => {
-    const prev = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = 'hidden';
-    dialog.current?.querySelector<HTMLElement>('input, button')?.focus();
-    const key = (e: KeyboardEvent) => e.key === 'Escape' && !busy && onCancel();
+    live.current = { busy, onCancel };
+  });
+  const close = useCallback(() => {
+    if (live.current.busy) return;
+    setClosing(true);
+    window.setTimeout(() => live.current.onCancel(), prefersReducedMotion() ? 0 : 200);
+  }, []);
+
+  // A modal sheet: the page behind it is held still (smooth scroll included), focus stays inside
+  // it, Escape closes it, and focus returns to what opened it.
+  useEffect(() => {
+    const release = holdScroll();
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialog.current?.focus({ preventScroll: true });
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
+      const d = dialog.current;
+      if (e.key !== 'Tab' || !d) return;
+      const items = [...d.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]):not([tabindex="-1"]), select, textarea, [href]')].filter((el) => el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === d)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener('keydown', key);
     return () => {
-      document.documentElement.style.overflow = prev;
+      release();
       window.removeEventListener('keydown', key);
+      opener?.focus({ preventScroll: true });
     };
-  }, [busy, onCancel]);
+  }, [close]);
 
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
@@ -178,20 +212,23 @@ export function ProductEditor({
 
   // in <body>: the page's <main> is its own stacking context, under the site header
   return createPortal(
-    <div className="fixed inset-0 z-[190] bg-scrim" onClick={(e) => e.target === e.currentTarget && !busy && onCancel()}>
+    <div className="adm-backdrop fixed inset-0 z-[190] grid sm:place-items-center sm:p-4" data-closing={closing || undefined} onClick={(e) => e.target === e.currentTarget && close()}>
       <div
         ref={dialog}
         role="dialog"
         aria-modal="true"
         aria-labelledby="editor-title"
-        className="absolute inset-x-0 bottom-0 top-0 overflow-y-auto overscroll-contain bg-bg sm:inset-y-4 sm:left-1/2 sm:w-[min(720px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:rounded-3xl sm:ring-1 sm:ring-divider"
+        tabIndex={-1}
+        data-lenis-prevent
+        data-closing={closing || undefined}
+        className="adm-sheet relative h-full w-full overflow-y-auto overscroll-contain bg-bg outline-none sm:h-auto sm:max-h-[calc(100svh-2rem)] sm:w-[min(720px,calc(100vw-2rem))] sm:rounded-3xl sm:ring-1 sm:ring-divider sm:shadow-[0_40px_120px_-30px_var(--shadow)]"
       >
-        <form onSubmit={submit} className="grid gap-5 p-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] sm:p-6 sm:pb-28">
+        <form onSubmit={submit} noValidate className="grid gap-5 p-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] sm:p-6 sm:pb-28">
           <div className="flex items-center justify-between gap-3">
             <h2 id="editor-title" className="font-editorial text-3xl font-medium text-fg">
               {product ? 'Edit product' : category === 'saree' ? 'Add a saree' : 'Add a suit'}
             </h2>
-            <button type="button" className="chip" onClick={onCancel} disabled={busy}>Close</button>
+            <button type="button" className="chip" onClick={close} disabled={busy}>Close</button>
           </div>
 
           <Group label="Category">
@@ -207,7 +244,7 @@ export function ProductEditor({
           <Group label="Photos" hint="4:5 portrait, daylight, plain wall. The first photo is the cover. Up to 8.">
             <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
               {photos.map((ph, i) => (
-                <li key={ph.url} className="grid gap-1">
+                <li key={ph.url} className="adm-rise grid gap-1">
                   {/* eslint-disable-next-line @next/next/no-img-element -- local previews of photos being added */}
                   <img src={ph.url} alt={`Photo ${i + 1}`} className="aspect-[4/5] w-full rounded-xl object-cover ring-1 ring-divider" />
                   <div className="flex justify-between gap-1">
@@ -310,7 +347,7 @@ export function ProductEditor({
           {error && <p className="rounded-2xl bg-surface px-4 py-3 text-sm text-danger ring-1 ring-danger" role="alert">{error}</p>}
 
           <div className="fixed inset-x-0 bottom-0 flex gap-2 border-t border-divider bg-bg p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:sticky sm:inset-x-auto sm:-mx-6 sm:-mb-28 sm:rounded-b-3xl sm:p-4">
-            <button type="button" className="btn btn-ghost flex-1" onClick={onCancel} disabled={busy}>Cancel</button>
+            <button type="button" className="btn btn-ghost flex-1" onClick={close} disabled={busy}>Cancel</button>
             <button type="submit" className="btn btn-gold flex-[2]" disabled={busy || preparing > 0}>
               {busy ? 'Saving…' : preparing > 0 ? 'Preparing photos…' : product ? 'Save changes' : 'Add to the site'}
             </button>
