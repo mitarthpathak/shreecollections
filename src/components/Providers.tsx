@@ -5,6 +5,7 @@ import { useShop, useUI } from '@/lib/store';
 import { startClock, getLenis, lockScroll } from '@/lib/clock';
 import { ScrollTrigger } from '@/lib/gsap';
 import { detectTier } from '@/lib/tier';
+import { isAdminPath } from './SiteChrome';
 
 const closeOverlays = () => {
   const ui = useUI.getState();
@@ -78,6 +79,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // "/" opens search on desktop.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // the admin panel has no site search or bag, and its own "/" (its product search)
+      if (isAdminPath(window.location.pathname)) return;
       const t = e.target as HTMLElement | null;
       const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
       // Not over another open dialog (bag drawer, image viewer, filter sheet).
