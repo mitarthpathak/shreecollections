@@ -177,6 +177,18 @@ function Ready({ onReady }: { onReady: () => void }) {
 export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => void }) {
   const s = TIER_SETTINGS[tier];
   const [dpr, setDpr] = useState(() => Math.min(s.dpr[1], dprCap()));
+  // A lower resolution resizes every buffer (a visible hitch), so it happens once, straight to
+  // 1x, and only while the page is at rest — never in the middle of a scroll.
+  const wantLowDpr = useRef(false);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (wantLowDpr.current && Math.abs(film.velocity) < 0.05) {
+        wantLowDpr.current = false;
+        setDpr(1);
+      }
+    }, 300);
+    return () => window.clearInterval(id);
+  }, []);
   // phones: fewer particles, a lighter thread and fewer coins
   const m = film.mobile;
   const glow = useMemo(() => (tier === 2 ? glowTexture() : null), [tier]);
@@ -209,7 +221,7 @@ export default function Stage({ tier, onReady }: { tier: Tier; onReady: () => vo
       <TickerDriver active={() => !film.covered && !document.hidden && film.footerRise < viewport.h - 2} />
       <PerformanceMonitor
         flipflops={3}
-        onDecline={() => setDpr((d) => Math.max(1, +(d - 0.25).toFixed(2)))}
+        onDecline={() => void (dpr > 1 && (wantLowDpr.current = true))}
         onFallback={() => {
           const cur = useUI.getState().tier;
           if (cur > 1) {
