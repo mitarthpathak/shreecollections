@@ -11,6 +11,7 @@ import { Footer } from '@/components/Footer';
 import { LazySearch, LazyBag } from '@/components/LazySearch';
 import { Cursor } from '@/components/Cursor';
 import { RouteCurtain } from '@/components/RouteCurtain';
+import { SiteOnly } from '@/components/SiteChrome';
 import { storeJsonLd, ld } from '@/lib/seo';
 import { validateCatalog } from '@/lib/catalog.server';
 
@@ -55,23 +56,32 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <a href="#main" className="sr-only z-[200] rounded-full bg-cta-bg px-4 py-3 text-cta-text focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           Skip to content
         </a>
-        <Link href="/shop" className="sr-only z-[200] rounded-full bg-cta-bg px-4 py-3 text-cta-text focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
-          Skip to shop
-        </Link>
+        <SiteOnly>
+          <Link href="/shop" className="sr-only z-[200] rounded-full bg-cta-bg px-4 py-3 text-cta-text focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+            Skip to shop
+          </Link>
+        </SiteOnly>
         <Themes>
         <Providers>
-          <Header />
+          {/* the admin panel (/admin) has its own top bar and none of the storefront's chrome */}
+          <SiteOnly>
+            <Header />
+          </SiteOnly>
           {children}
-          <Footer />
-          <TabBar />
-          <LazyBag />
-          <LazySearch />
-          <Cursor />
-          <RouteCurtain />
+          <SiteOnly>
+            <Footer />
+            <TabBar />
+            <LazyBag />
+            <LazySearch />
+            <Cursor />
+            <RouteCurtain />
+          </SiteOnly>
         </Providers>
         </Themes>
-        <div className="grain" aria-hidden />
-        <div className="vignette" aria-hidden />
+        <SiteOnly>
+          <div className="grain" aria-hidden />
+          <div className="vignette" aria-hidden />
+        </SiteOnly>
         <script type="application/ld+json" dangerouslySetInnerHTML={ld(storeJsonLd())} />
       </body>
     </html>

@@ -73,7 +73,7 @@ const ratio = (a, b) => {
 };
 
 const BACKGROUNDS = ['--bg', '--surface', '--surface-2', '--tint-neel', '--tint-sindoor', '--tint-mor', '--tint-matki', '--tint-pitambar', '--tint-knot', '--tint-lookbook'];
-const TEXT = ['--text', '--text-muted', '--gold-text', '--sale', '--link', '--tag', '--danger', '--cta2-text'];
+const TEXT = ['--text', '--text-muted', '--gold-text', '--sale', '--link', '--tag', '--danger', '--ok', '--cta2-text'];
 const UI = ['--field-line', '--focus', '--cta2-border'];
 const PAIRS = [
   ['--cta-text', '--cta-bg', 4.5],
