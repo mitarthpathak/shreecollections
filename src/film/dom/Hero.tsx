@@ -37,6 +37,8 @@ function NewArrivals({
   show = true,
   ...rest
 }: { className?: string; title: string; viewAll: string; show?: boolean } & React.HTMLAttributes<HTMLElement>) {
+  // nothing marked "new" in the catalogue (admin panel): no empty rail, the scroll beat stays
+  if (!NEW_ARRIVALS.length) return <section aria-hidden className={className} {...rest} />;
   return (
     <section aria-label={title} className={className} {...rest}>
       <div className="mx-auto max-w-[1600px] px-safe md:px-safe-12">
