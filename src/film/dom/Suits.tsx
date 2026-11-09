@@ -109,7 +109,9 @@ export function Suits() {
             <ul className="no-scrollbar flex gap-3 overflow-x-auto whitespace-nowrap md:block md:space-y-1 md:overflow-visible">
               {WORDS.map((w, i) => (
                 <li key={w} data-word data-on={i === 0 ? '' : undefined} className="group/w">
-                  <span className="font-display text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-outline-gold transition-colors duration-500 group-data-[on]/w:text-gold-300 group-data-[on]/w:[-webkit-text-stroke:0] md:text-[clamp(3rem,7vw,8rem)]">
+                  {/* Phones: at ~17px a 1px outline reads bolder than a fill, so the band dims the
+                      inactive words instead; the outlined style is kept for the giant desktop words. */}
+                  <span className="font-display text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-gold-300/35 transition-colors duration-500 group-data-[on]/w:text-gold-100 md:text-[clamp(3rem,7vw,8rem)] md:text-transparent md:[-webkit-text-stroke:1px_color-mix(in_oklab,var(--gold-300)_70%,transparent)] md:group-data-[on]/w:text-gold-300 md:group-data-[on]/w:[-webkit-text-stroke:0]">
                     {w}
                   </span>
                   <span lang="hi" className="font-hindi-display ml-3 hidden text-lg text-ivory-dim opacity-0 transition-opacity duration-500 group-data-[on]/w:opacity-100 md:inline">

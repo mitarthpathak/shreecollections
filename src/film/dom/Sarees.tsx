@@ -15,6 +15,14 @@ import { WishlistButton } from '@/components/WishlistButton';
 import { IconPlus } from '@/components/icons';
 
 const SAREES = getByCategory('saree').slice(0, 8);
+const STACK = 5;
+const STACK_STEP = 14; // px each stuck card sits below the one before
+/**
+ * Phones: a stuck card must fit between the header and the TabBar (plus the safe area), name and
+ * price included, even at the deepest step of the stack. The image is 3:4, so cap the card's width
+ * from the space left after the chrome, the stack offset and the ~92px of padding + caption.
+ */
+const STACK_MAX_W = `calc((100svh - var(--header-h) - var(--tabbar-h) - var(--safe-b) - ${(STACK - 1) * STACK_STEP}px - 92px) * 0.75)`;
 
 function Slide({ p, i }: { p: Product; i: number }) {
   const lang = useLang();
@@ -119,7 +127,7 @@ export function Sarees() {
   );
 
   const head = (
-    <header className="mx-auto mb-8 max-w-[1600px] px-5 md:mb-10 md:px-12">
+    <header className="mx-auto mb-8 max-w-[1600px] px-5 [filter:drop-shadow(0_2px_10px_rgb(7_6_10/0.95))_drop-shadow(0_0_2px_rgb(7_6_10/0.9))] md:mb-10 md:px-12">
       <p className="label mb-3 text-gold-500">{t('sarees')} · {SAREES.length}+</p>
       <h2 className="font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-gold">{brand.copy.sarees.en}</h2>
       <p lang="hi" className="font-hindi-display mt-2 text-xl text-ivory/80 md:text-2xl">{brand.copy.sarees.hi}</p>
@@ -145,9 +153,9 @@ export function Sarees() {
       <div className="py-20 md:hidden">
         {head}
         <div className="px-5">
-          {SAREES.slice(0, 5).map((p, i) => (
-            <div key={p.slug} data-stack className="sticky pb-6" style={{ top: `calc(var(--header-h) + ${i * 14}px)` }}>
-              <div className="origin-top rounded-[22px] bg-raat/60 p-2">
+          {SAREES.slice(0, STACK).map((p, i) => (
+            <div key={p.slug} data-stack className="sticky pb-6" style={{ top: `calc(var(--header-h) + ${i * STACK_STEP}px)` }}>
+              <div className="mx-auto origin-top rounded-[22px] bg-raat/60 p-2" style={{ maxWidth: STACK_MAX_W }}>
                 <Slide p={p} i={i} />
               </div>
             </div>
