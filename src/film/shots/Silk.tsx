@@ -14,6 +14,13 @@ import { flatNormal, loadFabricPhoto } from '../fabricPhotos';
 
 const W = 5.6;
 const H = 3.6;
+/**
+ * Rang Chakra sheet in the dark theme: deeper and a little more see-through than the Weave's, so
+ * the copy and cards over it stay legible (a bright cream sheet sat behind ivory text). On Kagaz
+ * the sheet is already darker than the text's page, so it keeps its full colour.
+ */
+const TINT_SHADE_DARK = 0.62;
+const TINT_ALPHA = 0.8;
 
 const vertex = /* glsl */ `
   uniform float uTime; uniform float uWind;
@@ -39,7 +46,7 @@ const vertex = /* glsl */ `
 const fragment = /* glsl */ `
   uniform sampler2D uTexA; uniform sampler2D uTexB;
   uniform float uMix; uniform float uAlpha; uniform float uTime;
-  uniform vec3 uTint; uniform float uTintAmt; uniform vec3 uEdge;
+  uniform vec3 uTint; uniform float uTintAmt; uniform vec3 uEdge; uniform float uShade;
   varying vec2 vUv2;
   ${SNOISE}
   void main(){
@@ -51,7 +58,7 @@ const fragment = /* glsl */ `
     float edge = 1.0 - smoothstep(0.0, 0.025, abs(n - m));
     vec3 col = n < m ? b : a;
     float l = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt);
+    col = mix(col, uTint * (0.18 + l * 0.85), uTintAmt) * uShade;
     csm_DiffuseColor = vec4(col, uAlpha);
     csm_Emissive = uEdge * edge * 2.4 * step(0.001, uMix) * step(uMix, 0.999);
   }
@@ -103,6 +110,7 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       uTint: { value: new THREE.Color(getThemeColor('--gold-300')) },
       uTintAmt: { value: 0 },
       uEdge: { value: new THREE.Color() },
+      uShade: { value: 1 },
     }),
     [textures],
   );
@@ -152,7 +160,8 @@ export function Silk({ index, mode, segments }: { index: number; mode: 'weave' |
       }
     } else {
       const c = film.u.chakra;
-      uniforms.uAlpha.value = c.show * 0.9;
+      uniforms.uAlpha.value = c.show * TINT_ALPHA;
+      uniforms.uShade.value = THREE.MathUtils.lerp(TINT_SHADE_DARK, 1, sceneTheme.light);
       (uniforms.uTint.value as THREE.Color).setRGB(...c.tint);
       uniforms.uTintAmt.value = 0.55 + c.tintAmt * 0.4;
     }

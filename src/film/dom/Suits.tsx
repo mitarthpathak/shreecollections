@@ -110,7 +110,9 @@ export function Suits() {
             <ul className="no-scrollbar flex gap-3 overflow-x-auto whitespace-nowrap md:block md:space-y-1 md:overflow-visible">
               {WORDS.map((w, i) => (
                 <li key={w} data-word data-on={i === 0 ? '' : undefined} className="group/w">
-                  <span className="font-editorial font-medium text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-outline-gold transition-colors duration-500 group-data-[on]/w:text-gold-text group-data-[on]/w:[-webkit-text-stroke:0] md:text-[clamp(3rem,7vw,8rem)]">
+                  {/* Phones: at ~17px a 1px outline reads bolder than a fill, so inactive words are a
+                      muted fill and the active one turns gold; the giant desktop words keep the outline. */}
+                  <span className="font-editorial font-medium text-[clamp(0.95rem,4.4vw,1.4rem)] leading-none text-fg-muted transition-colors duration-500 group-data-[on]/w:text-gold-text md:text-[clamp(3rem,7vw,8rem)] md:text-transparent md:[-webkit-text-stroke:1px_var(--text-muted)] md:group-data-[on]/w:text-gold-text md:group-data-[on]/w:[-webkit-text-stroke:0]">
                     {w}
                   </span>
                   <span lang="hi" className="font-hindi-display ml-3 hidden text-lg text-fg-muted opacity-0 transition-opacity duration-500 group-data-[on]/w:opacity-100 md:inline">

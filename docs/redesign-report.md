@@ -133,8 +133,14 @@ eye, the knot.
   chapter tint with a line motif instead.
 - The 3D saree ribbon passes behind the "Six yards of poetry" heading; a page-colour halo keeps it
   readable in both themes.
-- The open branch `claude/stage-4-film-chapters-leaks` overlaps this work (its leak fix is
-  re-implemented here) and would conflict; it can be closed rather than merged.
+- `claude/stage-4-film-chapters-leaks` (PR #9) was merged into `claude/confident-lovelace-kjl7jt`
+  after this branch started; that branch (which also contains `main`) is merged into `redesign`.
+  Its 8 conflicting files keep the redesign's code, with stage-4's fixes ported in theme tokens:
+  Mor Pankh's eye timed to its own band and the label in the band; Rang Chakra's sideways-swipe
+  wheel (vertical swipes scroll the page), cleanup on leaving, a page-colour scrim behind the copy
+  and a deeper silk in the dark theme; the phone saree stack capped above the TabBar; muted-fill
+  Suits words on phones; the phone map finishing before it reaches the header. `redesign` now
+  merges into `main` without conflicts.
 - Lookbook images are still the dark, framed editorial placeholders (only product placeholders
   were redrawn); the OG image is unchanged, as asked.
 

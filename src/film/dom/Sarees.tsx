@@ -16,8 +16,16 @@ import { WishlistButton } from '@/components/WishlistButton';
 import { IconPlus } from '@/components/icons';
 
 const SAREES = getByCategory('saree').slice(0, 8);
+const STACK = 5;
+const STACK_STEP = 14; // px each stuck card sits below the one before
+/**
+ * Phones: a stuck card must fit between the header and the TabBar (plus the safe area), name and
+ * price included, even at the deepest step of the stack. The image is 3:4, so cap the card's width
+ * from the space left after the chrome, the stack offset and the ~92px of padding + caption.
+ */
+const STACK_MAX_W = `calc((100svh - var(--header-h) - var(--tabbar-h) - var(--safe-b) - ${(STACK - 1) * STACK_STEP}px - 92px) * 0.75)`;
 
-function Slide({ p, i }: { p: Product; i: number }) {
+function Slide({ p }: { p: Product }) {
   const lang = useLang();
   const t = useT();
   const add = useShop((s) => s.add);
@@ -132,7 +140,7 @@ export function Sarees() {
       <div className="sticky top-0 hidden h-svh flex-col justify-center overflow-hidden md:flex motion-reduce:static motion-reduce:h-auto motion-reduce:py-24">
         {head}
         <div ref={track} className="flex gap-8 pl-12 pr-[20vw] will-change-transform motion-reduce:overflow-x-auto motion-reduce:pr-12">
-          {SAREES.map((p, i) => <Slide key={p.slug} p={p} i={i} />)}
+          {SAREES.map((p) => <Slide key={p.slug} p={p} />)}
           <Link href="/shop/sarees" className="grid aspect-[3/4] w-[22vw] min-w-[240px] shrink-0 place-items-center rounded-[18px] text-center ring-1 ring-field-line transition-colors hover:bg-surface" data-cursor="View">
             <span>
               <span className="font-editorial font-medium block text-3xl text-fg">{t('viewAll')}</span>
@@ -145,10 +153,10 @@ export function Sarees() {
       <div className="py-20 md:hidden">
         {head}
         <div className="px-5">
-          {SAREES.slice(0, 5).map((p, i) => (
-            <div key={p.slug} data-stack className="sticky pb-6" style={{ top: `calc(var(--header-h) + ${i * 14}px)` }}>
-              <div className="origin-top rounded-[22px] bg-bg/60 p-2">
-                <Slide p={p} i={i} />
+          {SAREES.slice(0, STACK).map((p, i) => (
+            <div key={p.slug} data-stack className="sticky pb-6" style={{ top: `calc(var(--header-h) + ${i * STACK_STEP}px)` }}>
+              <div className="mx-auto origin-top rounded-[22px] bg-bg/60 p-2" style={{ maxWidth: STACK_MAX_W }}>
+                <Slide p={p} />
               </div>
             </div>
           ))}

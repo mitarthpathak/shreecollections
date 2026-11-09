@@ -6,7 +6,7 @@ import { brand } from '@/brand.config';
 import { RajasthanMap, MAP_CREDIT } from '@/components/visit/RajasthanMap';
 import { StoreCard } from '@/components/visit/StoreCard';
 import { mapAtRest, mapPulse, mapTimeline } from '@/components/visit/VisitView';
-import { ScrollTrigger, useGSAP, prefersReducedMotion } from '@/lib/gsap';
+import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 
 /** The thread draws Rajasthan, districts fade in, the view zooms to Banswara and a pin drops. */
 export function Visit() {
@@ -21,10 +21,25 @@ export function Visit() {
     () => {
       const el = root.current, s = svg.current;
       if (!mapReady || !el || !s) return;
-      const tl = mapTimeline(s, { paused: true });
-      if (!tl) return;
-      if (prefersReducedMotion()) return mapAtRest(s, tl);
-      ScrollTrigger.create({ trigger: el, start: 'top 70%', end: 'bottom bottom', scrub: 1, animation: tl });
+      if (prefersReducedMotion()) {
+        const tl = mapTimeline(s, { paused: true });
+        return void (tl && mapAtRest(s, tl));
+      }
+      // Scrub the choreography while the map is in view. Desktop: the stage is sticky, so the
+      // whole pass works. Phones: the chapter is taller than the screen and the map scrolls away
+      // under the copy, so it finishes by the time the map reaches the header.
+      gsap.matchMedia().add({ desktop: '(min-width: 768px)', phone: '(max-width: 767px)' }, (ctx) => {
+        const tl = mapTimeline(s, { paused: true });
+        if (!tl) return;
+        const phone = ctx.conditions?.phone;
+        ScrollTrigger.create({
+          trigger: phone ? s : el,
+          start: phone ? 'top 85%' : 'top 70%',
+          end: phone ? 'top 15%' : 'bottom bottom',
+          scrub: 1,
+          animation: tl,
+        });
+      });
       // the pulse loops only while the chapter is on screen
       const pulse = mapPulse(s);
       if (pulse) ScrollTrigger.create({ trigger: el, start: 'top bottom', end: 'bottom top', onToggle: (self) => void pulse.paused(!self.isActive) });

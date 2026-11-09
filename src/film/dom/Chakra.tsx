@@ -20,6 +20,8 @@ type Seg = { key: string; value: number; color: string; label: string };
 type Arc = PieArcDatum<Seg> & { _cur?: { startAngle: number; endAngle: number } };
 
 const R = 200;
+/** A soft pool of page colour behind copy that sits over the silk sheet (positioned by the caller). */
+const SCRIM = 'pointer-events-none absolute -z-10 rounded-[40px] bg-bg/80 blur-2xl';
 
 /**
  * Rang Chakra: inner ring = Sarees / Suits, outer ring = colour families sized by real counts.
@@ -159,6 +161,8 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
       if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 8) pick(e.target as Element);
       start = null;
     };
+    // touch-action: pan-y hands vertical swipes to the page; the browser then cancels the pointer
+    const cancel = () => void (start = null);
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -168,14 +172,18 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
     node.addEventListener('pointerdown', down);
     node.addEventListener('pointermove', move);
     node.addEventListener('pointerup', up);
+    node.addEventListener('pointercancel', cancel);
     node.addEventListener('keydown', key);
     draw();
     return () => {
       node.removeEventListener('pointerdown', down);
       node.removeEventListener('pointermove', move);
       node.removeEventListener('pointerup', up);
+      node.removeEventListener('pointercancel', cancel);
       node.removeEventListener('keydown', key);
-      svg.selectAll('*').remove();
+      redraw.current = () => {};
+      // stop in-flight d3 transitions (their timers hold the nodes) before dropping the nodes
+      svg.selectAll('*').interrupt().remove();
     };
   }, [onChange]);
 
@@ -183,7 +191,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
     <svg
       ref={ref}
       viewBox={`${-R - 20} ${-R - 20} ${2 * R + 40} ${2 * R + 40}`}
-      className="aspect-square w-full max-w-[560px] touch-none select-none"
+      className="aspect-square w-full max-w-[560px] touch-pan-y select-none"
       role="group"
       aria-label="Rang Chakra colour wheel"
     />
@@ -194,6 +202,7 @@ export function Chakra() {
   const root = useRef<HTMLElement>(null);
   const strip = useRef<HTMLDivElement>(null);
   const flip = useRef<Flip.FlipState | null>(null);
+  const flipTl = useRef<gsap.core.Timeline | null>(null);
   const lang = useLang();
   const t = useT();
   const [sel, setSel] = useState<{ cat: Category | null; color: string | null }>({ cat: null, color: null });
@@ -219,7 +228,8 @@ export function Chakra() {
     const s = flip.current;
     if (!s || !strip.current) return;
     flip.current = null;
-    Flip.from(s, {
+    flipTl.current?.progress(1).kill();
+    flipTl.current = Flip.from(s, {
       targets: strip.current.querySelectorAll(':scope > [data-strip]'),
       duration: 0.6,
       ease: 'power2.inOut',
@@ -228,7 +238,20 @@ export function Chakra() {
     });
   }, [items]);
 
-  useEffect(() => () => void document.documentElement.style.removeProperty('--accent'), []);
+  // Leaving the page: stop the selection tweens and put the accent and the silk's tint back, so a
+  // return visit starts from an unselected wheel and an untinted sheet.
+  useEffect(
+    () => () => {
+      flipTl.current?.kill();
+      flipTl.current = null;
+      gsap.killTweensOf(film.u.chakra.tint);
+      gsap.killTweensOf(film.u.chakra, 'tintAmt');
+      Object.assign(film.u.chakra.tint, themeRGB01('--gold-300'));
+      film.u.chakra.tintAmt = 0;
+      document.documentElement.style.removeProperty('--accent');
+    },
+    [],
+  );
 
   useGSAP(
     () => {
@@ -237,7 +260,9 @@ export function Chakra() {
       gsap.timeline({ scrollTrigger: ranges.pass(el) })
         .fromTo(film.u.chakra, { show: 0 }, { show: 1, duration: 2.5, ease: 'none' }, 0)
         .to(film.u.chakra, { show: 0, duration: 2, ease: 'none' }, 8);
-      gsap.from('[data-chakra-head] > *', { y: 40, opacity: 0, stagger: 0.08, scrollTrigger: { ...ranges.enter(el), end: 'top 25%' } });
+      const head = { ...ranges.enter(el), end: 'top 25%' };
+      gsap.from('[data-chakra-scrim]', { opacity: 0, ease: 'none', scrollTrigger: head });
+      gsap.from('[data-chakra-head] > *', { y: 40, opacity: 0, stagger: 0.08, scrollTrigger: head });
     },
     { scope: root },
   );
@@ -245,22 +270,26 @@ export function Chakra() {
   return (
     <Section index={6} ref={root} label="Rang Chakra: find your colour" className="!h-auto min-h-[var(--m)] md:min-h-[var(--d)]">
       <div className="mx-auto grid max-w-[1600px] items-center gap-10 px-5 py-[16svh] md:grid-cols-[1fr_1.1fr] md:px-12">
-        <header data-chakra-head className="text-halo">
-          <p className="label mb-3 text-gold-text">Rang Chakra</p>
-          <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-fg"><Accent text={t('findColour')} word="colour" /></h2>
-          <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">अपना रंग चुनें</p>
-          <p className="mt-6 max-w-md text-fg-muted">
-            {lang === 'hi'
-              ? 'भीतरी घेरा: साड़ी या सूट। बाहरी घेरा: रंग। फ़ोन पर पहिया घुमाइए, टैप करके चुनिए।'
-              : 'Inner ring: sarees or suits. Outer ring: colours, sized by how many pieces we have. On a phone, spin the wheel and tap to choose.'}
-          </p>
-        </header>
+        {/* The tinted silk passes behind this copy: a soft scrim in the page colour keeps it legible. */}
+        <div className="relative isolate">
+          <div data-chakra-scrim aria-hidden className={`${SCRIM} -inset-x-6 -inset-y-8 md:-inset-x-12 md:-inset-y-12`} />
+          <header data-chakra-head className="text-halo">
+            <p className="label mb-3 text-gold-text">Rang Chakra</p>
+            <h2 className="font-editorial font-medium text-[clamp(2.6rem,7vw,7rem)] leading-[0.95] text-fg"><Accent text={t('findColour')} word="colour" /></h2>
+            <p lang="hi" className="font-hindi-display mt-2 text-xl text-fg/80 md:text-2xl">अपना रंग चुनें</p>
+            <p className="mt-6 max-w-md text-fg-muted">
+              {lang === 'hi'
+                ? 'भीतरी घेरा: साड़ी या सूट। बाहरी घेरा: रंग। फ़ोन पर पहिया दाएँ-बाएँ घुमाइए, टैप करके चुनिए।'
+                : 'Inner ring: sarees or suits. Outer ring: colours, sized by how many pieces we have. On a phone, swipe sideways to spin the wheel and tap to choose.'}
+            </p>
+          </header>
+        </div>
         <div className="grid place-items-center">
           <Wheel onChange={onChange} lang={lang} />
         </div>
       </div>
       <div className="mx-auto max-w-[1600px] px-5 pb-[14svh] md:px-12">
-        <div className="mb-5 flex items-baseline justify-between">
+        <div className="text-halo mb-5 flex items-baseline justify-between">
           <p className="text-sm text-fg-muted" aria-live="polite">
             <span className="text-[color:var(--accent)]">●</span> {items.length} {t('results')}
           </p>
