@@ -8,7 +8,7 @@ import { getAllProducts, FABRIC_HI, COLOR_FAMILIES } from '@/lib/catalog';
 import { useLang, useT } from '@/lib/i18n';
 import { formatINR } from '@/lib/format';
 import { gsap } from '@/lib/gsap';
-import { lockScroll } from '@/lib/clock';
+import { useModal } from '@/lib/modal';
 import { IconClose, IconSearch } from './icons';
 
 export function SearchOverlay() {
@@ -53,32 +53,38 @@ export function SearchOverlay() {
   );
   const results = useMemo(() => (dq.trim() ? fuse.search(dq.trim()).slice(0, 12).map((r) => r.item) : []), [dq, fuse]);
 
-  useEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    if (open) {
-      el.style.visibility = 'visible';
-      lockScroll(true);
-      gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out' });
-      gsap.fromTo(el.querySelector('[data-panel]'), { y: -24 }, { y: 0, duration: 0.45, ease: 'expo.out' });
-      requestAnimationFrame(() => input.current?.focus());
-    } else if (el.style.visibility === 'visible') {
-      lockScroll(false);
-      gsap.to(el, { opacity: 0, duration: 0.2, onComplete: () => void (el.style.visibility = 'hidden') });
-    }
-  }, [open]);
-
   const commit = () => q.trim().length > 1 && pushSearch(q.trim());
   const close = () => {
     commit();
     setOpen(false);
   };
 
+  // Scroll hold, focus trap, Escape and focus return (declared first: it notes the opener).
+  useModal(open, root, close);
+
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    if (open) {
+      el.style.visibility = 'visible';
+      gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out', overwrite: true });
+      gsap.fromTo(el.querySelector('[data-panel]'), { y: -24 }, { y: 0, duration: 0.45, ease: 'expo.out' });
+      // Synchronously, not in a later frame: the keyboard opened by the tap (see
+      // primeKeyboard) moves straight to the input.
+      input.current?.focus({ preventScroll: true });
+    } else if (el.style.visibility === 'visible') {
+      gsap.to(el, { opacity: 0, duration: 0.2, overwrite: true, onComplete: () => void (el.style.visibility = 'hidden') });
+    }
+  }, [open]);
+
   const suggestions = lang === 'hi' ? ['बनारसी', 'अनारकली', 'लहरिया', 'शादी', 'लाल'] : ['Banarasi', 'Anarkali', 'Leheriya', 'Wedding', 'Red'];
 
   return (
     <div ref={root} className="fixed inset-0 z-[75] bg-raat/95" style={{ visibility: 'hidden', opacity: 0 }} role="dialog" aria-modal="true" aria-label={t('search')} aria-hidden={!open}>
-      <div data-panel className="mx-auto flex h-full max-w-5xl flex-col px-4 pt-4 md:px-8 md:pt-10">
+      <div
+        data-panel
+        className="mx-auto flex h-full max-w-5xl flex-col pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] md:pl-[max(2rem,env(safe-area-inset-left,0px))] md:pr-[max(2rem,env(safe-area-inset-right,0px))] md:pt-[calc(2.5rem+env(safe-area-inset-top,0px))]"
+      >
         <div className="flex items-center gap-3 border-b border-gold-500/40 pb-3">
           <IconSearch className="shrink-0 text-gold-300" size={26} />
           <label htmlFor="site-search" className="sr-only">{t('search')}</label>
@@ -98,7 +104,7 @@ export function SearchOverlay() {
           </button>
         </div>
 
-        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto py-6" data-lenis-prevent>
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(1.5rem+var(--safe-b))] pt-6" data-lenis-prevent>
           {!q.trim() && (
             <div className="space-y-6">
               {recent.length > 0 && (
