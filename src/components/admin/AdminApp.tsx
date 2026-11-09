@@ -12,7 +12,10 @@ import { AdminImage, Checkbox, ConfirmDialog, Menu, Modal, Spinner, Switch, Toas
 type DeployState = 'pending' | 'success' | 'failure' | 'unknown';
 type Deploy = { version: string; state: DeployState; local: boolean };
 type Phase = { kind: 'loading' } | { kind: 'login'; error?: string } | { kind: 'error'; error: string } | { kind: 'ready' };
-type Saved = { version: string; products: Product[]; store: 'github' | 'local' };
+type StoreKind = 'supabase' | 'github' | 'local';
+type Saved = { version: string; products: Product[]; store: StoreKind; live?: boolean };
+/** How this deployment saves: Supabase is live at once and takes photos one by one. */
+type Mode = { store: StoreKind; live: boolean; separateUploads: boolean };
 type Badge = (typeof BADGES)[number];
 type Res<T> = { status: number; data: T & { error?: string } };
 
@@ -126,6 +129,7 @@ export function AdminApp() {
   const [loginBusy, setLoginBusy] = useState(false);
   const [reauth, setReauth] = useState(false);
   const [deploy, setDeploy] = useState<Deploy | null>(null);
+  const [mode, setMode] = useState<Mode>({ store: 'github', live: false, separateUploads: false });
   /** photos saved in this session that the live site may not serve yet: path → local preview */
   const [previews, setPreviews] = useState<ReadonlyMap<string, string>>(() => new Map());
   const [asking, setAsking] = useState<{ options: ConfirmOptions; resolve: (ok: boolean) => void } | null>(null);
@@ -137,10 +141,12 @@ export function AdminApp() {
   const loadedAt = useRef(0);
   const latest = useRef<Product[]>([]);
   const search = useRef<HTMLInputElement>(null);
+  /** photos already uploaded (Supabase), so a retried save doesn't upload them again */
+  const uploaded = useRef(new WeakMap<object, string>());
   const live = useRef({ ready: false, idle: false, cat: DEFAULTS.cat as Filters['cat'] });
 
   const load = useCallback(async (silent = false) => {
-    const r = await api<{ products: Product[] }>('/api/admin/products');
+    const r = await api<{ products: Product[] } & Partial<Mode>>('/api/admin/products');
     if (r.status === 401) return setPhase({ kind: 'login', error: silent ? 'Your session ended. Please log in again.' : undefined });
     if (r.status !== 200) {
       if (!silent) setPhase({ kind: 'error', error: r.data.error ?? 'Could not load the products.' });
@@ -148,6 +154,7 @@ export function AdminApp() {
     }
     loadedAt.current = Date.now();
     setProducts(overlay(r.data.products, optimistic.current));
+    setMode({ store: r.data.store ?? 'github', live: Boolean(r.data.live), separateUploads: Boolean(r.data.separateUploads) });
     setPhase({ kind: 'ready' });
   }, []);
 
@@ -327,7 +334,8 @@ export function AdminApp() {
       const n = new Set([...s].filter((x) => alive.has(x)));
       return n.size === s.size ? s : n;
     });
-    setDeploy({ version: data.version, state: data.store === 'local' ? 'success' : 'pending', local: data.store === 'local' });
+    // Supabase: live as soon as it is saved; GitHub: live after Vercel's rebuild
+    setDeploy({ version: data.version, state: data.store === 'local' || data.live ? 'success' : 'pending', local: data.store === 'local' });
   }
 
   async function setStock(slugs: string[], inStock: boolean, undoable = true) {
@@ -390,12 +398,41 @@ export function AdminApp() {
     toast.show('ok', `Removed ${what}.`);
   }
 
-  async function save(payload: SavePayload) {
+  /** Supabase: each new photo goes up on its own first (so a save has no size limit). */
+  async function uploadPhotos(payload: SavePayload, onProgress: (done: number, total: number) => void) {
+    const names: string[] = [];
+    for (const [i, up] of payload.uploads.entries()) {
+      onProgress(i, payload.uploads.length);
+      let name = uploaded.current.get(up);
+      if (!name) {
+        const r = await api<{ name: string }>('/api/admin/photos', { method: 'POST', body: JSON.stringify({ type: up.type, data: up.data }) });
+        if (r.status === 401) {
+          setReauth(true);
+          return { error: 'Your session ended. Log in again in the box that opened, then press Save again: nothing you typed is lost.' };
+        }
+        if (r.status !== 200 || !r.data.name) return { error: r.data.error ?? 'Could not upload a photo. Please try again.' };
+        name = r.data.name;
+        uploaded.current.set(up, name);
+      }
+      names.push(name);
+    }
+    onProgress(payload.uploads.length, payload.uploads.length);
+    return { names };
+  }
+
+  async function save(payload: SavePayload, onProgress: (done: number, total: number) => void = () => {}) {
     const slug = payload.product.slug;
-    const r = await post<Saved & { slug: string }>(
-      { op: 'upsert', product: payload.product, uploads: payload.uploads.map(({ type, data }) => ({ type, data })) },
-      slug ? [slug] : [],
-    );
+    let body: unknown = { op: 'upsert', product: payload.product, uploads: payload.uploads.map(({ type, data }) => ({ type, data })) };
+    if (mode.separateUploads && payload.uploads.length) {
+      const up = await uploadPhotos(payload, onProgress);
+      if ('error' in up) return { error: up.error! };
+      const photos = payload.product.photos.map((ref) => {
+        const m = /^new:(\d+)$/.exec(ref);
+        return m ? `upload:${up.names[Number(m[1])]}` : ref;
+      });
+      body = { op: 'upsert', product: { ...payload.product, photos }, uploads: [] };
+    }
+    const r = await post<Saved & { slug: string }>(body, slug ? [slug] : []);
     if (r.status === 401) return { error: 'Your session ended. Log in again in the box that opened, then press Save again: nothing you typed is lost.' };
     if (r.status !== 200) return { error: r.data.error ?? 'Saving failed. Please try again.' };
     // keep showing the photos just uploaded until the site has been rebuilt with them
@@ -411,7 +448,7 @@ export function AdminApp() {
     });
     afterSave(r.data);
     setEditing(null);
-    toast.show('ok', `${slug ? 'Saved' : 'Added'} “${payload.product.name}”.`);
+    toast.show('ok', `${slug ? 'Saved' : 'Added'} “${payload.product.name}”.${r.data.live ? ' It is live on the site.' : ''}`);
     return null;
   }
 
@@ -422,9 +459,9 @@ export function AdminApp() {
     return r.status === 200 ? null : (r.data.error ?? 'Could not log in.');
   }
 
-  async function logout() {
+  async function logout(everywhere = false) {
     if (saving) return toast.show('info', 'One moment: a save is still running.');
-    await api('/api/admin/logout', { method: 'POST' });
+    await api('/api/admin/logout', { method: 'POST', body: JSON.stringify({ everywhere }) });
     setProducts([]);
     setSelected(new Set());
     setDeploy(null);
@@ -509,9 +546,16 @@ export function AdminApp() {
               View site ↗
             </a>
             <ThemeToggle />
-            <button type="button" className="chip !min-h-10" onClick={() => void logout()}>
-              Log out
-            </button>
+            <Menu
+              label="Log out"
+              className="chip !min-h-10"
+              items={[
+                { label: 'Log out', onSelect: () => void logout() },
+                ...(mode.store === 'supabase' ? [{ label: 'Log out on every device', onSelect: () => void logout(true) }] : []),
+              ]}
+            >
+              Log out <IconChevron size={16} />
+            </Menu>
           </div>
           {status && (
             <div className="w-full sm:hidden">
@@ -796,6 +840,7 @@ export function AdminApp() {
           previews={previews}
           onClose={() => setEditing(null)}
           onSave={save}
+          maxUploadBytes={mode.separateUploads ? undefined : 3_000_000}
           confirm={askConfirm}
         />
       )}

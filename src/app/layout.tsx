@@ -13,9 +13,8 @@ import { Cursor } from '@/components/Cursor';
 import { RouteCurtain } from '@/components/RouteCurtain';
 import { SiteOnly } from '@/components/SiteChrome';
 import { storeJsonLd, ld } from '@/lib/seo';
-import { validateCatalog } from '@/lib/catalog.server';
-
-validateCatalog();
+import { getCatalog } from '@/lib/catalog.server';
+import { CatalogProvider } from '@/components/CatalogProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL(brand.siteUrl),
@@ -49,7 +48,9 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default async function RootLayout({ children }: LayoutProps<'/'>) {
+  // validated on the server (Supabase when connected, else data/products.json); every page shares it
+  const products = await getCatalog();
   return (
     <html lang="en-IN" className={fontVars} data-tier="2" suppressHydrationWarning>
       <body>
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           </Link>
         </SiteOnly>
         <Themes>
+        <CatalogProvider products={products}>
         <Providers>
           {/* the admin panel (/admin) has its own top bar and none of the storefront's chrome */}
           <SiteOnly>
@@ -77,6 +79,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             <RouteCurtain />
           </SiteOnly>
         </Providers>
+        </CatalogProvider>
         </Themes>
         <SiteOnly>
           <div className="grain" aria-hidden />

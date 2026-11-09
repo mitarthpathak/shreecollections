@@ -1,30 +1,43 @@
 # Admin panel
 
 `/admin` lets the shop add, edit and remove sarees and suits from a phone or a computer:
-log in with the admin password, then use **+ Add saree** / **+ Add suit**, **Edit** or **Remove**.
+log in with the admin password, then **+ Add product**, edit a product, or remove one.
 
-Each save is one commit to the branch the live site is built from (Vercel's production branch) (`data/products.json` and the photos in
-`public/products/<slug>/`). Vercel rebuilds the site from it, so a change is live about two
-minutes later; the panel shows when it is.
+## Setup (once, about 2 minutes)
 
-## One-time setup (Vercel)
+The catalogue and the photos live in **Supabase** (a database and photo storage). The code sets
+everything up by itself: no tables, SQL or keys to copy by hand.
 
-1. **Admin password**: Vercel → the project → Settings → Environment Variables → add
-   `ADMIN_PASSWORD` (at least 8 characters; a long passphrase is best). Environment:
-   Production (and Preview if you want the panel on previews too).
-2. **GitHub token**, so the panel can save:
-   - GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** →
-     Generate new token.
-   - Repository access: **Only select repositories** → `mitarthpathak/shreecollections`.
-   - Permissions → Repository permissions → **Contents: Read and write** (nothing else).
-   - Expiration: up to a year; put a reminder to renew it.
-   - Add it in Vercel as `ADMIN_GITHUB_TOKEN`.
-3. Optional: `ADMIN_GITHUB_BRANCH` and `ADMIN_GITHUB_REPO`. By default the panel saves to the
-   branch the live deployment was built from (Vercel's production branch), in this repository.
-4. Redeploy (Deployments → ⋯ → Redeploy) so the new variables are picked up, then open
-   `https://<your site>/admin`.
+1. **Connect Supabase.** Vercel → this project → **Storage** → **Create Database** → **Supabase**
+   → Continue → Create (any name, region **Mumbai**). Vercel creates the Supabase project and
+   adds its settings (`POSTGRES_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, …) to this
+   project by itself.
+2. **Admin password.** Vercel → Settings → Environment Variables → add `ADMIN_PASSWORD` (at
+   least 8 characters; a long passphrase is best).
+3. **Redeploy** (Deployments → ⋯ → Redeploy). The first build creates the tables (in a private
+   `shree` schema), copies the 24 products from `data/products.json` into them, and the first photo
+   you add creates the public `catalog` photo bucket. Then open `https://<your site>/admin`.
 
-Changing `ADMIN_PASSWORD` signs everyone out. Never put the password or the token in the code.
+That's all. A save is **live on the site in a few seconds**: nothing is rebuilt and nothing is
+committed. Changing `ADMIN_PASSWORD` signs everyone out. Never put the password in the code.
+
+What runs on its own: a daily job (`vercel.json` → `/api/admin/cron`) keeps a free Supabase
+project from pausing for inactivity and deletes photos that were uploaded but never saved; the
+site re-reads the catalogue every hour as well as right after every save; "New" comes off a
+product 45 days after it was added.
+
+Made the Supabase project on supabase.com instead? Add these three in Vercel by hand, from the
+Supabase dashboard (**Connect** button, and Project Settings → API Keys): `POSTGRES_URL`
+(the *Transaction pooler* connection string), `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (or
+`SUPABASE_SERVICE_ROLE_KEY`). Then redeploy.
+
+### Without Supabase
+
+Everything still works as before: the site reads `data/products.json`, and the panel saves by
+committing to GitHub (set `ADMIN_GITHUB_TOKEN`: a fine-grained token with **Contents: Read and
+write** on this repository only; optional `ADMIN_GITHUB_BRANCH` / `ADMIN_GITHUB_REPO`). Each save
+is then a commit and is live after Vercel's rebuild (about 2 minutes); one save takes up to 3 MB
+of new photos.
 
 ## How it behaves
 
@@ -55,20 +68,25 @@ Changing `ADMIN_PASSWORD` signs everyone out. Never put the password or the toke
   (WebP, or JPEG on Safari). Add them with the button or by dropping them on the photo area;
   drag (or ← →) to reorder; **⋯** → Make it the cover, Adjust the crop (for photos that are not
   already 4:5: slide to keep the left, middle or right) and Remove. Shoot them as in
-  `docs/photo-guide.md`. The first photo is the cover; up to 8 per product, and one save takes up
-  to 3 MB of new photos (the form shows how much is used).
+  `docs/photo-guide.md`. The first photo is the cover; up to 8 per product. With Supabase each
+  photo uploads on its own (the Save button counts them); without it, one save takes up to 3 MB
+  of new photos (the form shows how much is used).
 - **Sample products** (the drawn artwork that came with the site) are marked "No photos"; the
   form shows their artwork. Remove them in one go with **Select all** → **Remove…**, or edit one
   and add photos to turn it into a real product.
 - At least one saree and one suit must stay on the site (the home page is built around both).
-- A save applies to the latest catalogue on GitHub, so two people saving at once don't overwrite
-  each other. Coming back to the tab after a while reloads the list.
+- A save applies to the latest catalogue, so two people saving at once don't overwrite each other;
+  editing a product someone else changed after you opened it is refused with a message (open it
+  again to see theirs). Coming back to the tab after a while reloads the list.
 - Logins: 7-day session cookie (httpOnly, SameSite=Strict); 8 wrong passwords from one address
-  pause logins from it for 15 minutes. If the session ends while you work, a log-in box opens
-  over the page: nothing you typed is lost; log in and press Save again.
+  pause logins from it for 15 minutes. With Supabase, sessions are kept in the database: **Log out
+  → Log out on every device** signs out every phone and computer. If the session ends while you
+  work, a log-in box opens over the page: nothing you typed is lost; log in and press Save again.
 
 ## Local development
 
-`npm run dev` with `ADMIN_PASSWORD` set and no token: the panel reads and writes the files on
-your disk instead (a "local mode" notice says so). To try the GitHub path against a different
-repository or a mock, set `ADMIN_GITHUB_TOKEN` and `ADMIN_GITHUB_API`.
+`npm run dev` with `ADMIN_PASSWORD` set and nothing else: the panel reads and writes the files on
+your disk instead (the status pill says "local files"). To try the Supabase path, set
+`POSTGRES_URL` (any Postgres works; `localhost` connects without SSL), `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`; to try the GitHub path against a mock, `ADMIN_GITHUB_TOKEN` and
+`ADMIN_GITHUB_API`.

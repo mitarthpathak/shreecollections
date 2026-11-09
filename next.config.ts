@@ -13,6 +13,15 @@ const SITE_URL = (
   (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://shreecollections.vercel.app')
 ).replace(/\/$/, '');
 
+/** Supabase Storage, where photos added in the admin panel live (when Supabase is connected). */
+const SUPABASE_HOST = (() => {
+  try {
+    return new URL(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').hostname;
+  } catch {
+    return '';
+  }
+})();
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Always inlined, so ?debug / ?capture code is dead-code-eliminated from normal production builds.
@@ -30,6 +39,7 @@ const nextConfig: NextConfig = {
     deviceSizes: [384, 640, 828, 1080, 1440, 1920],
     imageSizes: [96, 184, 256, 384],
     qualities: [70, 75, 80],
+    remotePatterns: SUPABASE_HOST ? [{ protocol: 'https', hostname: SUPABASE_HOST, pathname: '/storage/v1/object/public/catalog/**' }] : [],
   },
   turbopack: {
     rules: {

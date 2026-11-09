@@ -404,7 +404,8 @@ export function AdminImage({
       </span>
     );
   }
-  const url = src.startsWith('/') ? `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${width > 96 ? 75 : 70}` : src;
+  // site files and stored photos go through the optimiser; local previews (blob:) as they are
+  const url = src.startsWith('/') || src.startsWith('https://') ? `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${width > 96 ? 75 : 70}` : src;
   // eslint-disable-next-line @next/next/no-img-element -- admin thumbnails, incl. local previews of unsaved photos
   return <img src={url} alt={alt} loading="lazy" decoding="async" className={className} onError={() => setBroken(true)} />;
 }

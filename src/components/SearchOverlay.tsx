@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Fuse from 'fuse.js';
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useShop, useUI } from '@/lib/store';
-import { getAllProducts, FABRIC_HI, COLOR_FAMILIES, productMedia } from '@/lib/catalog';
+import { FABRIC_HI, COLOR_FAMILIES, productMedia } from '@/lib/catalog';
+import { useCatalog } from './CatalogProvider';
 import { useLang, useT } from '@/lib/i18n';
 import { formatINR } from '@/lib/format';
 import { gsap } from '@/lib/gsap';
@@ -23,6 +24,7 @@ export function SearchOverlay() {
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
+  const { getAllProducts } = useCatalog();
   const fuse = useMemo(
     () =>
       new Fuse(
@@ -49,7 +51,7 @@ export function SearchOverlay() {
           ignoreLocation: true,
         },
       ),
-    [],
+    [getAllProducts],
   );
   const results = useMemo(() => (dq.trim() ? fuse.search(dq.trim()).slice(0, 12).map((r) => r.item) : []), [dq, fuse]);
 

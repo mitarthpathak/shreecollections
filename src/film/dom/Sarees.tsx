@@ -2,10 +2,11 @@
 import Image from 'next/image';
 import { Accent } from '@/components/Accent';
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
-import { getByCategory, type Product, productMedia } from '@/lib/catalog';
+import { type Product, productMedia } from '@/lib/catalog';
+import { useCatalog } from '@/components/CatalogProvider';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
 import { useLang, useT } from '@/lib/i18n';
@@ -15,7 +16,6 @@ import { Price } from '@/components/Price';
 import { WishlistButton } from '@/components/WishlistButton';
 import { IconPlus } from '@/components/icons';
 
-const SAREES = getByCategory('saree').slice(0, 8);
 const STACK = 5;
 const STACK_STEP = 14; // px each stuck card sits below the one before
 /**
@@ -88,6 +88,8 @@ function Slide({ p }: { p: Product }) {
 }
 
 export function Sarees() {
+  const { getByCategory } = useCatalog();
+  const SAREES = useMemo(() => getByCategory('saree').slice(0, 8), [getByCategory]);
   const root = useRef<HTMLElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const t = useT();

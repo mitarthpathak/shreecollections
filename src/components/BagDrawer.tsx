@@ -3,7 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useShop, useUI } from '@/lib/store';
-import { getProduct, type Product, productMedia } from '@/lib/catalog';
+import { type Product, productMedia } from '@/lib/catalog';
+import { useCatalog } from './CatalogProvider';
 import { formatINR } from '@/lib/format';
 import { useLang, useT } from '@/lib/i18n';
 import { contactChannel, copyForInstagram, orderMessage, whatsappLink } from '@/lib/whatsapp';
@@ -15,12 +16,13 @@ import { IconClose, IconMinus, IconPlus } from './icons';
 
 export function useBagLines() {
   const bag = useShop((s) => s.bag);
+  const { getProduct } = useCatalog();
   return useMemo(
     () =>
       bag
         .map((l) => ({ ...l, product: getProduct(l.slug) }))
         .filter((l): l is typeof l & { product: Product } => Boolean(l.product)),
-    [bag],
+    [bag, getProduct],
   );
 }
 

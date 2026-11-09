@@ -2,18 +2,20 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Page } from '@/components/Page';
 import { ProductView } from '@/components/product/ProductView';
-import { getAllProducts, getProduct, productMedia } from '@/lib/catalog';
+import { productMedia } from '@/lib/catalog';
+import { getServerCatalog } from '@/lib/catalog.server';
 import { breadcrumbJsonLd, productJsonLd, ld } from '@/lib/seo';
 import { formatINR } from '@/lib/format';
 
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return getAllProducts().map((p) => ({ slug: p.slug }));
+// Built for every product; one added later in the admin panel renders on its first visit.
+export const dynamicParams = true;
+export async function generateStaticParams() {
+  return (await getServerCatalog()).products.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<'/product/[slug]'>): Promise<Metadata> {
   const { slug } = await params;
-  const p = getProduct(slug);
+  const p = (await getServerCatalog()).getProduct(slug);
   if (!p) return {};
   const description = `${p.description} ${formatINR(p.price)} at Shree Collection, Banswara.`;
   return {
@@ -26,7 +28,7 @@ export async function generateMetadata({ params }: PageProps<'/product/[slug]'>)
 
 export default async function ProductPage({ params }: PageProps<'/product/[slug]'>) {
   const { slug } = await params;
-  const p = getProduct(slug);
+  const p = (await getServerCatalog()).getProduct(slug);
   if (!p) notFound();
   const cat = p.category === 'saree' ? { name: 'Sarees', path: '/shop/sarees' } : { name: 'Suits', path: '/shop/suits' };
   return (

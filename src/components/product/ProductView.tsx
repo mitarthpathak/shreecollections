@@ -2,7 +2,8 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getAllProducts, getProduct, completeTheLook, productMedia, FABRIC_HI, OCCASION_LABEL, COLOR_FAMILIES, type Product } from '@/lib/catalog';
+import { productMedia, FABRIC_HI, OCCASION_LABEL, COLOR_FAMILIES, type Product } from '@/lib/catalog';
+import { useCatalog } from '@/components/CatalogProvider';
 import { useShop, useUI } from '@/lib/store';
 import { useLang, useT } from '@/lib/i18n';
 import { threadToBag } from '@/lib/fx';
@@ -31,6 +32,7 @@ function deliveryEstimate(pin: string, lang: 'en' | 'hi') {
 }
 
 export function ProductView({ slug }: { slug: string }) {
+  const { getAllProducts, getProduct, completeTheLook } = useCatalog();
   const p = getProduct(slug)!;
   const lang = useLang();
   const t = useT();
@@ -84,12 +86,12 @@ export function ProductView({ slug }: { slug: string }) {
 
   const variants = useMemo(
     () => getAllProducts().filter((q) => q.category === p.category && q.subcategory === p.subcategory),
-    [p],
+    [p, getAllProducts],
   );
-  const look = useMemo(() => completeTheLook(p, 4), [p]);
+  const look = useMemo(() => completeTheLook(p, 4), [p, completeTheLook]);
   const recent = useMemo(
     () => (hydrated ? viewed.filter((s) => s !== slug).map((s) => getProduct(s)).filter(Boolean).slice(0, 4) as Product[] : []),
-    [hydrated, viewed, slug],
+    [hydrated, viewed, slug, getProduct],
   );
   const name = lang === 'hi' ? p.nameHi : p.name;
   const sized = Boolean(p.sizes?.length);

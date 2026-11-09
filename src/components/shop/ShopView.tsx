@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react';
 import {
-  getAllProducts,
   sortProducts,
   FABRICS,
   OCCASIONS,
@@ -13,6 +12,7 @@ import {
   type Category,
   type SortKey,
 } from '@/lib/catalog';
+import { useCatalog } from '@/components/CatalogProvider';
 import { ProductCard } from '../ProductCard';
 import { PriceHistogram } from './PriceHistogram';
 import { MiniChakra } from './MiniChakra';
@@ -53,7 +53,8 @@ function ShopGrid({ category, sp, morph = false }: { category?: Category; sp: Pi
   const filtersBtn = useRef<HTMLButtonElement>(null);
   const locked = useRef(false);
 
-  const base = useMemo(() => (category ? getAllProducts().filter((p) => p.category === category) : getAllProducts()), [category]);
+  const { getAllProducts } = useCatalog();
+  const base = useMemo(() => (category ? getAllProducts().filter((p) => p.category === category) : getAllProducts()), [category, getAllProducts]);
   const f = {
     fabric: list(sp, 'fabric'),
     color: list(sp, 'color'),

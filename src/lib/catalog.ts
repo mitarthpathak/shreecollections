@@ -1,8 +1,8 @@
 /**
- * Thin data layer. Components only ever import from here, so the JSON source can be
- * swapped for Shopify Storefront, Supabase or Sanity by rewriting this file alone.
+ * Thin data layer: pure helpers over a product list. The list itself comes from the server
+ * (src/lib/catalog.server.ts: Supabase when it is connected, else data/products.json) and
+ * reaches components through useCatalog() (src/components/CatalogProvider.tsx).
  */
-import raw from '../../data/products.json';
 import { FABRICS, OCCASIONS, BADGES } from './catalog.constants';
 import type { Product } from './catalog.schema';
 
@@ -11,16 +11,6 @@ export type { Product };
 export type Category = Product['category'];
 export type Fabric = (typeof FABRICS)[number];
 export type Occasion = (typeof OCCASIONS)[number];
-
-// Validated with Zod at build time (src/lib/catalog.server.ts, imported by the root layout),
-// so the schema never ships to the browser.
-const products = raw as Product[];
-
-export const getAllProducts = () => products;
-export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
-export const getByCategory = (c: Category) => products.filter((p) => p.category === c);
-export const getBestsellers = (n = 6) => products.filter((p) => p.badges?.includes('bestseller')).slice(0, n);
-export const getByFabric = (f: string) => products.filter((p) => p.fabric === f);
 
 /** What to show for a product: its photos when it has any, otherwise the drawn placeholders. */
 export const productMedia = (p: Product) => (p.photos?.length ? p.photos : p.images);
@@ -78,7 +68,7 @@ export function sortProducts(list: Product[], sort: SortKey) {
 }
 
 /** Recommendations for "Complete the look": same occasion, other category first. */
-export function completeTheLook(p: Product, n = 4) {
+export function completeTheLook(p: Product, products: Product[], n = 4) {
   const others = products.filter((q) => q.slug !== p.slug);
   const share = (q: Product) => q.occasion.filter((o) => p.occasion.includes(o)).length;
   return others
@@ -88,7 +78,21 @@ export function completeTheLook(p: Product, n = 4) {
     .map((x) => x.q);
 }
 
-export const priceExtent = () => {
-  const ps = products.map((p) => p.price);
-  return [Math.min(...ps), Math.max(...ps)] as const;
-};
+/** A product list with its lookups: what useCatalog() returns, and what server code uses. */
+export function catalogOf(products: Product[]) {
+  const bySlug = new Map(products.map((p) => [p.slug, p]));
+  return {
+    products,
+    getAllProducts: () => products,
+    getProduct: (slug: string) => bySlug.get(slug),
+    getByCategory: (c: Category) => products.filter((p) => p.category === c),
+    getBestsellers: (n = 6) => products.filter((p) => p.badges?.includes('bestseller')).slice(0, n),
+    getByFabric: (f: string) => products.filter((p) => p.fabric === f),
+    completeTheLook: (p: Product, n = 4) => completeTheLook(p, products, n),
+    priceExtent: () => {
+      const ps = products.map((p) => p.price);
+      return [Math.min(...ps), Math.max(...ps)] as const;
+    },
+  };
+}
+export type Catalog = ReturnType<typeof catalogOf>;

@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useShop, useUI } from '@/lib/store';
-import { getProduct, type Product } from '@/lib/catalog';
+import type { Product } from '@/lib/catalog';
+import { useCatalog } from './CatalogProvider';
 import { ProductCard } from './ProductCard';
 import { useT } from '@/lib/i18n';
 
@@ -9,6 +10,7 @@ export function WishlistGrid() {
   const hydrated = useUI((s) => s.hydrated);
   const wish = useShop((s) => s.wishlist);
   const t = useT();
+  const { getProduct } = useCatalog();
   const items = wish.map((s) => getProduct(s)).filter(Boolean) as Product[];
   if (!hydrated) return <div className="min-h-[40svh]" />;
   if (!items.length)
