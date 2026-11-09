@@ -21,6 +21,8 @@ export const brand = {
   logo: {
     /** The owner's badge (1254 × 1254, black disc with a gold ring): header, footer, the 3D coin. */
     src: '/brand/logo.webp',
+    /** The face of the hero's 3D coin: the gold logo with only श्री COLLECTION (no tagline lines). */
+    coin: '/brand/logo-coin.webp',
     hasArtwork: true,
     alt: 'Shree Collection logo: Bal Krishna leaning on a matki of makhan, above श्री COLLECTION, Ladies Garments, Suits, Sarees',
   },
