@@ -12,20 +12,19 @@ export const brand = {
   name: 'Shree Collection',
   nameHi: 'श्री Collection',
   wordmark: { hi: 'श्री', en: 'COLLECTION' },
-  /** The logo raster has a typo (GARAIENTS). This live-text tagline replaces it everywhere. */
+  /** The logo's tagline, also set as live text next to the wordmark. */
   tagline: 'Ladies Garments · Suits · Sarees',
   taglineHi: 'लेडीज़ गारमेंट्स · सूट · साड़ियाँ',
   signOff: 'Jai Shree Krishna',
   signOffHi: 'जय श्री कृष्ण',
 
   logo: {
-    src: '/brand/logo.png',
-    /**
-     * Set to true once the corrected master is in /public/brand/logo.png.
-     * The supplied raster reads "LADIES GARAIENTS" and must never be displayed.
-     */
-    hasArtwork: false,
-    alt: 'Shree Collection badge: Bal Krishna with a matki of makhan above a gold श्री COLLECTION wordmark',
+    /** The owner's badge (1254 × 1254, black disc with a gold ring): header, footer, the 3D coin. */
+    src: '/brand/logo.webp',
+    /** The face of the hero's 3D coin: the gold logo with only श्री COLLECTION (no tagline lines). */
+    coin: '/brand/logo-coin.webp',
+    hasArtwork: true,
+    alt: 'Shree Collection logo: Bal Krishna leaning on a matki of makhan, above श्री COLLECTION, Ladies Garments, Suits, Sarees',
   },
 
   location: {
@@ -34,16 +33,17 @@ export const brand = {
     country: 'IN',
     lat: 23.5537819,
     lng: 74.4271211,
-    mapsUrl: 'https://www.google.com/maps/search/?api=1&query=23.5537819%2C74.4271211',
-    /** Street address (unknown: the address row shows only city and state). */
-    streetAddress: null as string | null,
+    /** The store's Google Maps listing (its pin is at lat/lng above). */
+    mapsUrl: 'https://maps.app.goo.gl/iswrNdp41axNWpGG6',
+    /** Street address (null: the address row shows only city and state). */
+    streetAddress: 'Shop No. 20 A, Ground Floor, Nakshatra Mall, near Navin Petrol Pump' as string | null,
     /** PIN code. */
-    postalCode: null as string | null,
+    postalCode: '327001' as string | null,
   },
 
   contact: {
     /** Phone, E.164 without spaces, e.g. "+919876543210" (unknown: no Call button). */
-    phone: null as string | null,
+    phone: '+919460583773' as string | null,
     /**
      * WhatsApp number, international format, digits only, no "+", e.g. "919876543210".
      * Unknown: every WhatsApp button becomes "Message on Instagram" (lib/whatsapp.ts).
@@ -51,8 +51,14 @@ export const brand = {
     whatsapp: null as string | null,
   },
 
-  /** Opening hours, e.g. [{ days: 'Mon–Sat', daysHi: 'सोम–शनि', open: '10:30', close: '20:30' }] (unknown: no hours row). */
-  hours: null as { days: string; daysHi: string; open: string; close: string }[] | null,
+  /**
+   * Opening hours, 24-hour times; `schema` is the schema.org day range for search engines
+   * (null: no hours row). Festival changes (e.g. Diwali) belong on Google Maps, not here.
+   */
+  hours: [
+    { days: 'Mon–Sat', daysHi: 'सोम–शनि', schema: 'Mo-Sa', open: '10:30', close: '20:00' },
+    { days: 'Sunday', daysHi: 'रविवार', schema: 'Su', open: '11:00', close: '19:30' },
+  ] as { days: string; daysHi: string; schema: string; open: string; close: string }[] | null,
 
   instagram: {
     handle: 'shreecollectionsbsw',
@@ -97,7 +103,7 @@ export const brand = {
 
 /** Every unknown fact, listed in one place (also rendered on /about for the owner). */
 export const brandTodos: { key: string; label: string }[] = [
-  !brand.logo.hasArtwork && { key: 'logo', label: 'Corrected logo master without the GARAIENTS typo (/public/brand/logo.png)' },
+  !brand.logo.hasArtwork && { key: 'logo', label: 'Logo (/public/brand/logo.webp)' },
   !brand.location.streetAddress && { key: 'address', label: 'Street address' },
   !brand.location.postalCode && { key: 'pincode', label: 'PIN code' },
   !brand.contact.phone && { key: 'phone', label: 'Phone number' },

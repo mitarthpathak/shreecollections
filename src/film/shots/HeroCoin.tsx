@@ -78,11 +78,20 @@ export function HeroCoin({ onReady }: { onReady?: () => void }) {
     const { pos } = placed;
     const { turn, lift } = film.u.hero;
     const t = s.clock.elapsedTime;
-    // idle float + pointer tilt (desktop) / idle sway (mobile)
-    const px = film.mobile ? Math.sin(t * 0.6) * 0.25 : film.pointer.x;
-    const py = film.mobile ? Math.cos(t * 0.5) * 0.15 : film.pointer.y;
-    easing.damp(sp.rotation, 'y', turn * (Math.PI / 2) + px * 0.35 * (1 - turn), 0.25, dt);
-    easing.damp(sp.rotation, 'x', -py * 0.25 * (1 - turn), 0.3, dt);
+    // Desktop: the coin's face turns toward the mouse, measured from the coin itself (not the
+    // middle of the screen), full tilt about three radii away, and settles flat when the mouse
+    // leaves the page. Phones: a slow idle sway.
+    let tx = 0, ty = 0;
+    if (film.mobile) {
+      tx = Math.sin(t * 0.6) * 0.5;
+      ty = Math.cos(t * 0.5) * 0.4;
+    } else if (film.pointer.inside && film.coin.r > 0) {
+      const reach = film.coin.r * 3;
+      tx = THREE.MathUtils.clamp((film.pointer.cx - film.coin.x) / reach, -1, 1);
+      ty = THREE.MathUtils.clamp((film.pointer.cy - film.coin.y) / reach, -1, 1);
+    }
+    easing.damp(sp.rotation, 'y', turn * (Math.PI / 2) + tx * 0.3 * (1 - turn), 0.35, dt);
+    easing.damp(sp.rotation, 'x', ty * 0.22 * (1 - turn), 0.35, dt);
     g.position.set(pos.x, pos.y + (Math.sin(t * 0.8) * 0.06 + lift * 0.2) * k, pos.z);
   });
 

@@ -81,11 +81,21 @@ export function Film({ heroMedia = null }: { heroMedia?: HeroMedia }) {
       if (e.pointerType !== 'mouse') return;
       film.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
       film.pointer.y = -((e.clientY / window.innerHeight) * 2 - 1);
+      film.pointer.cx = e.clientX;
+      film.pointer.cy = e.clientY;
+      film.pointer.inside = true;
     };
+    // the mouse left the page (or the window lost focus): things that follow it settle back
+    const leave = () => void (film.pointer.inside = false);
     window.addEventListener('pointermove', move, { passive: true });
+    document.documentElement.addEventListener('mouseleave', leave);
+    window.addEventListener('blur', leave);
     const unsub = useUI.subscribe((s) => (film.covered = s.bagOpen || s.searchOpen));
     return () => {
       window.removeEventListener('pointermove', move);
+      document.documentElement.removeEventListener('mouseleave', leave);
+      window.removeEventListener('blur', leave);
+      film.pointer.inside = false;
       unsub();
       film.covered = false;
     };
