@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Page } from '@/components/Page';
 import { brand } from '@/brand.config';
+
+export const metadata: Metadata = {
+  title: 'Page not found',
+  description: brand.copy.notFound.en,
+};
 
 export default function NotFound() {
   return (

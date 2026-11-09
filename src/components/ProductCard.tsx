@@ -1,12 +1,12 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRef, useState, ViewTransition } from 'react';
+import { useEffect, useRef, useState, ViewTransition } from 'react';
 import type { Product } from '@/lib/catalog';
 import { FABRIC_HI } from '@/lib/catalog';
 import { Price } from './Price';
 import { WishlistButton } from './WishlistButton';
-import { IconPlus } from './icons';
+import { IconClose, IconPlus } from './icons';
 import { useShop } from '@/lib/store';
 import { useLang, useT } from '@/lib/i18n';
 import { threadToBag } from '@/lib/fx';
@@ -19,7 +19,7 @@ export function BadgeList({ badges }: { badges?: Product['badges'] }) {
       {badges.map((b) => (
         <li
           key={b}
-          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.12em] ${
             b === 'bestseller' ? 'bg-sindoor text-ivory' : b === 'limited' ? 'bg-raat/80 text-gold-100 ring-1 ring-gold-500' : 'bg-gold-300 text-raat'
           }`}
         >
@@ -45,21 +45,57 @@ export function ProductCard({
   const t = useT();
   const add = useShop((s) => s.add);
   const media = useRef<HTMLDivElement>(null);
+  const picker = useRef<HTMLDivElement>(null);
+  const plus = useRef<HTMLButtonElement>(null);
+  const refocus = useRef(false);
   const [picking, setPicking] = useState(false);
+  const [slide, setSlide] = useState(0);
   const name = lang === 'hi' ? p.nameHi : p.name;
+  const shots = p.images.slice(0, 2);
 
   const quickAdd = (size?: string) => {
     add(p.slug, size);
     threadToBag(media.current);
+    // Don't drop keyboard focus on <body> when the chosen size button unmounts.
+    refocus.current = Boolean(picker.current?.contains(document.activeElement));
     setPicking(false);
   };
+
+  // The size picker closes on a tap or click anywhere else, on its × and on Esc.
+  useEffect(() => {
+    if (!picking) {
+      if (refocus.current) plus.current?.focus({ preventScroll: true });
+      refocus.current = false;
+      return;
+    }
+    picker.current?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
+    const onDown = (e: PointerEvent) => {
+      if (!picker.current?.contains(e.target as Node)) setPicking(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      refocus.current = true;
+      setPicking(false);
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [picking]);
 
   const img = (
     <div
       ref={media}
+      onScroll={(e) => {
+        const el = e.currentTarget;
+        const i = el.clientWidth ? Math.round(el.scrollLeft / el.clientWidth) : 0;
+        if (i !== slide) setSlide(i);
+      }}
       className="no-scrollbar relative flex aspect-[3/4] snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-[14px] bg-lacquer [@media(hover:hover)]:overflow-hidden"
     >
-      {p.images.slice(0, 2).map((src, i) => (
+      {shots.map((src, i) => (
         <Image
           key={src}
           src={src}
@@ -95,15 +131,22 @@ export function ProductCard({
           <BadgeList badges={p.badges} />
         </div>
         <WishlistButton slug={p.slug} className="absolute right-2 top-2" />
-        {/* swipe hint dots (touch only) */}
-        <div aria-hidden className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 [@media(hover:hover)]:hidden">
-          <span className="h-1 w-3 rounded-full bg-gold-300/80" />
-          <span className="h-1 w-1.5 rounded-full bg-ivory/40" />
-        </div>
+        {/* swipe hint dots (touch only): the current image is the long gold one */}
+        {shots.length > 1 && (
+          <div aria-hidden className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 [@media(hover:hover)]:hidden">
+            {shots.map((src, i) => (
+              <span
+                key={src}
+                data-on={i === slide}
+                className="h-1 w-1.5 rounded-full bg-ivory/40 transition-all duration-300 data-[on=true]:w-3 data-[on=true]:bg-gold-300/80"
+              />
+            ))}
+          </div>
+        )}
         {p.inStock && (
           <div className="absolute inset-x-2 bottom-2 flex justify-end [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
             {picking && p.sizes ? (
-              <div className="glass flex flex-wrap justify-center gap-1 rounded-2xl p-1.5" role="group" aria-label={t('size')}>
+              <div ref={picker} className="glass flex flex-wrap justify-center gap-1 rounded-2xl p-1.5" role="group" aria-label={`${t('size')}: ${name}`}>
                 {p.sizes.map((s) => (
                   <button
                     key={s}
@@ -114,9 +157,21 @@ export function ProductCard({
                     {s}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    refocus.current = true;
+                    setPicking(false);
+                  }}
+                  className="grid min-h-11 min-w-11 place-items-center rounded-full text-ivory-dim hover:text-gold-100"
+                  aria-label={t('close')}
+                >
+                  <IconClose size={16} />
+                </button>
               </div>
             ) : (
               <button
+                ref={plus}
                 type="button"
                 data-cursor="Add"
                 onClick={() => (p.sizes ? setPicking(true) : quickAdd())}
@@ -131,7 +186,7 @@ export function ProductCard({
         )}
       </div>
       <div className="mt-3 space-y-1 px-0.5">
-        <p className="label text-[0.62rem] text-gold-500">
+        <p className="label text-[0.7rem] text-gold-500">
           {lang === 'hi' ? FABRIC_HI[p.fabric] : p.fabric}
           {p.subcategory !== p.fabric && ` · ${p.subcategory}`}
           {p.category === 'suit' && !p.stitched && ` · ${t('unstitched')}`}

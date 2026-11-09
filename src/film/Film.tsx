@@ -26,6 +26,7 @@ import { KnotChapter } from './dom/Knot';
 const Stage = dynamic(() => import('./Stage'), { ssr: false });
 const DEBUG_BUILD = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_FILM_DEBUG === '1';
 const Debug = DEBUG_BUILD ? dynamic(() => import('./Debug'), { ssr: false }) : () => null;
+const MOBILE_QUERY = '(max-width: 767px)';
 
 export function Film() {
   const tier = useUI((s) => s.tier);
@@ -33,15 +34,29 @@ export function Film() {
   const [loadStage, setLoadStage] = useState(false);
   const [stageReady, setStageReady] = useState(false);
   const [introDone, setIntroDone] = useState(false);
+  // Phone layout (camera fov, shot placement, flat lookbook). Kept current through rotation:
+  // the stage remounts when it flips, so every shot picks up the new value.
+  const [mobile, setMobile] = useState(false);
   const fontsReady = useRef(false);
   const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_QUERY);
+    const apply = () => {
+      if (film.mobile !== mq.matches) setStageReady(false); // posters cover the remount
+      film.mobile = mq.matches;
+      setMobile(mq.matches);
+    };
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
 
   // Decide on the stage once the tier is known. The page loads with posters; the 3D chunk
   // follows on the visitor's first sign of intent (or after a quiet moment), during idle,
   // so first paint and first input never compete with three.js.
   useEffect(() => {
     if (!hydrated) return;
-    film.mobile = window.matchMedia('(max-width: 767px)').matches;
     document.fonts?.ready.then(() => (fontsReady.current = true));
     if (tier === 0) return;
     let started = false;
@@ -102,7 +117,43 @@ export function Film() {
           film.direction = self.direction as 1 | -1;
         },
       });
+      // Section lengths are in svh, and phone / desktop lengths differ, so after a rotation or
+      // a window resize the same scroll offset lands in another chapter. Remember where the
+      // reader was (chapter + progress) when the size changed, and go back there once
+      // ScrollTrigger has re-measured.
+      let held: { c: number; p: number } | null = null;
+      let fallback = 0;
+      let size = { w: window.innerWidth, h: window.innerHeight };
+      const coarse = window.matchMedia('(pointer: coarse)').matches;
+      const onResize = () => {
+        const w = window.innerWidth, h = window.innerHeight;
+        // a phone's toolbar showing / hiding changes only the height: svh lengths don't move
+        const moved = w !== size.w || (!coarse && h !== size.h);
+        size = { w, h };
+        if (!moved || held) return;
+        held = { c: film.chapter, p: film.chapterProgress };
+        // ScrollTrigger refreshes on its own after a resize; make sure one happens
+        fallback = window.setTimeout(() => held && ScrollTrigger.refresh(), 1500);
+      };
+      const restore = () => {
+        if (!held) return;
+        window.clearTimeout(fallback);
+        const { c, p } = held;
+        held = null;
+        const from = triggers[c].start;
+        const to = triggers[c + 1]?.start ?? ScrollTrigger.maxScroll(window);
+        const y = Math.round(from + (to - from) * p);
+        const lenis = getLenis();
+        if (lenis) {
+          lenis.resize();
+          lenis.scrollTo(y, { immediate: true, force: true });
+        } else window.scrollTo(0, y);
+        ScrollTrigger.update();
+      };
+      window.addEventListener('resize', onResize);
+      ScrollTrigger.addEventListener('refresh', restore);
       const off = onFrame(() => {
+        if (held) return; // measurements are stale until the refresh
         const y = getLenis()?.scroll ?? window.scrollY;
         let c = 0;
         for (let i = 0; i < triggers.length; i++) if (y >= triggers[i].start - 1) c = i;
@@ -112,6 +163,9 @@ export function Film() {
       });
       return () => {
         off();
+        window.removeEventListener('resize', onResize);
+        ScrollTrigger.removeEventListener('refresh', restore);
+        window.clearTimeout(fallback);
         film.chapter = 0;
         film.chapterProgress = 0;
         film.progress = 0;
@@ -152,7 +206,7 @@ export function Film() {
       <Preloader progress={() => progressRef.current()} onDone={() => setIntroDone(true)} />
       {loadStage && tier > 0 && (
         <div className={`fixed inset-0 z-0 transition-opacity duration-1000 ${stageReady ? 'opacity-100' : 'opacity-0'}`} aria-hidden>
-          <Stage key={tier} tier={tier} onReady={() => setStageReady(true)} />
+          <Stage key={`${tier}-${mobile ? 'm' : 'd'}`} tier={tier} onReady={() => setStageReady(true)} />
         </div>
       )}
       <Posters hidden={stageReady && tier > 0} />
@@ -167,7 +221,7 @@ export function Film() {
         <Suits />
         <Chakra />
         <Picks />
-        <Lookbook stageReady={stageReady} />
+        <Lookbook wall3D={stageReady && tier >= 2 && !mobile} />
         <Visit />
         <KnotChapter />
       </div>
