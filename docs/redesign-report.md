@@ -151,10 +151,8 @@ eye, the knot.
 - [ ] **Hero drape video**: `public/media/hero-drape.mp4` + `hero-drape.webp` (spec in the photo guide).
 - [ ] **Fabric textures**: `public/textures/<fabric>/albedo.webp` (+ `normal.webp`) for the six fabrics.
 - [ ] **Light posters** (designer): light-theme captures of the 11 chapters, if wanted.
-- [ ] **Corrected logo** without the GARAIENTS typo → `public/brand/logo.png`, then `logo.hasArtwork: true`.
-- [ ] **Street address and PIN code** → `location.streetAddress`, `location.postalCode`.
-- [ ] **Opening hours** → `hours`.
-- [ ] **Phone** → `contact.phone` (E.164, e.g. `+919876543210`).
+- [x] **Logo** → `public/brand/logo.webp` (`logo.hasArtwork: true`).
+- [x] **Street address and PIN code**, **opening hours**, **phone**, Google Maps listing.
 - [ ] **WhatsApp number** → `contact.whatsapp` (international, digits only, no `+`, e.g. `919876543210`).
       Until then, orders go to Instagram DMs.
 - [ ] **Owner story** → `ownerStory`; **shipping, returns, privacy policies** → `policies.*`.

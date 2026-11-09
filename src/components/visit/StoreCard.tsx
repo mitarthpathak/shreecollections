@@ -5,6 +5,12 @@ import { ContactIcon } from '../ContactIcon';
 import { useLang, useT } from '@/lib/i18n';
 import { buildWhatsAppEnquiry, contactChannel } from '@/lib/whatsapp';
 
+/** "20:00" → "8 pm", "10:30" → "10:30 am". */
+function clock(hhmm: string) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'am' : 'pm'}`;
+}
+
 export function StoreCard({ className = '', headingLevel = 3 }: { className?: string; headingLevel?: 2 | 3 }) {
   const H = headingLevel === 2 ? 'h2' : 'h3';
   const t = useT();
@@ -32,7 +38,7 @@ export function StoreCard({ className = '', headingLevel = 3 }: { className?: st
           <div>
             <dt className="label mb-1 text-gold-text">{lang === 'hi' ? 'समय' : 'Hours'}</dt>
             <dd>
-              <ul>{brand.hours.map((h) => <li key={h.days}>{lang === 'hi' ? h.daysHi : h.days}: {h.open}–{h.close}</li>)}</ul>
+              <ul>{brand.hours.map((h) => <li key={h.days}>{lang === 'hi' ? h.daysHi : h.days}: {clock(h.open)} – {clock(h.close)}</li>)}</ul>
             </dd>
           </div>
         )}

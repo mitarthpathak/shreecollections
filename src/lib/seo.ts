@@ -27,7 +27,7 @@ export function storeJsonLd() {
     geo: { '@type': 'GeoCoordinates', latitude: brand.location.lat, longitude: brand.location.lng },
     hasMap: brand.location.mapsUrl,
     ...(brand.contact.phone ? { telephone: brand.contact.phone } : {}),
-    ...(brand.hours ? { openingHours: brand.hours.map((h) => `${h.days} ${h.open}-${h.close}`) } : {}),
+    ...(brand.hours ? { openingHours: brand.hours.map((h) => `${h.schema} ${h.open}-${h.close}`) } : {}),
     sameAs: [brand.instagram.url],
     priceRange: '₹1,499 – ₹24,999',
     currenciesAccepted: 'INR',
