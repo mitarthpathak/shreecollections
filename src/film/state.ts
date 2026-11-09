@@ -10,7 +10,8 @@ export const film = {
   chapterProgress: 0,
   /** per-chapter progress 0..1, indexed like CHAPTERS */
   chapters: new Array<number>(11).fill(0),
-  pointer: { x: 0, y: 0 },
+  /** mouse: x/y -1..1 over the viewport, cx/cy in CSS px; inside = the mouse is over the page */
+  pointer: { x: 0, y: 0, cx: 0, cy: 0, inside: false },
   /** the canvas is hidden behind an opaque section or the tab is hidden */
   covered: false,
   /** The chapter colour journey's current background, sRGB 0–1 (see chapterBg.ts). */

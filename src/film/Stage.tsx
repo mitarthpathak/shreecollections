@@ -52,9 +52,11 @@ function CameraRig() {
     rail.getPoint(t.current, pos);
     rail.getPoint(Math.min(1, t.current + 0.03), look);
     if (t.current > 0.97) look.copy(pos).add(new THREE.Vector3(0, 0, -6));
-    const px = film.mobile ? 0 : film.pointer.x * 0.18;
-    const py = film.mobile ? 0 : film.pointer.y * 0.12;
-    easing.damp3(base, [pos.x + px, pos.y + py, pos.z], 0.12, dt);
+    // a gentle parallax with the mouse (desktop); flat again when it leaves the page
+    const follow = !film.mobile && film.pointer.inside;
+    const px = follow ? film.pointer.x * 0.04 : 0;
+    const py = follow ? film.pointer.y * 0.025 : 0;
+    easing.damp3(base, [pos.x + px, pos.y + py, pos.z], 0.3, dt);
     easing.damp3(target, look, 0.18, dt);
     const cam = s.camera as THREE.PerspectiveCamera;
     const rise = film.footerRise > 0 ? (film.footerRise / s.size.height) * 2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * KNOT_DEPTH : 0;
