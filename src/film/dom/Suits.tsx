@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRef } from 'react';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
-import { getByCategory, type Product, productMedia } from '@/lib/catalog';
+import { type Product, productMedia } from '@/lib/catalog';
+import { useCatalog } from '@/components/CatalogProvider';
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { useLang, useT } from '@/lib/i18n';
 import { Price } from '@/components/Price';
@@ -69,7 +70,7 @@ function ArchCard({ p }: { p: Product }) {
 export function Suits() {
   const root = useRef<HTMLElement>(null);
   const t = useT();
-  const suits = getByCategory('suit');
+  const suits = useCatalog().getByCategory('suit');
   const picks = WORDS.map((w) => suits.find((s) => s.subcategory === w)).filter(Boolean) as Product[];
 
   useGSAP(

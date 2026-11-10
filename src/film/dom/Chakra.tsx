@@ -7,7 +7,8 @@ import 'd3-transition';
 import { pie, arc, type PieArcDatum } from 'd3-shape';
 import { interpolate } from 'd3-interpolate';
 import { Section, ranges } from './Section';
-import { getAllProducts, COLOR_FAMILIES, type Category } from '@/lib/catalog';
+import { COLOR_FAMILIES, type Category } from '@/lib/catalog';
+import { useCatalog } from '@/components/CatalogProvider';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { Flip } from '@/lib/gsap-flip';
 import '@/lib/gsap-silk';
@@ -31,6 +32,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
   const ref = useRef<SVGSVGElement>(null);
   const langRef = useRef(lang);
   const redraw = useRef<() => void>(() => {});
+  const { getAllProducts } = useCatalog();
   useEffect(() => {
     langRef.current = lang;
     redraw.current();
@@ -185,7 +187,7 @@ function Wheel({ onChange, lang }: { onChange: (cat: Category | null, color: str
       // stop in-flight d3 transitions (their timers hold the nodes) before dropping the nodes
       svg.selectAll('*').interrupt().remove();
     };
-  }, [onChange]);
+  }, [onChange, getAllProducts]);
 
   return (
     <svg
@@ -206,9 +208,10 @@ export function Chakra() {
   const lang = useLang();
   const t = useT();
   const [sel, setSel] = useState<{ cat: Category | null; color: string | null }>({ cat: null, color: null });
+  const { getAllProducts } = useCatalog();
   const items = useMemo(
     () => getAllProducts().filter((p) => (!sel.cat || p.category === sel.cat) && (!sel.color || p.colorFamily === sel.color)).slice(0, 8),
-    [sel],
+    [sel, getAllProducts],
   );
 
   const onChange = useMemo(

@@ -25,6 +25,9 @@ export const ProductSchema = z.object({
   badges: z.array(z.enum(BADGES)).optional(),
   description: z.string(),
   care: z.array(z.string()),
+  /** ISO times, set by the admin panel (absent on products that never went through it) */
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 /** A product must have something to show: photos, or the drawn placeholders. */

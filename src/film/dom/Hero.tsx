@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Accent } from '@/components/Accent';
 import { useEffect, useRef, useState } from 'react';
 import { ProductCard } from '@/components/ProductCard';
-import { getAllProducts } from '@/lib/catalog';
+import { useCatalog } from '@/components/CatalogProvider';
 import type { HeroMedia } from '../Film';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
@@ -25,10 +25,6 @@ const COIN = {
   tall: { dx: 0, y: 0.31, r: 0.115 },
 };
 
-/** "New arrivals" in the hero's last beat: the newest pieces, as real product cards. */
-const NEW_ARRIVALS = getAllProducts()
-  .filter((p) => p.badges?.includes('new'))
-  .slice(0, 6);
 
 function NewArrivals({
   className = '',
@@ -37,6 +33,11 @@ function NewArrivals({
   show = true,
   ...rest
 }: { className?: string; title: string; viewAll: string; show?: boolean } & React.HTMLAttributes<HTMLElement>) {
+  // "New arrivals" in the hero's last beat: the newest pieces, as real product cards
+  const { getAllProducts } = useCatalog();
+  const NEW_ARRIVALS = getAllProducts()
+    .filter((p) => p.badges?.includes('new'))
+    .slice(0, 6);
   // nothing marked "new" in the catalogue (admin panel): no empty rail, the scroll beat stays
   if (!NEW_ARRIVALS.length) return <section aria-hidden className={className} {...rest} />;
   return (

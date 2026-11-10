@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { Accent } from '@/components/Accent';
 import { Section, ranges } from './Section';
 import { brand } from '@/brand.config';
-import { getBestsellers } from '@/lib/catalog';
+import { useCatalog } from '@/components/CatalogProvider';
 import { gsap, useGSAP, prefersReducedMotion } from '@/lib/gsap';
 import { film } from '../state';
 import { ProductCard } from '@/components/ProductCard';
@@ -14,7 +14,7 @@ import Link from 'next/link';
 export function Picks() {
   const root = useRef<HTMLElement>(null);
   const t = useT();
-  const items = getBestsellers(4);
+  const items = useCatalog().getBestsellers(4);
   useGSAP(
     () => {
       const el = root.current!;

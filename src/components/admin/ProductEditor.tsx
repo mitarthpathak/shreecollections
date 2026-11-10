@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { BADGES, COLOR_FAMILIES, FABRICS, OCCASIONS, OCCASION_LABEL, type Product } from '@/lib/catalog';
 import { discountPct, formatINR } from '@/lib/format';
 import { useModal } from '@/lib/modal';
+import { prefersReducedMotion } from '@/lib/gsap';
 import { IconClose } from '@/components/icons';
 import { needsCrop, preparePhoto, RATIO, type PreparedPhoto } from './photos';
 import { AdminImage, Menu, Modal, Spinner, Switch, type ConfirmOptions } from './ui';
@@ -15,6 +16,8 @@ type Badge = (typeof BADGES)[number];
 export type SavePayload = {
   product: {
     slug?: string;
+    /** the product's updatedAt when the form opened: the server refuses to overwrite a newer change */
+    baseUpdatedAt?: string;
     name: string;
     nameHi?: string;
     category: Category;
@@ -47,8 +50,6 @@ const CARE: Record<Category, string> = {
   suit: 'Gentle hand wash or dry clean\nIron on low heat',
 };
 const DEFAULT_FABRIC: Record<Category, Product['fabric']> = { saree: 'Banarasi', suit: 'Cotton' };
-/** Vercel takes request bodies up to 4.5 MB; leave room for the form and encoding. */
-const MAX_UPLOAD_BYTES = 3_000_000;
 const MAX_PHOTOS = 8;
 /** The same limits the server checks (src/lib/admin/products.ts), so its errors stay rare. */
 const LIMIT = { name: 120, sub: 60, price: 10_000_000, description: 2000, careLines: 12, careLine: 200 };
@@ -85,14 +86,17 @@ export function ProductEditor({
   onClose,
   onSave,
   confirm,
+  maxUploadBytes,
 }: {
   product?: Product;
   category: Category;
   products: Product[];
   previews: ReadonlyMap<string, string>;
   onClose: () => void;
-  onSave: (p: SavePayload) => Promise<{ error: string } | null>;
+  onSave: (p: SavePayload, onProgress: (done: number, total: number) => void) => Promise<{ error: string } | null>;
   confirm: (o: ConfirmOptions) => Promise<boolean>;
+  /** new-photo bytes one save can carry (GitHub: Vercel's 4.5 MB request limit); none with Supabase */
+  maxUploadBytes?: number;
 }) {
   const start = product?.category ?? startCategory;
   const [category, setCategory] = useState<Category>(start);
@@ -116,8 +120,10 @@ export function ProductEditor({
   const [formError, setFormError] = useState<string | null>(null);
   const [photoNote, setPhotoNote] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [cropping, setCropping] = useState<string | null>(null);
   const [dropping, setDropping] = useState(false);
+  const [closing, setClosing] = useState(false);
   const dialog = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const downOnScrim = useRef(false);
@@ -137,7 +143,7 @@ export function ProductEditor({
   const cover = photos[0]?.url ?? product?.images[0];
 
   async function requestClose() {
-    if (submitting) return;
+    if (submitting || closing) return;
     if (dirty) {
       const discard = await confirm({
         title: 'Discard your changes?',
@@ -148,7 +154,9 @@ export function ProductEditor({
       });
       if (!discard) return;
     }
-    onClose();
+    // a short exit: the sheet sinks away, the backdrop fades (none with reduced motion)
+    setClosing(true);
+    window.setTimeout(onClose, prefersReducedMotion() ? 0 : 200);
   }
 
   // Tab stays inside, Escape asks before discarding, focus goes back to the button that opened it.
@@ -256,8 +264,8 @@ export function ProductEditor({
     if (!occasion.length) e.occasion = 'Pick at least one occasion.';
     if (!photos.length && !product?.images.length) e.photos = 'Add at least one photo.';
     else if (photos.length > MAX_PHOTOS) e.photos = `A product can have up to ${MAX_PHOTOS} photos.`;
-    else if (uploadBytes > MAX_UPLOAD_BYTES) {
-      e.photos = `The new photos are ${mb(uploadBytes)} MB; one save takes up to ${mb(MAX_UPLOAD_BYTES)} MB. Save with fewer new photos, then add the rest.`;
+    else if (maxUploadBytes && uploadBytes > maxUploadBytes) {
+      e.photos = `The new photos are ${mb(uploadBytes)} MB; one save takes up to ${mb(maxUploadBytes)} MB. Save with fewer new photos, then add the rest.`;
     }
     if (description.trim().length > LIMIT.description) e.description = `Keep the description under ${LIMIT.description} characters.`;
     const lines = careLines(care);
@@ -293,7 +301,7 @@ export function ProductEditor({
     setSubmitting(true);
     const r = await onSave({
       product: {
-        ...(product ? { slug: product.slug } : {}),
+        ...(product ? { slug: product.slug, ...(product.updatedAt ? { baseUpdatedAt: product.updatedAt } : {}) } : {}),
         name: norm(name),
         ...(norm(nameHi) ? { nameHi: norm(nameHi) } : {}),
         category,
@@ -312,8 +320,9 @@ export function ProductEditor({
         photos: refs,
       },
       uploads,
-    });
+    }, (done, total) => setProgress(total > 0 ? { done, total } : null));
     setSubmitting(false);
+    setProgress(null);
     if (r) {
       const marked = fromServer(r.error);
       setErrors(marked);
@@ -334,7 +343,8 @@ export function ProductEditor({
     <div
       data-admin
       data-lenis-prevent
-      className="fixed inset-0 z-[200] bg-scrim sm:grid sm:place-items-center sm:p-4"
+      data-closing={closing || undefined}
+      className="adm-backdrop fixed inset-0 z-[200] sm:grid sm:place-items-center sm:p-4"
       onPointerDown={(e) => (downOnScrim.current = e.target === e.currentTarget)}
       onClick={(e) => {
         if (downOnScrim.current && e.target === e.currentTarget) void requestClose();
@@ -353,7 +363,8 @@ export function ProductEditor({
             void submit();
           }
         }}
-        className="flex h-full w-full flex-col bg-bg outline-none sm:h-auto sm:max-h-[calc(100svh-2rem)] sm:w-[min(760px,100%)] sm:rounded-3xl sm:ring-1 sm:ring-divider lg:w-[min(1120px,100%)]"
+        data-closing={closing || undefined}
+        className="adm-sheet flex h-full w-full flex-col bg-bg outline-none sm:h-auto sm:shadow-[0_40px_120px_-30px_var(--shadow)] sm:max-h-[calc(100svh-2rem)] sm:w-[min(760px,100%)] sm:rounded-3xl sm:ring-1 sm:ring-divider lg:w-[min(1120px,100%)]"
       >
         <header className="flex flex-none items-center gap-3 border-b border-divider py-2 pl-4 pr-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] sm:pl-6 sm:pr-3 sm:pt-2">
           <h2 id="editor-title" className="min-w-0 truncate font-editorial text-2xl font-medium text-fg sm:text-3xl">{title}</h2>
@@ -476,11 +487,11 @@ export function ProductEditor({
                 <p className="text-xs text-fg-muted">
                   4:5 portrait, daylight, plain wall. The first photo is the cover<span className="hidden [@media(pointer:fine)]:inline">; drag photos to reorder them</span>.
                 </p>
-                {uploadBytes > 0 && (
-                  <p className={`text-xs tabular-nums ${uploadBytes > MAX_UPLOAD_BYTES ? 'text-danger' : 'text-fg-muted'}`}>
-                    New photos: {fileSize(uploadBytes)} of {mb(MAX_UPLOAD_BYTES)} MB per save
+                {uploadBytes > 0 && maxUploadBytes ? (
+                  <p className={`text-xs tabular-nums ${uploadBytes > maxUploadBytes ? 'text-danger' : 'text-fg-muted'}`}>
+                    New photos: {fileSize(uploadBytes)} of {mb(maxUploadBytes)} MB per save
                   </p>
-                )}
+                ) : null}
                 {(errors.photos || photoNote) && (
                   <p id="ed-photos-err" className="text-sm text-danger">
                     {errors.photos ?? photoNote}
@@ -658,6 +669,7 @@ export function ProductEditor({
                 </div>
                 <div className="grid gap-2">
                   <p className="text-sm text-fg-muted">Badges on the product card</p>
+                  <p className="-mt-1 text-xs text-fg-muted">“New” comes off by itself 45 days after a product is added.</p>
                   <div className="flex flex-wrap gap-2">
                     {BADGES.map((b) => (
                       <button key={b} type="button" className="chip" aria-pressed={badges.includes(b)} onClick={() => setBadges((l) => toggle(l, b))}>
@@ -723,7 +735,7 @@ export function ProductEditor({
             {submitting ? (
               <>
                 <Spinner />
-                Saving…
+                {progress && progress.done < progress.total ? `Uploading photo ${progress.done + 1} of ${progress.total}…` : 'Saving…'}
               </>
             ) : product ? (
               'Save changes'
@@ -817,7 +829,7 @@ function PhotoTile({
         e.stopPropagation();
         onDropHere();
       }}
-      className="grid min-w-0 gap-1.5 [@media(pointer:fine)]:cursor-grab"
+      className="adm-rise grid min-w-0 gap-1.5 [@media(pointer:fine)]:cursor-grab"
     >
       <div className="relative">
         <AdminImage
