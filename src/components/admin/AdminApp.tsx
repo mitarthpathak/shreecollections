@@ -1,23 +1,45 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { BADGES, COLOR_FAMILIES, FABRICS, productMedia, type Product } from '@/lib/catalog';
+import { formatINR } from '@/lib/format';
+import { BadgeMark } from '@/components/BadgeMark';
+import { ThemeToggle } from '@/components/Theme';
+import { IconChevron, IconClose, IconFilter } from '@/components/icons';
 import { ProductEditor, type SavePayload } from './ProductEditor';
+import { AdminImage, Checkbox, ConfirmDialog, Menu, Modal, Spinner, Switch, Toasts, useToasts, type ConfirmOptions } from './ui';
 
-type Deploy = { version: string; state: 'pending' | 'success' | 'failure' | 'unknown'; local: boolean };
+type DeployState = 'pending' | 'success' | 'failure' | 'unknown';
+type Deploy = { version: string; state: DeployState; local: boolean };
 type Phase = { kind: 'loading' } | { kind: 'login'; error?: string } | { kind: 'error'; error: string } | { kind: 'ready' };
 type Saved = { version: string; products: Product[]; store: 'github' | 'local' };
 type Badge = (typeof BADGES)[number];
+type Res<T> = { status: number; data: T & { error?: string } };
 
-async function api<T>(url: string, init?: RequestInit): Promise<{ status: number; data: T & { error?: string } }> {
-  const res = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers }, cache: 'no-store' });
-  const data = (await res.json().catch(() => ({ error: 'Unexpected response from the server.' }))) as T & { error?: string };
-  return { status: res.status, data };
+/** Never throws: a dropped connection comes back as status 0 with a message. */
+async function api<T>(url: string, init?: RequestInit): Promise<Res<T>> {
+  try {
+    const res = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers }, cache: 'no-store' });
+    const data = (await res.json().catch(() => ({ error: 'Unexpected response from the server.' }))) as T & { error?: string };
+    return { status: res.status, data };
+  } catch {
+    return { status: 0, data: { error: 'No connection. Check the internet and try again.' } as T & { error?: string } };
+  }
 }
 
-const rupees = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 const PAGE = 60;
+/** when the catalogue was last read (module-level: only ever called from events) */
+const stamp = () => Date.now();
 const BADGE_LABEL: Record<Badge, string> = { new: 'New', bestseller: 'Bestseller', limited: 'Limited' };
 const CAT_LABEL = { saree: 'Sarees', suit: 'Suits' } as const;
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
+/** "XS · S · M · L · XL · XXL" → "XS–XXL" when the sizes run without a gap. */
+function sizeRange(s: string[]) {
+  const at = s.map((x) => SIZE_ORDER.indexOf(x));
+  const run = s.length > 2 && at.every((v, i) => v >= 0 && (i === 0 || v === at[i - 1] + 1));
+  return run ? `${s[0]}–${s[s.length - 1]}` : s.join(' · ');
+}
 
 /* ───────────────────────── filters (kept in the URL, so a refresh or a shared link keeps them) ───────────────────────── */
 
@@ -33,6 +55,26 @@ type Filters = {
   q: string;
 };
 const DEFAULTS: Filters = { cat: 'all', type: '', fabric: '', color: '', stock: 'all', photo: 'all', badge: 'all', sort: 'type', q: '' };
+const SORTS: [Filters['sort'], string][] = [
+  ['type', 'Group by type'],
+  ['newest', 'Newest first'],
+  ['name', 'Name A–Z'],
+  ['price-asc', 'Price: low to high'],
+  ['price-desc', 'Price: high to low'],
+];
+
+/** What a URL value may be; anything else (an old link, a typo) falls back to the default. */
+const VALID: Record<keyof Filters, (v: string) => boolean> = {
+  cat: (v) => v === 'all' || v === 'saree' || v === 'suit',
+  type: (v) => v.length <= 60,
+  fabric: (v) => (FABRICS as readonly string[]).includes(v),
+  color: (v) => v in COLOR_FAMILIES,
+  stock: (v) => v === 'all' || v === 'in' || v === 'out',
+  photo: (v) => v === 'all' || v === 'with' || v === 'sample',
+  badge: (v) => v === 'all' || v === 'none' || (BADGES as readonly string[]).includes(v),
+  sort: (v) => SORTS.some(([k]) => k === v),
+  q: (v) => v.length <= 100,
+};
 
 function readFilters(): Filters {
   if (typeof window === 'undefined') return DEFAULTS;
@@ -40,7 +82,7 @@ function readFilters(): Filters {
   const f = { ...DEFAULTS };
   for (const k of Object.keys(DEFAULTS) as (keyof Filters)[]) {
     const v = u.get(k);
-    if (v !== null) (f as Record<string, string>)[k] = v;
+    if (v !== null && VALID[k](v)) (f as Record<string, string>)[k] = v;
   }
   return f;
 }
@@ -65,6 +107,9 @@ function matches(p: Product, f: Filters, q: string) {
   return true;
 }
 
+/** Stock changes shown before the server confirms them (slug → in stock). */
+const overlay = (list: Product[], o: ReadonlyMap<string, boolean>) => (o.size ? list.map((p) => (o.has(p.slug) ? { ...p, inStock: o.get(p.slug)! } : p)) : list);
+
 /* ───────────────────────── the panel ───────────────────────── */
 
 export function AdminApp() {
@@ -72,20 +117,37 @@ export function AdminApp() {
   const [products, setProducts] = useState<Product[]>([]);
   const [f, setF] = useState<Filters>(DEFAULTS);
   const [limit, setLimit] = useState(PAGE);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [editing, setEditing] = useState<{ product?: Product; category: Product['category'] } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /** slugs with a save in flight */
+  const [pending, setPending] = useState<ReadonlySet<string>>(() => new Set());
+  const [saving, setSaving] = useState(0);
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [reauth, setReauth] = useState(false);
   const [deploy, setDeploy] = useState<Deploy | null>(null);
   /** photos saved in this session that the live site may not serve yet: path → local preview */
   const [previews, setPreviews] = useState<ReadonlyMap<string, string>>(() => new Map());
+  const [asking, setAsking] = useState<{ options: ConfirmOptions; resolve: (ok: boolean) => void } | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const toast = useToasts();
+  /** saves run one after another, so their answers arrive in the order they were made */
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const optimistic = useRef(new Map<string, boolean>());
+  const loadedAt = useRef(0);
+  const latest = useRef<Product[]>([]);
+  const search = useRef<HTMLInputElement>(null);
+  const live = useRef({ ready: false, idle: false, cat: DEFAULTS.cat as Filters['cat'] });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     const r = await api<{ products: Product[] }>('/api/admin/products');
-    if (r.status === 401) return setPhase({ kind: 'login' });
-    if (r.status !== 200) return setPhase({ kind: 'error', error: r.data.error ?? 'Could not load the products.' });
-    setProducts(r.data.products);
+    if (r.status === 401) return setPhase({ kind: 'login', error: silent ? 'Your session ended. Please log in again.' : undefined });
+    if (r.status !== 200) {
+      if (!silent) setPhase({ kind: 'error', error: r.data.error ?? 'Could not load the products.' });
+      return;
+    }
+    loadedAt.current = Date.now();
+    setProducts(overlay(r.data.products, optimistic.current));
     setPhase({ kind: 'ready' });
   }, []);
 
@@ -95,30 +157,71 @@ export function AdminApp() {
     void load();
   }, [load]);
 
-  const update = (patch: Partial<Filters>) => {
-    setF((prev) => {
-      const next = { ...prev, ...patch };
-      // a type belongs to one category: picking another category clears it
-      if (patch.cat && patch.cat !== prev.cat && !patch.type) next.type = '';
-      writeFilters(next);
-      return next;
-    });
-    setLimit(PAGE);
-  };
+  useEffect(() => {
+    latest.current = products;
+    live.current = { ready: phase.kind === 'ready', idle: phase.kind === 'ready' && !editing && saving === 0, cat: f.cat };
+  });
+
+  // Back to this tab after a while (or from another device): show the catalogue as it is now.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== 'visible' || !live.current.idle || Date.now() - loadedAt.current < 30_000) return;
+      void load(true);
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [load]);
+
+  // "/" searches, "n" adds a product (not while typing, and not over a dialog)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || !live.current.ready) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest('input, textarea, select, [contenteditable="true"], [role="menu"]') || document.querySelector('[aria-modal="true"]')) return;
+      if (e.key === '/') {
+        e.preventDefault();
+        search.current?.focus();
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        setEditing({ category: live.current.cat === 'suit' ? 'suit' : 'saree' });
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // after a save: ask GitHub (Vercel's commit status) until the new version is live
   useEffect(() => {
-    if (!deploy || deploy.local || deploy.state === 'success' || deploy.state === 'failure') return;
+    if (!deploy || deploy.local || deploy.state !== 'pending') return;
+    const version = deploy.version;
     let tries = 0;
     const id = window.setInterval(async () => {
       tries++;
-      const r = await api<{ state: Deploy['state'] }>(`/api/admin/status?v=${encodeURIComponent(deploy.version)}`);
-      const state = r.data.state ?? 'unknown';
-      if (state !== deploy.state || tries > 40) setDeploy((d) => (d && d.version === deploy.version ? { ...d, state: tries > 40 && state !== 'success' ? 'unknown' : state } : d));
-      if (state === 'success' || state === 'failure' || tries > 40) window.clearInterval(id);
+      const r = await api<{ state?: DeployState }>(`/api/admin/status?v=${encodeURIComponent(version)}`);
+      const state = r.data.state;
+      const done = state === 'success' || state === 'failure';
+      // "unknown" only means Vercel hasn't reported yet: keep waiting (about 5 minutes at most)
+      if (done || tries >= 40) {
+        window.clearInterval(id);
+        setDeploy((d) => (d && d.version === version ? { ...d, state: done ? state : 'unknown' } : d));
+      }
     }, 8000);
     return () => window.clearInterval(id);
   }, [deploy]);
+
+  const update = (patch: Partial<Filters>) => {
+    const next = { ...f, ...patch };
+    // a type belongs to one category: picking another category clears it
+    if (patch.cat && patch.cat !== f.cat && patch.type === undefined) next.type = '';
+    writeFilters(next);
+    setF(next);
+    setLimit(PAGE);
+  };
+  const clearFilters = () => update({ ...DEFAULTS, sort: f.sort });
 
   /** category → type → count, for the sidebar */
   const tree = useMemo(() => {
@@ -159,10 +262,11 @@ export function AdminApp() {
     let n = 0;
     let current = '';
     const groupSlugs = new Map<string, string[]>();
-    if (grouped) for (const p of shown) {
-      const k = `${p.category}|${p.subcategory}`;
-      groupSlugs.set(k, [...(groupSlugs.get(k) ?? []), p.slug]);
-    }
+    if (grouped)
+      for (const p of shown) {
+        const k = `${p.category}|${p.subcategory}`;
+        groupSlugs.set(k, [...(groupSlugs.get(k) ?? []), p.slug]);
+      }
     for (const p of shown) {
       if (n >= limit) break;
       if (grouped) {
@@ -181,49 +285,119 @@ export function AdminApp() {
   const rendered = rows.filter((r) => r.kind === 'item').length;
   const hiddenByCollapse = grouped ? shown.filter((p) => collapsed.has(`${p.category}|${p.subcategory}`)).length : 0;
   const remaining = shown.length - rendered - hiddenByCollapse;
-
   const activeFilters = (Object.keys(DEFAULTS) as (keyof Filters)[]).filter((k) => k !== 'sort' && f[k] !== DEFAULTS[k]).length;
+
+  /** The selection only ever acts on products the filters show: hidden ones are left out (and said so). */
+  const picked = useMemo(() => shown.filter((p) => selected.has(p.slug)), [shown, selected]);
+  const hiddenPicked = selected.size - picked.length;
+  const pickedBusy = picked.some((p) => pending.has(p.slug));
 
   /* ───────── actions ───────── */
 
-  async function login(password: string) {
-    setBusy(true);
-    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password }) });
-    setBusy(false);
-    if (r.status !== 200) return setPhase({ kind: 'login', error: r.data.error ?? 'Could not log in.' });
-    setPhase({ kind: 'loading' });
-    void load();
+  const askConfirm = (options: ConfirmOptions) => new Promise<boolean>((resolve) => setAsking({ options, resolve }));
+
+  const names = (slugs: string[]) => {
+    const list = latest.current.filter((p) => slugs.includes(p.slug));
+    return list.length === 1 ? `“${list[0].name}”` : `${list.length} products`;
+  };
+
+  /** Queue a write. A 401 opens the log-in box over the page; nothing on screen is lost. */
+  function post<T extends Saved>(body: unknown, slugs: string[]): Promise<Res<T>> {
+    setSaving((n) => n + 1);
+    setPending((p) => new Set([...p, ...slugs]));
+    const run = queue.current.then(() => api<T>('/api/admin/products', { method: 'POST', body: JSON.stringify(body) }));
+    queue.current = run;
+    return run.then((r) => {
+      setSaving((n) => n - 1);
+      setPending((p) => {
+        const n = new Set(p);
+        slugs.forEach((s) => n.delete(s));
+        return n;
+      });
+      if (r.status === 401) setReauth(true);
+      return r;
+    });
   }
 
-  async function logout() {
-    await api('/api/admin/logout', { method: 'POST' });
-    setProducts([]);
-    setPhase({ kind: 'login' });
-  }
-
-  function afterSave(data: Saved, text: string) {
-    setProducts(data.products);
-    setSelected(new Set());
+  function afterSave(data: Saved) {
+    loadedAt.current = stamp();
+    setProducts(overlay(data.products, optimistic.current));
+    const alive = new Set(data.products.map((p) => p.slug));
+    setSelected((s) => {
+      const n = new Set([...s].filter((x) => alive.has(x)));
+      return n.size === s.size ? s : n;
+    });
     setDeploy({ version: data.version, state: data.store === 'local' ? 'success' : 'pending', local: data.store === 'local' });
-    setNotice({ tone: 'ok', text });
   }
 
-  async function post<T extends Saved>(body: unknown) {
-    setBusy(true);
-    setNotice(null);
-    const r = await api<T>('/api/admin/products', { method: 'POST', body: JSON.stringify(body) });
-    setBusy(false);
-    if (r.status === 401) {
-      setPhase({ kind: 'login', error: 'Your session ended. Please log in again.' });
-      return null;
+  async function setStock(slugs: string[], inStock: boolean, undoable = true) {
+    if (!slugs.length) return;
+    const what = names(slugs);
+    const before = new Map(latest.current.filter((p) => slugs.includes(p.slug)).map((p) => [p.slug, p.inStock]));
+    // the switch moves now; the save follows
+    slugs.forEach((s) => optimistic.current.set(s, inStock));
+    setProducts((ps) => ps.map((p) => (slugs.includes(p.slug) ? { ...p, inStock } : p)));
+    const r = await post({ op: 'bulk', slugs, patch: { inStock } }, slugs);
+    slugs.forEach((s) => optimistic.current.delete(s));
+    if (r.status !== 200) {
+      setProducts((ps) => ps.map((p) => (before.has(p.slug) ? { ...p, inStock: before.get(p.slug)! } : p)));
+      if (r.status !== 401) toast.show('error', r.data.error ?? 'Could not update the stock.');
+      return;
     }
-    return r;
+    afterSave(r.data);
+    toast.show('ok', `${what}: ${inStock ? 'in stock' : 'out of stock'}.`, undoable ? { label: 'Undo', run: () => void setStock(slugs, !inStock, false) } : undefined);
+  }
+
+  async function setBadge(slugs: string[], badge: Badge, add: boolean, undoable = true) {
+    const target = latest.current.filter((p) => slugs.includes(p.slug) && Boolean(p.badges?.includes(badge)) !== add).map((p) => p.slug);
+    if (!target.length) {
+      const one = slugs.length === 1;
+      return toast.show('info', `${add ? (one ? 'It already has' : 'They all already have') : one ? 'It doesn’t have' : 'None of them has'} the “${BADGE_LABEL[badge]}” badge.`);
+    }
+    const r = await post({ op: 'bulk', slugs: target, patch: add ? { addBadge: badge } : { removeBadge: badge } }, target);
+    if (r.status !== 200) {
+      if (r.status !== 401) toast.show('error', r.data.error ?? 'Could not update the badges.');
+      return;
+    }
+    afterSave(r.data);
+    toast.show(
+      'ok',
+      `${names(target)}: “${BADGE_LABEL[badge]}” ${add ? 'added' : 'removed'}.`,
+      undoable ? { label: 'Undo', run: () => void setBadge(target, badge, !add, false) } : undefined,
+    );
+  }
+
+  async function removeProducts(list: Product[]) {
+    if (!list.length) return;
+    const one = list.length === 1;
+    const ok = await askConfirm({
+      title: one ? `Remove “${list[0].name}”?` : `Remove ${list.length.toLocaleString('en-IN')} products?`,
+      body: `${one ? 'It leaves' : 'They leave'} the site, with ${one ? 'its' : 'their'} photos, at the next update (about 2 minutes). This can’t be undone from the panel.`,
+      confirm: one ? 'Remove' : `Remove ${list.length.toLocaleString('en-IN')}`,
+      danger: true,
+      items: list.map((p) => ({ key: p.slug, name: p.name, thumb: previews.get(productMedia(p)[0]) ?? productMedia(p)[0] })),
+      typeToConfirm: list.length > 10 ? 'DELETE' : undefined,
+    });
+    if (!ok) return;
+    const slugs = list.map((p) => p.slug);
+    const what = names(slugs);
+    const r = await post({ op: 'delete', slugs }, slugs);
+    if (r.status !== 200) {
+      if (r.status !== 401) toast.show('error', r.data.error ?? 'Could not remove.');
+      return;
+    }
+    afterSave(r.data);
+    toast.show('ok', `Removed ${what}.`);
   }
 
   async function save(payload: SavePayload) {
-    const r = await post<Saved & { slug: string }>({ op: 'upsert', product: payload.product, uploads: payload.uploads.map(({ type, data }) => ({ type, data })) });
-    if (!r) return null;
-    if (r.status !== 200) return { error: r.data.error ?? 'Saving failed.' };
+    const slug = payload.product.slug;
+    const r = await post<Saved & { slug: string }>(
+      { op: 'upsert', product: payload.product, uploads: payload.uploads.map(({ type, data }) => ({ type, data })) },
+      slug ? [slug] : [],
+    );
+    if (r.status === 401) return { error: 'Your session ended. Log in again in the box that opened, then press Save again: nothing you typed is lost.' };
+    if (r.status !== 200) return { error: r.data.error ?? 'Saving failed. Please try again.' };
     // keep showing the photos just uploaded until the site has been rebuilt with them
     const saved = r.data.products.find((p) => p.slug === r.data.slug);
     setPreviews((prev) => {
@@ -235,35 +409,29 @@ export function AdminApp() {
       });
       return next;
     });
-    afterSave(r.data, `${payload.product.slug ? 'Saved' : 'Added'} “${payload.product.name}”.`);
+    afterSave(r.data);
     setEditing(null);
+    toast.show('ok', `${slug ? 'Saved' : 'Added'} “${payload.product.name}”.`);
     return null;
   }
 
-  const describe = (slugs: string[]) => {
-    const names = products.filter((p) => slugs.includes(p.slug)).map((p) => p.name);
-    return names.length === 1 ? `“${names[0]}”` : `${names.length} products`;
-  };
-
-  async function removeProducts(slugs: string[]) {
-    if (!slugs.length) return;
-    const what = describe(slugs);
-    if (!window.confirm(`Remove ${what} from the site? This deletes ${slugs.length === 1 ? 'it' : 'them'} and the photos.`)) return;
-    const r = await post({ op: 'delete', slugs });
-    if (!r) return;
-    if (r.status !== 200) return setNotice({ tone: 'error', text: r.data.error ?? 'Could not remove.' });
-    afterSave(r.data, `Removed ${what}.`);
+  async function login(password: string) {
+    setLoginBusy(true);
+    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password }) });
+    setLoginBusy(false);
+    return r.status === 200 ? null : (r.data.error ?? 'Could not log in.');
   }
 
-  async function bulk(slugs: string[], patch: { inStock?: boolean; addBadge?: Badge; removeBadge?: Badge }, text: string) {
-    if (!slugs.length) return;
-    const r = await post({ op: 'bulk', slugs, patch });
-    if (!r) return;
-    if (r.status !== 200) return setNotice({ tone: 'error', text: r.data.error ?? 'Could not update.' });
-    afterSave(r.data, `${describe(slugs)}: ${text}.`);
+  async function logout() {
+    if (saving) return toast.show('info', 'One moment: a save is still running.');
+    await api('/api/admin/logout', { method: 'POST' });
+    setProducts([]);
+    setSelected(new Set());
+    setDeploy(null);
+    setPhase({ kind: 'login' });
   }
 
-  const toggle = (slugs: string[], on: boolean) =>
+  const toggleSel = (slugs: string[], on: boolean) =>
     setSelected((s) => {
       const n = new Set(s);
       for (const x of slugs) {
@@ -272,53 +440,99 @@ export function AdminApp() {
       }
       return n;
     });
+  const openNew = () => setEditing({ category: f.cat === 'suit' ? 'suit' : 'saree' });
 
   /* ───────── views ───────── */
 
-  if (phase.kind === 'loading') return <Shell><p className="text-fg-muted" role="status">Loading…</p></Shell>;
-  if (phase.kind === 'error') {
+  if (phase.kind === 'loading') {
     return (
       <Shell>
-        <p className="rounded-2xl bg-surface p-5 text-fg ring-1 ring-divider" role="alert">{phase.error}</p>
-        <button type="button" className="btn btn-ghost mt-4" onClick={() => void logout()}>Log out</button>
+        <Skeleton />
       </Shell>
     );
   }
-  if (phase.kind === 'login') return <Shell narrow><Login busy={busy} error={phase.error} onLogin={login} /></Shell>;
+  if (phase.kind === 'error') {
+    return (
+      <Shell narrow>
+        <div className="panel grid gap-4 rounded-3xl p-6" role="alert">
+          <h2 className="font-editorial text-3xl font-medium text-fg">Couldn’t load the products</h2>
+          <p className="text-sm text-fg-muted">{phase.error}</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-gold"
+              onClick={() => {
+                setPhase({ kind: 'loading' });
+                void load();
+              }}
+            >
+              Try again
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
+              Log out
+            </button>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+  if (phase.kind === 'login') {
+    return (
+      <Shell narrow>
+        <Login
+          key={phase.error ?? 'login'}
+          busy={loginBusy}
+          initialError={phase.error}
+          onLogin={async (pw) => {
+            const error = await login(pw);
+            if (!error) {
+              setPhase({ kind: 'loading' });
+              void load();
+            }
+            return error;
+          }}
+        />
+      </Shell>
+    );
+  }
 
   const shownSlugs = shown.map((p) => p.slug);
-  const allShownSelected = shown.length > 0 && shownSlugs.every((s) => selected.has(s));
+  const status = saveStatus(saving, deploy);
 
   return (
     <Shell
-      actions={
-        <div className="flex gap-2">
-          <button type="button" className="btn btn-gold !min-h-11 !px-4" onClick={() => setEditing({ category: f.cat === 'suit' ? 'suit' : 'saree' })} disabled={busy}>
-            + Add product
-          </button>
-          <button type="button" className="btn btn-ghost !min-h-11 !px-4" onClick={() => void logout()}>Log out</button>
-        </div>
+      bar={
+        <>
+          <div className="ml-auto flex items-center gap-1">
+            {status && <StatusPill status={status} onDismiss={() => setDeploy(null)} className="hidden sm:inline-flex" />}
+            <a href="/" target="_blank" rel="noopener" className="hidden min-h-11 items-center rounded-full px-3 text-sm text-fg-muted hover:text-fg md:inline-flex">
+              View site ↗
+            </a>
+            <ThemeToggle />
+            <button type="button" className="chip !min-h-10" onClick={() => void logout()}>
+              Log out
+            </button>
+          </div>
+          {status && (
+            <div className="w-full sm:hidden">
+              <StatusPill status={status} onDismiss={() => setDeploy(null)} className="inline-flex" />
+            </div>
+          )}
+        </>
       }
     >
-      {/* overview: each number is a shortcut to that view */}
-      <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat i={0} label="Sarees" value={stats.saree} on={f.cat === 'saree' && !f.type} onClick={() => update({ ...DEFAULTS, sort: f.sort, cat: 'saree' })} />
-        <Stat i={1} label="Suits" value={stats.suit} on={f.cat === 'suit' && !f.type} onClick={() => update({ ...DEFAULTS, sort: f.sort, cat: 'suit' })} />
-        <Stat i={2} label="Out of stock" value={stats.out} on={f.stock === 'out'} onClick={() => update({ stock: f.stock === 'out' ? 'all' : 'out' })} />
+      {/* overview: each number is also a filter, and a second press turns it off */}
+      <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0">
+        <Stat i={0} label="Sarees" value={stats.saree} on={f.cat === 'saree'} onClick={() => update({ cat: f.cat === 'saree' ? 'all' : 'saree', type: '' })} />
+        <Stat i={1} label="Suits" value={stats.suit} on={f.cat === 'suit'} onClick={() => update({ cat: f.cat === 'suit' ? 'all' : 'suit', type: '' })} />
+        <Stat i={2} label="Out of stock" value={stats.out} warn={stats.out > 0} on={f.stock === 'out'} onClick={() => update({ stock: f.stock === 'out' ? 'all' : 'out' })} />
         <Stat i={3} label="Without photos" value={stats.sample} on={f.photo === 'sample'} onClick={() => update({ photo: f.photo === 'sample' ? 'all' : 'sample' })} />
       </div>
-
-      {deploy && <DeployBanner key={`${deploy.version}-${deploy.state}`} deploy={deploy} />}
-      {notice && (
-        <p key={notice.text} role={notice.tone === 'error' ? 'alert' : 'status'} className={`adm-rise mb-4 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ${notice.tone === 'error' ? 'text-danger ring-danger' : 'text-fg ring-divider'}`}>
-          {notice.text}
-        </p>
-      )}
 
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         {/* catalogue tree: category → type, with counts */}
         <nav aria-label="Categories and types" className="hidden lg:block">
-          <div className="sticky top-[calc(var(--header-h)+1rem)] max-h-[calc(100svh-var(--header-h)-2rem)] overflow-y-auto rounded-2xl bg-surface p-2 ring-1 ring-divider">
+          <div className="sticky top-4 max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain rounded-2xl bg-surface p-2 ring-1 ring-divider">
             <TreeItem label="All products" count={products.length} on={f.cat === 'all' && !f.type} onClick={() => update({ cat: 'all', type: '' })} />
             {(['saree', 'suit'] as const).map((c) => (
               <div key={c} className="mt-1">
@@ -336,141 +550,242 @@ export function AdminApp() {
         </nav>
 
         <div className="min-w-0">
-          {/* phones / tablets: category and type as chips */}
-          <div className="mb-3 lg:hidden">
+          {/* search, filters and Add stay in reach while the list scrolls */}
+          <div className="sticky top-0 z-30 -mx-4 mb-3 bg-bg/95 px-4 py-2 backdrop-blur-sm md:mx-0 md:px-0">
+            <div className="flex gap-2">
+              <label className="sr-only" htmlFor="admin-search">
+                Search products
+              </label>
+              <input
+                ref={search}
+                id="admin-search"
+                type="search"
+                value={f.q}
+                onChange={(e) => update({ q: e.target.value })}
+                placeholder="Search name, ID, price…"
+                className="min-h-12 w-full min-w-0 rounded-full bg-bg px-5 text-base text-fg ring-1 ring-field-line placeholder:text-fg-muted focus:ring-2 focus:ring-focus md:text-sm"
+              />
+              <button type="button" className="chip relative !min-h-12 shrink-0 md:hidden" onClick={() => setFiltersOpen(true)} aria-label={`Filters${activeFilters ? `, ${activeFilters} on` : ''}`}>
+                <IconFilter size={18} />
+                {activeFilters > 0 && (
+                  <span aria-hidden className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-cta-bg text-[0.7rem] font-semibold text-cta-text">
+                    {activeFilters}
+                  </span>
+                )}
+              </button>
+              <button type="button" className="btn btn-gold !min-h-12 shrink-0 !px-4 sm:!px-5" onClick={openNew} title="Add a product (N)">
+                <span aria-hidden>+</span>
+                <span className="sr-only sm:not-sr-only">Add product</span>
+              </button>
+            </div>
+            <div className="mt-2 hidden gap-2 md:grid md:grid-cols-3 xl:grid-cols-6">
+              <FilterFields f={f} update={update} />
+            </div>
+          </div>
+
+          {/* phones and tablets: category and type as chips (the tree is on the left from lg) */}
+          <div className="mb-2 lg:hidden">
             <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
               {(['all', 'saree', 'suit'] as const).map((c) => (
                 <button key={c} type="button" className="chip shrink-0" aria-pressed={f.cat === c && !f.type} onClick={() => update({ cat: c, type: '' })}>
-                  {c === 'all' ? `All ${products.length}` : `${CAT_LABEL[c]} ${stats[c]}`}
+                  {c === 'all' ? 'All' : CAT_LABEL[c]} <span className="tabular-nums opacity-75">{c === 'all' ? products.length : stats[c]}</span>
                 </button>
               ))}
             </div>
             {f.cat !== 'all' && (
               <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1">
-                {tree[f.cat].map(([t, n]) => (
+                {(tree[f.cat] ?? []).map(([t, n]) => (
                   <button key={t} type="button" className="chip shrink-0 !min-h-10" aria-pressed={f.type === t} onClick={() => update({ type: f.type === t ? '' : t })}>
-                    {t} <span className="text-fg-muted">{n}</span>
+                    {t} <span className="tabular-nums opacity-75">{n}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* search + filters */}
-          <div className="mb-3 grid gap-2">
-            <label className="sr-only" htmlFor="admin-search">Search products</label>
-            <input
-              id="admin-search"
-              type="search"
-              value={f.q}
-              onChange={(e) => update({ q: e.target.value })}
-              placeholder="Search by name, ID, fabric, colour or price"
-              className="min-h-12 w-full rounded-full bg-bg px-5 text-base text-fg ring-1 ring-field-line placeholder:text-fg-muted focus:ring-focus md:text-sm"
-            />
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-              <Select label="Fabric" value={f.fabric} onChange={(v) => update({ fabric: v })} options={[['', 'All fabrics'], ...FABRICS.map((x) => [x, x] as [string, string])]} />
-              <Select label="Colour" value={f.color} onChange={(v) => update({ color: v })} options={[['', 'All colours'], ...Object.keys(COLOR_FAMILIES).map((x) => [x, x] as [string, string])]} />
-              <Select label="Stock" value={f.stock} onChange={(v) => update({ stock: v as Filters['stock'] })} options={[['all', 'Any stock'], ['in', 'In stock'], ['out', 'Out of stock']]} />
-              <Select label="Photos" value={f.photo} onChange={(v) => update({ photo: v as Filters['photo'] })} options={[['all', 'Any photos'], ['with', 'With photos'], ['sample', 'Without photos']]} />
-              <Select label="Badge" value={f.badge} onChange={(v) => update({ badge: v as Filters['badge'] })} options={[['all', 'Any badge'], ['none', 'No badge'], ...BADGES.map((b) => [b, BADGE_LABEL[b]] as [string, string])]} />
-              <Select
-                label="Sort"
-                value={f.sort}
-                onChange={(v) => update({ sort: v as Filters['sort'] })}
-                options={[['type', 'Group by type'], ['newest', 'Newest first'], ['name', 'Name A–Z'], ['price-asc', 'Price: low to high'], ['price-desc', 'Price: high to low']]}
+          <div className="mb-2 flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-fg-muted">
+            <label className="inline-flex min-h-11 cursor-pointer items-center gap-2">
+              <Checkbox
+                checked={shown.length > 0 && picked.length === shown.length}
+                indeterminate={picked.length > 0}
+                onChange={(on) => toggleSel(shownSlugs, on)}
+                label={shown.length === products.length ? `Select all ${shown.length}` : `Select all ${shown.length} matching`}
               />
-            </div>
-          </div>
-
-          <div className="mb-2 flex min-h-11 flex-wrap items-center justify-between gap-2 text-sm text-fg-muted">
-            <label className="inline-flex min-h-11 items-center gap-2">
-              <input type="checkbox" className="size-5 accent-[var(--gold-text)]" checked={allShownSelected} onChange={() => toggle(shownSlugs, !allShownSelected)} />
-              {shown.length === products.length ? `Select all ${shown.length}` : `Select all ${shown.length} matching`}
+              <span aria-hidden>{shown.length === products.length ? `Select all ${shown.length}` : `Select all ${shown.length} matching`}</span>
             </label>
-            <span aria-live="polite">
+            <span aria-live="polite" className="tabular-nums">
               {shown.length.toLocaleString('en-IN')} of {products.length.toLocaleString('en-IN')} products
               {activeFilters > 0 && (
-                <button type="button" className="ml-3 underline underline-offset-4 hover:text-fg" onClick={() => update({ ...DEFAULTS, sort: f.sort })}>
+                <button type="button" className="ml-3 min-h-11 underline underline-offset-4 hover:text-fg" onClick={clearFilters}>
                   Clear filters
                 </button>
               )}
             </span>
           </div>
 
-          <ul key={JSON.stringify({ ...f, q: '' })} className="overflow-clip rounded-2xl bg-surface ring-1 ring-divider">
-            {rows.map((r, idx) =>
-              r.kind === 'group' ? (
-                <li key={`g-${r.key}`} style={{ ['--i' as string]: idx }} className="adm-rise flex items-center gap-3 border-b border-divider bg-surface-2 px-3 py-2">
-                  <input
-                    type="checkbox"
-                    aria-label={`Select all ${r.label}`}
-                    className="size-5 accent-[var(--gold-text)]"
-                    checked={r.slugs.every((s) => selected.has(s))}
-                    onChange={(e) => toggle(r.slugs, e.target.checked)}
+          <div className="overflow-clip rounded-2xl bg-surface ring-1 ring-divider">
+            {/* desktop: column headings; Product and Price sort */}
+            <div className="admin-row hidden border-b border-divider bg-surface-2 px-3 py-1 text-xs font-medium uppercase tracking-[0.06em] text-fg-muted lg:grid">
+              <span className="[grid-area:cb]" />
+              <SortHead
+                className="[grid-area:main]"
+                label="Product"
+                dir={f.sort === 'name' ? 'asc' : undefined}
+                onClick={() => update({ sort: f.sort === 'name' ? 'type' : 'name' })}
+              />
+              <SortHead
+                className="justify-self-end [grid-area:price]"
+                label="Price"
+                dir={f.sort === 'price-asc' ? 'asc' : f.sort === 'price-desc' ? 'desc' : undefined}
+                onClick={() => update({ sort: f.sort === 'price-asc' ? 'price-desc' : f.sort === 'price-desc' ? 'type' : 'price-asc' })}
+              />
+              <span className="[grid-area:stock]">Stock</span>
+              <span className="text-right [grid-area:menu]">Actions</span>
+            </div>
+            <ul key={JSON.stringify({ ...f, q: '' })}>
+              {rows.map((r, idx) => {
+                if (r.kind === 'group') {
+                  const on = r.slugs.filter((s) => selected.has(s)).length;
+                  const open = !collapsed.has(r.key);
+                  return (
+                    <li key={`g-${r.key}`} style={{ ['--i' as string]: idx }} className="adm-rise flex items-center gap-3 border-b border-divider bg-surface-2/60 px-3 py-1">
+                      <Checkbox checked={on === r.slugs.length} indeterminate={on > 0} onChange={(v) => toggleSel(r.slugs, v)} label={`Select all ${r.label}`} />
+                      <button
+                        type="button"
+                        className="flex min-h-11 flex-1 items-center justify-between gap-2 text-left"
+                        aria-expanded={open}
+                        onClick={() =>
+                          setCollapsed((c) => {
+                            const n = new Set(c);
+                            if (n.has(r.key)) n.delete(r.key);
+                            else n.add(r.key);
+                            return n;
+                          })
+                        }
+                      >
+                        <span>
+                          <span className="font-editorial text-xl font-medium text-fg">{r.label}</span>
+                          <span className="ml-2 text-xs tabular-nums text-fg-muted">
+                            {f.cat === 'all' ? `${r.cat === 'saree' ? 'Saree' : 'Suit'} · ` : ''}
+                            {r.slugs.length} {r.slugs.length === 1 ? 'item' : 'items'}
+                          </span>
+                        </span>
+                        <IconChevron size={18} className={`text-fg-muted transition-transform ${open ? '' : '-rotate-90'}`} />
+                      </button>
+                    </li>
+                  );
+                }
+                return (
+                  <Row
+                    key={r.p.slug}
+                    i={idx}
+                    p={r.p}
+                    thumb={previews.get(productMedia(r.p)[0])}
+                    selected={selected.has(r.p.slug)}
+                    pending={pending.has(r.p.slug)}
+                    grouped={grouped}
+                    onSelect={(on) => toggleSel([r.p.slug], on)}
+                    onEdit={() => setEditing({ product: r.p, category: r.p.category })}
+                    onStock={(v) => void setStock([r.p.slug], v)}
+                    onRemove={() => void removeProducts([r.p])}
                   />
-                  <button
-                    type="button"
-                    className="flex min-h-10 flex-1 items-center justify-between gap-2 text-left"
-                    aria-expanded={!collapsed.has(r.key)}
-                    onClick={() =>
-                      setCollapsed((c) => {
-                        const n = new Set(c);
-                        if (n.has(r.key)) n.delete(r.key);
-                        else n.add(r.key);
-                        return n;
-                      })
-                    }
-                  >
-                    <span>
-                      <span className="font-editorial text-xl font-medium text-fg">{r.label}</span>
-                      <span className="ml-2 text-xs text-fg-muted">
-                        {f.cat === 'all' ? `${r.cat === 'saree' ? 'Saree' : 'Suit'} · ` : ''}
-                        {r.slugs.length} {r.slugs.length === 1 ? 'item' : 'items'}
-                      </span>
-                    </span>
-                    <span aria-hidden className={`text-fg-muted transition-transform ${collapsed.has(r.key) ? '-rotate-90' : ''}`}>▾</span>
-                  </button>
+                );
+              })}
+              {!shown.length && (
+                <li className="grid justify-items-center gap-3 px-6 py-12 text-center">
+                  <p className="font-editorial text-2xl text-fg">{products.length ? 'Nothing matches these filters' : 'No products yet'}</p>
+                  <p className="text-sm text-fg-muted">{products.length ? 'Try fewer filters, or another search.' : 'Add the first saree or suit.'}</p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {activeFilters > 0 && (
+                      <button type="button" className="btn btn-ghost" onClick={clearFilters}>
+                        Clear filters
+                      </button>
+                    )}
+                    <button type="button" className="btn btn-gold" onClick={openNew}>
+                      + Add product
+                    </button>
+                  </div>
                 </li>
-              ) : (
-                <Row
-                  key={r.p.slug}
-                  i={idx}
-                  p={r.p}
-                  thumb={previews.get(productMedia(r.p)[0])}
-                  selected={selected.has(r.p.slug)}
-                  busy={busy}
-                  onSelect={(on) => toggle([r.p.slug], on)}
-                  onEdit={() => setEditing({ product: r.p, category: r.p.category })}
-                  onStock={() => void bulk([r.p.slug], { inStock: !r.p.inStock }, r.p.inStock ? 'out of stock' : 'back in stock')}
-                  onRemove={() => void removeProducts([r.p.slug])}
-                />
-              ),
-            )}
-            {!shown.length && <li className="p-8 text-center text-sm text-fg-muted">No products match these filters.</li>}
-          </ul>
+              )}
+            </ul>
+          </div>
 
           {remaining > 0 && (
             <div className="mt-4 flex justify-center">
               <button type="button" className="btn btn-ghost" onClick={() => setLimit((l) => l + PAGE)}>
-                Show {Math.min(PAGE, remaining)} more <span className="text-fg-muted">({remaining.toLocaleString('en-IN')} left)</span>
+                Show {Math.min(PAGE, remaining)} more <span className="tabular-nums text-fg-muted">({remaining.toLocaleString('en-IN')} left)</span>
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* bulk actions for the selection */}
-      {selected.size > 0 && (
-        <div className="fixed inset-x-0 bottom-[calc(var(--tabbar-h)+var(--safe-b))] z-[60] px-3 pb-3 md:bottom-0">
-          <div className="adm-rise adm-glass mx-auto flex max-w-4xl flex-wrap items-center gap-2 rounded-3xl p-3 shadow-[0_24px_60px_-24px_var(--shadow)] ring-1 ring-divider">
-            <span key={selected.size} className="adm-pop px-2 text-sm font-medium text-fg">{selected.size} selected</span>
-            <button type="button" className="chip !min-h-10" disabled={busy} onClick={() => void bulk([...selected], { inStock: true }, 'marked in stock')}>In stock</button>
-            <button type="button" className="chip !min-h-10" disabled={busy} onClick={() => void bulk([...selected], { inStock: false }, 'marked out of stock')}>Out of stock</button>
-            <BadgeMenu busy={busy} onPick={(b, add) => void bulk([...selected], add ? { addBadge: b } : { removeBadge: b }, add ? `badge “${BADGE_LABEL[b]}” added` : `badge “${BADGE_LABEL[b]}” removed`)} />
-            <button type="button" className="chip !min-h-10 text-danger" disabled={busy} onClick={() => void removeProducts([...selected])}>Remove</button>
-            <button type="button" className="chip !min-h-10 ml-auto" onClick={() => setSelected(new Set())}>Clear</button>
+      {/* actions for the selection */}
+      {picked.length > 0 && (
+        <div data-admin className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(var(--safe-b)+0.75rem)]">
+          <div className="adm-rise adm-glass mx-auto flex max-w-4xl flex-col gap-1 rounded-3xl p-2 shadow-[0_24px_60px_-24px_var(--shadow)] ring-1 ring-divider sm:flex-row sm:items-center sm:gap-2">
+            <div className="flex min-h-10 items-center justify-between gap-2 pl-2 sm:contents">
+              <p className="text-sm text-fg sm:pl-2">
+                <span key={picked.length} className="adm-pop inline-block font-semibold tabular-nums">{picked.length.toLocaleString('en-IN')}</span> selected
+                {hiddenPicked > 0 && <span className="text-fg-muted"> · {hiddenPicked} hidden by filters, left out</span>}
+              </p>
+              <button type="button" className="chip !min-h-10 shrink-0 sm:order-last" onClick={() => setSelected(new Set())}>
+                <IconClose size={16} />
+                Clear
+              </button>
+            </div>
+            <div className="no-scrollbar -mx-2 flex items-center gap-2 overflow-x-auto px-2 sm:mx-0 sm:ml-auto sm:px-0">
+              {pickedBusy && <Spinner className="text-fg-muted" />}
+              <button type="button" className="chip !min-h-10 shrink-0" disabled={pickedBusy} onClick={() => void setStock(picked.filter((p) => !p.inStock).map((p) => p.slug), true)}>
+                Mark in stock
+              </button>
+              <button type="button" className="chip !min-h-10 shrink-0" disabled={pickedBusy} onClick={() => void setStock(picked.filter((p) => p.inStock).map((p) => p.slug), false)}>
+                Mark out of stock
+              </button>
+              <Menu
+                label="Badges"
+                disabled={pickedBusy}
+                className="chip !min-h-10 shrink-0"
+                items={[
+                  ...BADGES.map((b) => ({ label: `Add “${BADGE_LABEL[b]}”`, onSelect: () => void setBadge(picked.map((p) => p.slug), b, true) })),
+                  'divider' as const,
+                  ...BADGES.map((b) => ({ label: `Remove “${BADGE_LABEL[b]}”`, onSelect: () => void setBadge(picked.map((p) => p.slug), b, false) })),
+                ]}
+              >
+                Badge <IconChevron size={16} />
+              </Menu>
+              <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-divider" />
+              <button type="button" className="chip !min-h-10 shrink-0 text-danger" disabled={pickedBusy} onClick={() => void removeProducts(picked)}>
+                Remove…
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      <Toasts toasts={toast.toasts} onDismiss={toast.dismiss} raised={picked.length > 0} />
+
+      {filtersOpen && (
+        <Modal sheet onClose={() => setFiltersOpen(false)} labelledBy="filters-title" z="z-[210]">
+          <div className="grid gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="filters-title" className="font-editorial text-2xl font-medium text-fg">
+                Filters
+              </h2>
+              {activeFilters > 0 && (
+                <button type="button" className="min-h-11 text-sm text-fg-muted underline underline-offset-4 hover:text-fg" onClick={clearFilters}>
+                  Clear all
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <FilterFields f={f} update={update} labelled />
+            </div>
+            <button type="button" className="btn btn-gold" onClick={() => setFiltersOpen(false)}>
+              Show {shown.length.toLocaleString('en-IN')} {shown.length === 1 ? 'product' : 'products'}
+            </button>
+          </div>
+        </Modal>
       )}
 
       {editing && (
@@ -479,10 +794,43 @@ export function AdminApp() {
           product={editing.product}
           category={editing.category}
           products={products}
-          busy={busy}
           previews={previews}
-          onCancel={() => setEditing(null)}
+          onClose={() => setEditing(null)}
           onSave={save}
+          confirm={askConfirm}
+        />
+      )}
+
+      {reauth && (
+        <Modal onClose={() => setReauth(false)} labelledBy="reauth-title" z="z-[225]">
+          <div className="grid gap-3">
+            <h2 id="reauth-title" className="font-editorial text-2xl font-medium text-fg">
+              Log in again
+            </h2>
+            <p className="text-sm text-fg-muted">Your session ended. Log in to carry on: nothing on screen is lost.</p>
+            <Login
+              inDialog
+              busy={loginBusy}
+              onLogin={async (pw) => {
+                const error = await login(pw);
+                if (!error) {
+                  setReauth(false);
+                  toast.show('ok', 'Logged in again. Please try that once more.');
+                }
+                return error;
+              }}
+            />
+          </div>
+        </Modal>
+      )}
+
+      {asking && (
+        <ConfirmDialog
+          options={asking.options}
+          onDone={(ok) => {
+            asking.resolve(ok);
+            setAsking(null);
+          }}
         />
       )}
     </Shell>
@@ -496,7 +844,8 @@ function Row({
   p,
   thumb,
   selected,
-  busy,
+  pending,
+  grouped,
   onSelect,
   onEdit,
   onStock,
@@ -506,77 +855,138 @@ function Row({
   p: Product;
   thumb?: string;
   selected: boolean;
-  busy: boolean;
+  pending: boolean;
+  grouped: boolean;
   onSelect: (on: boolean) => void;
   onEdit: () => void;
-  onStock: () => void;
+  onStock: (inStock: boolean) => void;
   onRemove: () => void;
 }) {
   const color = COLOR_FAMILIES[p.colorFamily]?.hex;
+  const src = thumb ?? productMedia(p)[0];
   return (
-    <li style={{ ['--i' as string]: i }} className={`adm-rise adm-row grid scroll-mt-[calc(var(--header-h)+1rem)] scroll-mb-[calc(var(--tabbar-h)+5rem)] grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-divider p-3 last:border-b-0 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] ${selected ? 'bg-surface-2' : ''}`}>
-      <input type="checkbox" aria-label={`Select ${p.name}`} className="size-5 accent-[var(--gold-text)]" checked={selected} onChange={(e) => onSelect(e.target.checked)} />
-      <Thumb src={thumb ?? productMedia(p)[0]} local={Boolean(thumb)} />
-      <div className="min-w-0">
-        <button type="button" onClick={onEdit} className="block max-w-full truncate text-left font-medium text-fg hover:text-gold-text">
-          {p.name}
-        </button>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted">
-          <span>{p.id}</span>
-          <span>{p.fabric}</span>
-          <span className="inline-flex items-center gap-1">
-            <span aria-hidden className="size-2.5 rounded-full ring-1 ring-field-line" style={{ background: color }} />
-            {p.colorFamily}
+    <li style={{ ['--i' as string]: i }} className={`adm-rise adm-row admin-row grid border-b border-divider px-3 py-2.5 last:border-b-0 ${selected ? 'bg-surface-2' : ''}`}>
+      <span className="grid place-items-center [grid-area:cb]">
+        <Checkbox checked={selected} onChange={onSelect} label={`Select ${p.name}`} />
+      </span>
+      {/* the whole product block opens the editor */}
+      <button type="button" onClick={onEdit} className="group flex min-w-0 items-center gap-3 rounded-xl text-left [grid-area:main]" aria-label={`Edit ${p.name}`}>
+        <AdminImage key={src} src={src} className="aspect-[4/5] w-14 shrink-0 rounded-lg object-cover ring-1 ring-divider" />
+        <span className="min-w-0">
+          <span className="block truncate font-medium text-fg group-hover:text-gold-text">{p.name}</span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-fg-muted">
+            <span className="tabular-nums">{p.id}</span>
+            {!grouped && <span>{p.subcategory}</span>}
+            <span>{p.fabric}</span>
+            <span className="inline-flex items-center gap-1">
+              <span aria-hidden className="size-2.5 rounded-full ring-1 ring-field-line" style={{ background: color }} />
+              {p.colorFamily}
+            </span>
+            {p.sizes?.length ? <span>{sizeRange(p.sizes)}</span> : null}
           </span>
-          {p.sizes?.length ? <span>{p.sizes.join(' · ')}</span> : null}
-        </p>
-        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-          <span className="font-medium text-fg">{rupees(p.price)}</span>
-          {p.mrp && <span className="text-xs text-fg-muted line-through">{rupees(p.mrp)}</span>}
-          {p.badges?.map((b) => (
-            <span key={b} className="rounded-full bg-badge-bg px-2 py-0.5 text-xs text-badge-text">{BADGE_LABEL[b]}</span>
-          ))}
-          {!p.photos?.length && <span className="rounded-full px-2 py-0.5 text-xs text-fg-muted ring-1 ring-field-line">No photos</span>}
-        </p>
-      </div>
-      <div className="col-span-3 flex flex-wrap gap-1.5 sm:col-span-1 sm:justify-end">
-        <button
-          type="button"
-          className={`chip !min-h-10 !px-3 ${p.inStock ? '' : 'text-danger'}`}
-          disabled={busy}
-          onClick={onStock}
-          aria-label={p.inStock ? `${p.name} is in stock; mark out of stock` : `${p.name} is out of stock; mark in stock`}
-        >
-          <span aria-hidden className={`size-2 rounded-full ${p.inStock ? 'bg-[var(--gold-text)]' : 'bg-[var(--danger)]'}`} />
-          {p.inStock ? 'In stock' : 'Out of stock'}
+          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <span className="font-medium tabular-nums text-fg lg:hidden">{formatINR(p.price)}</span>
+            {p.mrp ? <s className="text-xs tabular-nums text-fg-muted lg:hidden">{formatINR(p.mrp)}</s> : null}
+            {p.badges?.map((b) => (
+              <span key={b} className="rounded-full bg-badge-bg px-2 py-0.5 text-xs text-badge-text">
+                {BADGE_LABEL[b]}
+              </span>
+            ))}
+            {!p.photos?.length && <span className="rounded-full px-2 py-0.5 text-xs text-fg-muted ring-1 ring-field-line">No photos</span>}
+          </span>
+        </span>
+      </button>
+      <span className="hidden text-right tabular-nums [grid-area:price] lg:block">
+        <span className="block font-medium text-fg">{formatINR(p.price)}</span>
+        {p.mrp ? <s className="block text-xs text-fg-muted">{formatINR(p.mrp)}</s> : null}
+      </span>
+      <Switch className="justify-self-start [grid-area:stock]" checked={p.inStock} busy={pending} onChange={onStock} label={`${p.name}: in stock`} on="In stock" off="Out of stock" />
+      <span className="flex items-center justify-end gap-1 [grid-area:menu]">
+        <button type="button" className="chip hidden !min-h-10 !px-4 lg:inline-flex" onClick={onEdit}>
+          Edit
         </button>
-        <button type="button" className="chip !min-h-10 !px-3" onClick={onEdit} disabled={busy}>Edit</button>
-        <button type="button" className="chip !min-h-10 !px-3 text-danger" onClick={onRemove} disabled={busy}>Remove</button>
-      </div>
+        <Menu
+          label={`More for ${p.name}`}
+          className="grid size-11 place-items-center rounded-full text-lg text-fg hover:bg-surface-2"
+          items={[
+            { label: 'Edit', onSelect: onEdit },
+            { label: 'View on site', href: `/product/${p.slug}`, external: true },
+            'divider',
+            { label: 'Remove…', danger: true, onSelect: onRemove },
+          ]}
+        >
+          <span aria-hidden>⋯</span>
+        </Menu>
+      </span>
     </li>
   );
 }
 
-function Shell({ children, actions, narrow }: { children: React.ReactNode; actions?: React.ReactNode; narrow?: boolean }) {
+function Shell({ children, bar, narrow }: { children: React.ReactNode; bar?: React.ReactNode; narrow?: boolean }) {
   return (
-    <div className={`mx-auto px-4 pb-40 pt-8 md:px-8 md:pt-12 ${narrow ? 'max-w-md' : 'max-w-7xl'}`}>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="label mb-2 text-gold-text">Shree Collection</p>
-          <h1 className="font-editorial text-4xl font-medium text-fg md:text-5xl">Admin</h1>
+    <main id="main" data-admin data-lenis-prevent className="min-h-svh bg-bg pb-40">
+      <header className="border-b border-divider pt-[env(safe-area-inset-top,0px)]">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 md:px-8">
+          <Link href="/" className="shrink-0 rounded-full" aria-label="Shree Collection: open the shop">
+            <BadgeMark size={40} />
+          </Link>
+          <div className="min-w-0 leading-tight">
+            <p className="label text-gold-text">Shree Collection</p>
+            <h1 className="font-editorial text-2xl font-medium text-fg">Admin</h1>
+          </div>
+          {bar}
         </div>
-        {actions}
-      </div>
-      {children}
-    </div>
+      </header>
+      <div className={`mx-auto px-4 pt-5 md:px-8 md:pt-8 ${narrow ? 'max-w-md' : 'max-w-7xl'}`}>{children}</div>
+    </main>
   );
 }
 
-function Stat({ i, label, value, on, onClick }: { i: number; label: string; value: number; on: boolean; onClick: () => void }) {
+type Status = { tone: 'busy' | 'ok' | 'bad' | 'info'; text: string };
+
+function saveStatus(saving: number, deploy: Deploy | null): Status | null {
+  if (saving > 0) return { tone: 'busy', text: 'Saving…' };
+  if (!deploy) return null;
+  if (deploy.local) return { tone: 'info', text: 'Saved to the local files (dev mode)' };
+  if (deploy.state === 'pending') return { tone: 'busy', text: 'Updating the site, about 2 min…' };
+  if (deploy.state === 'success') return { tone: 'ok', text: 'Live on the site' };
+  if (deploy.state === 'failure') return { tone: 'bad', text: 'Site update failed: check Vercel' };
+  return { tone: 'info', text: 'Saved: live after the next site update' };
+}
+
+function StatusPill({ status, onDismiss, className = '' }: { status: Status; onDismiss: () => void; className?: string }) {
+  const { tone, text } = status;
   return (
-    <button type="button" aria-pressed={on} onClick={onClick} style={{ ['--i' as string]: i }} className={`adm-rise adm-lift rounded-2xl p-4 text-left ring-1 ${on ? 'bg-cta-bg text-cta-text ring-cta-bg' : 'bg-surface text-fg ring-divider hover:bg-surface-2'}`}>
-      <span className="block font-editorial text-3xl font-medium leading-none">{value.toLocaleString('en-IN')}</span>
-      <span className={`mt-1 block text-xs ${on ? '' : 'text-fg-muted'}`}>{label}</span>
+    <p
+      role="status"
+      className={`min-h-9 items-center gap-2 rounded-full pl-3 text-xs font-medium ring-1 ${tone === 'busy' ? 'pr-3' : 'pr-1'} ${
+        tone === 'ok' ? 'text-ok ring-ok' : tone === 'bad' ? 'text-danger ring-danger' : 'text-fg-muted ring-divider'
+      } ${className}`}
+    >
+      {tone === 'busy' ? <Spinner className="!size-3" /> : <span aria-hidden className={`size-2 rounded-full ${tone === 'ok' ? 'bg-ok' : tone === 'bad' ? 'bg-danger' : 'bg-field-line'}`} />}
+      {text}
+      {tone !== 'busy' && (
+        <button type="button" aria-label="Dismiss" onClick={onDismiss} className="grid size-8 place-items-center rounded-full hover:bg-surface-2">
+          <IconClose size={14} />
+        </button>
+      )}
+    </p>
+  );
+}
+
+function Stat({ i, label, value, on, warn, onClick }: { i: number; label: string; value: number; on: boolean; warn?: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      style={{ ['--i' as string]: i }}
+      className={`adm-rise adm-lift min-w-[8.5rem] shrink-0 rounded-2xl px-4 py-3 text-left ring-1 sm:min-w-0 ${
+        on ? 'bg-cta-bg text-cta-text ring-cta-bg' : 'bg-surface text-fg ring-divider hover:bg-surface-2'
+      }`}
+    >
+      <span className={`block text-2xl font-semibold leading-none tabular-nums ${!on && warn ? 'text-danger' : ''}`}>{value.toLocaleString('en-IN')}</span>
+      <span className={`mt-1.5 block text-xs ${on ? '' : 'text-fg-muted'}`}>{label}</span>
     </button>
   );
 }
@@ -587,102 +997,175 @@ function TreeItem({ label, count, on, onClick, strong, indent }: { label: string
       type="button"
       aria-current={on ? 'true' : undefined}
       onClick={onClick}
-      className={`flex min-h-10 w-full items-center justify-between gap-2 rounded-xl px-3 text-left text-sm transition-colors ${indent ? 'pl-6' : ''} ${on ? 'bg-cta-bg text-cta-text' : 'text-fg hover:bg-surface-2'} ${strong ? 'font-medium' : ''}`}
+      className={`flex min-h-10 w-full items-center justify-between gap-2 rounded-xl px-3 text-left text-sm transition-colors ${indent ? 'pl-6' : ''} ${
+        on ? 'bg-cta-bg text-cta-text' : 'text-fg hover:bg-surface-2'
+      } ${strong ? 'font-medium' : ''}`}
     >
       <span className="truncate">{label}</span>
-      <span className={`shrink-0 text-xs ${on ? '' : 'text-fg-muted'}`}>{count}</span>
+      <span className={`shrink-0 text-xs tabular-nums ${on ? '' : 'text-fg-muted'}`}>{count}</span>
     </button>
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+function SortHead({ label, dir, onClick, className = '' }: { label: string; dir?: 'asc' | 'desc'; onClick: () => void; className?: string }) {
   return (
-    <label className="grid">
-      <span className="sr-only">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={`min-h-11 w-full min-w-0 rounded-full bg-bg px-4 text-base ring-1 ring-field-line focus:ring-focus md:text-sm ${value && value !== 'all' && value !== 'type' ? 'text-fg ring-gold-line' : 'text-fg-muted'}`}>
-        {options.map(([v, l]) => (
-          <option key={v} value={v}>{l}</option>
-        ))}
-      </select>
-    </label>
+    <button type="button" onClick={onClick} className={`inline-flex min-h-9 items-center gap-1 uppercase hover:text-fg ${dir ? 'text-fg' : ''} ${className}`}>
+      {label}
+      <span aria-hidden className="w-3 text-center">
+        {dir === 'asc' ? '↑' : dir === 'desc' ? '↓' : ''}
+      </span>
+      <span className="sr-only">{dir ? `, sorted ${dir === 'asc' ? 'ascending' : 'descending'}` : ', sort'}</span>
+    </button>
   );
 }
 
-function BadgeMenu({ busy, onPick }: { busy: boolean; onPick: (b: Badge, add: boolean) => void }) {
+function FilterFields({ f, update, labelled }: { f: Filters; update: (p: Partial<Filters>) => void; labelled?: boolean }) {
+  const fields: [keyof Filters, string, [string, string][]][] = [
+    ['fabric', 'Fabric', [['', 'All fabrics'], ...FABRICS.map((x) => [x, x] as [string, string])]],
+    ['color', 'Colour', [['', 'All colours'], ...Object.keys(COLOR_FAMILIES).map((x) => [x, x] as [string, string])]],
+    ['stock', 'Stock', [['all', 'Any stock'], ['in', 'In stock'], ['out', 'Out of stock']]],
+    ['photo', 'Photos', [['all', 'Any photos'], ['with', 'With photos'], ['sample', 'Without photos']]],
+    ['badge', 'Badge', [['all', 'Any badge'], ['none', 'No badge'], ...BADGES.map((b) => [b, BADGE_LABEL[b]] as [string, string])]],
+    ['sort', 'Sort', SORTS],
+  ];
+  return fields.map(([key, label, options]) => (
+    <Select key={key} label={label} labelled={labelled} active={f[key] !== DEFAULTS[key]} value={f[key]} onChange={(v) => update({ [key]: v } as Partial<Filters>)} options={options} />
+  ));
+}
+
+function Select({
+  label,
+  labelled,
+  active,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  labelled?: boolean;
+  active: boolean;
+  value: string;
+  onChange: (v: string) => void;
+  options: [string, string][];
+}) {
   return (
-    <label className="inline-flex">
-      <span className="sr-only">Badge</span>
+    <label className="grid gap-1.5">
+      <span className={labelled ? 'text-xs text-fg-muted' : 'sr-only'}>{label}</span>
       <select
-        className="chip !min-h-10 appearance-none pr-4"
-        disabled={busy}
-        value=""
-        onChange={(e) => {
-          const [op, b] = e.target.value.split(':') as ['add' | 'remove', Badge];
-          if (b) onPick(b, op === 'add');
-        }}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`min-h-11 w-full min-w-0 rounded-full bg-bg px-4 text-base focus:ring-2 focus:ring-focus md:text-sm ${active ? 'text-fg ring-2 ring-gold-line' : 'text-fg-muted ring-1 ring-field-line'}`}
       >
-        <option value="">Badge…</option>
-        {BADGES.map((b) => (
-          <option key={`a-${b}`} value={`add:${b}`}>Add “{BADGE_LABEL[b]}”</option>
-        ))}
-        {BADGES.map((b) => (
-          <option key={`r-${b}`} value={`remove:${b}`}>Remove “{BADGE_LABEL[b]}”</option>
+        {options.map(([v, l]) => (
+          <option key={v} value={v}>
+            {l}
+          </option>
         ))}
       </select>
     </label>
   );
 }
 
-function Login({ busy, error, onLogin }: { busy: boolean; error?: string; onLogin: (p: string) => void }) {
+function Login({
+  busy,
+  initialError,
+  inDialog,
+  onLogin,
+}: {
+  busy: boolean;
+  initialError?: string;
+  inDialog?: boolean;
+  onLogin: (password: string) => Promise<string | null>;
+}) {
   const [password, setPassword] = useState('');
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState<string | null>(initialError ?? null);
+  const id = useId();
   return (
     <form
-      className="adm-rise panel grid gap-4 rounded-3xl p-6"
-      onSubmit={(e) => {
+      className={inDialog ? 'grid gap-4' : 'adm-rise panel grid gap-4 rounded-3xl p-6'}
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (password) onLogin(password);
+        if (!password || busy) return;
+        const err = await onLogin(password);
+        if (err) setError(err);
       }}
     >
-      <label className="grid gap-2 text-sm text-fg-muted" htmlFor="admin-password">
-        Admin password
-        <input
-          id="admin-password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="min-h-12 rounded-full bg-bg px-4 text-base text-fg ring-1 ring-field-line focus:ring-focus"
-          autoFocus
-        />
-      </label>
-      {error && <p className="text-sm text-danger" role="alert">{error}</p>}
-      <button type="submit" className="btn btn-gold" disabled={busy || !password}>{busy ? 'Checking…' : 'Log in'}</button>
+      {!inDialog && <h2 className="font-editorial text-3xl font-medium text-fg">Log in</h2>}
+      <div className="grid gap-2">
+        <label htmlFor={id} className="text-sm text-fg-muted">
+          Admin password
+        </label>
+        <div className="relative">
+          <input
+            id={id}
+            type={show ? 'text' : 'password'}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(null);
+            }}
+            aria-invalid={Boolean(error) || undefined}
+            aria-describedby={error ? `${id}-err` : undefined}
+            className="min-h-12 w-full rounded-full bg-bg pl-4 pr-20 text-base text-fg ring-1 ring-field-line focus:ring-2 focus:ring-focus aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-danger"
+            data-autofocus
+            autoFocus={!inDialog}
+          />
+          <button
+            type="button"
+            aria-pressed={show}
+            aria-label={show ? 'Hide password' : 'Show password'}
+            onClick={() => setShow((s) => !s)}
+            className="absolute right-1.5 top-1/2 min-h-9 -translate-y-1/2 rounded-full px-3 text-sm text-fg-muted hover:text-fg"
+          >
+            {show ? 'Hide' : 'Show'}
+          </button>
+        </div>
+      </div>
+      {error && (
+        <p id={`${id}-err`} className="text-sm text-danger" role="alert">
+          {error}
+        </p>
+      )}
+      <button type="submit" className="btn btn-gold" disabled={busy || !password}>
+        {busy ? (
+          <>
+            <Spinner />
+            Checking…
+          </>
+        ) : (
+          'Log in'
+        )}
+      </button>
     </form>
   );
 }
 
-function DeployBanner({ deploy }: { deploy: Deploy }) {
-  const text = deploy.local
-    ? 'Saved to this computer’s files (local mode). Restart or rebuild the site to see it.'
-    : deploy.state === 'success'
-      ? 'Live on the site now.'
-      : deploy.state === 'failure'
-        ? 'The site could not be rebuilt with this change. Check the latest deployment in Vercel.'
-        : deploy.state === 'pending'
-          ? 'Saved. The site is updating (about 2 minutes)…'
-          : 'Saved. The site will show it after the next update (about 2 minutes).';
+function Skeleton() {
   return (
-    <p role="status" className={`adm-rise mb-4 flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ${deploy.state === 'failure' ? 'text-danger ring-danger' : 'text-fg ring-divider'}`}>
-      {text}
-    </p>
+    <div aria-busy="true" className="grid gap-5">
+      <p className="sr-only" role="status">
+        Loading the products…
+      </p>
+      <div className="flex gap-2 overflow-hidden sm:grid sm:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-[4.6rem] min-w-[8.5rem] animate-pulse rounded-2xl bg-surface-2" />
+        ))}
+      </div>
+      <div className="h-12 animate-pulse rounded-full bg-surface-2" />
+      <div className="overflow-hidden rounded-2xl ring-1 ring-divider">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex items-center gap-3 border-b border-divider p-3 last:border-0">
+            <div className="size-5 rounded bg-surface-2" />
+            <div className="aspect-[4/5] w-14 animate-pulse rounded-lg bg-surface-2" />
+            <div className="grid flex-1 gap-2">
+              <div className="h-4 w-2/3 animate-pulse rounded bg-surface-2" />
+              <div className="h-3 w-1/3 animate-pulse rounded bg-surface-2" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
-}
-
-/** Small thumbnails through the image optimiser (a 1600 × 2000 photo would be ~300 KB each). */
-function Thumb({ src, local }: { src?: string; local?: boolean }) {
-  const [broken, setBroken] = useState(false);
-  if (!src || broken) return <span aria-hidden className="block aspect-[4/5] w-14 shrink-0 rounded-lg bg-surface-2 ring-1 ring-divider" />;
-  const url = local || !src.startsWith('/') ? src : `/_next/image?url=${encodeURIComponent(src)}&w=96&q=70`;
-  // eslint-disable-next-line @next/next/no-img-element -- admin thumbnails, incl. local previews of unsaved photos
-  return <img src={url} alt="" loading="lazy" decoding="async" className="aspect-[4/5] w-14 shrink-0 rounded-lg object-cover ring-1 ring-divider" onError={() => setBroken(true)} />;
 }

@@ -28,6 +28,8 @@
   --pitambar: #f2b705;
   --sindoor: #b3122b;
   --sindoor-light: #f2788a;
+  --hara: #2f6b34;
+  --hara-light: #7cc489;
   --matki: #8c3b2a;
   /* raw: paper + kajal */
   --kagaz: #faf5ec;
@@ -100,6 +102,8 @@
   --focus: var(--neel-gehra);
   --tag: var(--mor-gehra);
   --danger: var(--sindoor);
+  /* "in stock", "live": green that reads on every background */
+  --ok: var(--hara);
   --scrim: rgb(28 20 16 / 0.45);
   --shadow: rgb(60 40 20 / 0.18);
   --metal-hi: var(--gold-500);
@@ -161,6 +165,7 @@
       --focus: var(--neel-text);
       --tag: var(--mor-light);
       --danger: var(--sindoor-light);
+      --ok: var(--hara-light);
       --scrim: rgb(0 0 0 / 0.65);
       --shadow: rgb(0 0 0 / 0.6);
       --metal-hi: var(--gold-100);
@@ -209,6 +214,7 @@
   --focus: var(--neel-text);
   --tag: var(--mor-light);
   --danger: var(--sindoor-light);
+  --ok: var(--hara-light);
   --scrim: rgb(0 0 0 / 0.65);
   --shadow: rgb(0 0 0 / 0.6);
   --metal-hi: var(--gold-100);
@@ -269,6 +275,7 @@
   --color-focus: var(--focus);
   --color-tag: var(--tag);
   --color-danger: var(--danger);
+  --color-ok: var(--ok);
   --color-scrim: var(--scrim);
   --color-chapter-bg: var(--chapter-bg);
   --color-accent: var(--accent);
@@ -722,6 +729,33 @@ html:not([data-chapter-active]) [data-film-fab],
 html[data-chapter-active='hero'] [data-film-fab] {
   opacity: 0;
   visibility: hidden;
+}
+
+/* ───────────────────────── Admin panel ─────────────────────────
+ * A work tool: disabled controls fade (they never strike through, as an unavailable size does
+ * in the shop), and product rows are a table on wide screens, two lines on phones.
+ */
+[data-admin] .chip:disabled,
+[data-admin] .btn:disabled {
+  text-decoration: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* display comes from the markup (grid, or hidden lg:grid for the column headings) */
+[data-admin] .admin-row {
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'cb main main'
+    '. stock menu';
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  [data-admin] .admin-row {
+    grid-template-columns: 1.25rem minmax(0, 1fr) 7.5rem 10.5rem 7.5rem;
+    grid-template-areas: 'cb main price stock menu';
+  }
 }
 
 /* ───────────────────────── Admin panel motion ─────────────────────────
