@@ -757,3 +757,42 @@ html[data-chapter-active='hero'] [data-film-fab] {
     grid-template-areas: 'cb main price stock menu';
   }
 }
+
+/* ───────────────────────── Admin panel motion ─────────────────────────
+ * Soft and quick: the editor rises over a blurred page, rows settle in when the view changes,
+ * the bulk bar and notices slide up. Off entirely with reduced motion. */
+@keyframes adm-fade-in { from { opacity: 0; } }
+@keyframes adm-fade-out { to { opacity: 0; } }
+@keyframes adm-rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes adm-sheet-in { from { opacity: 0; transform: translateY(28px) scale(0.985); } }
+@keyframes adm-sheet-out { to { opacity: 0; transform: translateY(20px) scale(0.985); } }
+@keyframes adm-pop { 0% { transform: scale(0.96); } 60% { transform: scale(1.02); } 100% { transform: none; } }
+
+.adm-backdrop {
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+  animation: adm-fade-in 260ms var(--ease-ui) both;
+}
+.adm-backdrop[data-closing] { animation: adm-fade-out 200ms var(--ease-ui) both; }
+.adm-sheet { animation: adm-sheet-in 420ms var(--ease-out-expo) both; }
+.adm-sheet[data-closing] { animation: adm-sheet-out 200ms cubic-bezier(0.4, 0, 1, 1) both; }
+.adm-rise { animation: adm-rise 460ms var(--ease-out-expo) both; animation-delay: calc(min(var(--i, 0), 14) * 24ms); }
+.adm-pop { animation: adm-pop 320ms var(--ease-out-expo); }
+.adm-glass {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+.adm-lift { transition: transform 260ms var(--ease-out-expo), box-shadow 260ms var(--ease-ui), background-color 200ms var(--ease-ui), color 200ms var(--ease-ui); }
+@media (hover: hover) {
+  .adm-lift:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -24px var(--shadow); }
+}
+.adm-row { transition: background-color 200ms var(--ease-ui); }
+@media (hover: hover) {
+  .adm-row:hover { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adm-backdrop, .adm-backdrop[data-closing], .adm-sheet, .adm-sheet[data-closing], .adm-rise, .adm-pop { animation: none; }
+  .adm-lift, .adm-lift:hover { transition: none; transform: none; }
+}

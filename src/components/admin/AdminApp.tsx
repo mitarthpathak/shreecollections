@@ -567,10 +567,10 @@ export function AdminApp() {
     >
       {/* overview: each number is also a filter, and a second press turns it off */}
       <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0">
-        <Stat label="Sarees" value={stats.saree} on={f.cat === 'saree'} onClick={() => update({ cat: f.cat === 'saree' ? 'all' : 'saree', type: '' })} />
-        <Stat label="Suits" value={stats.suit} on={f.cat === 'suit'} onClick={() => update({ cat: f.cat === 'suit' ? 'all' : 'suit', type: '' })} />
-        <Stat label="Out of stock" value={stats.out} warn={stats.out > 0} on={f.stock === 'out'} onClick={() => update({ stock: f.stock === 'out' ? 'all' : 'out' })} />
-        <Stat label="Without photos" value={stats.sample} on={f.photo === 'sample'} onClick={() => update({ photo: f.photo === 'sample' ? 'all' : 'sample' })} />
+        <Stat i={0} label="Sarees" value={stats.saree} on={f.cat === 'saree'} onClick={() => update({ cat: f.cat === 'saree' ? 'all' : 'saree', type: '' })} />
+        <Stat i={1} label="Suits" value={stats.suit} on={f.cat === 'suit'} onClick={() => update({ cat: f.cat === 'suit' ? 'all' : 'suit', type: '' })} />
+        <Stat i={2} label="Out of stock" value={stats.out} warn={stats.out > 0} on={f.stock === 'out'} onClick={() => update({ stock: f.stock === 'out' ? 'all' : 'out' })} />
+        <Stat i={3} label="Without photos" value={stats.sample} on={f.photo === 'sample'} onClick={() => update({ photo: f.photo === 'sample' ? 'all' : 'sample' })} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
@@ -686,13 +686,13 @@ export function AdminApp() {
               <span className="[grid-area:stock]">Stock</span>
               <span className="text-right [grid-area:menu]">Actions</span>
             </div>
-            <ul>
-              {rows.map((r) => {
+            <ul key={JSON.stringify({ ...f, q: '' })}>
+              {rows.map((r, idx) => {
                 if (r.kind === 'group') {
                   const on = r.slugs.filter((s) => selected.has(s)).length;
                   const open = !collapsed.has(r.key);
                   return (
-                    <li key={`g-${r.key}`} className="flex items-center gap-3 border-b border-divider bg-surface-2/60 px-3 py-1">
+                    <li key={`g-${r.key}`} style={{ ['--i' as string]: idx }} className="adm-rise flex items-center gap-3 border-b border-divider bg-surface-2/60 px-3 py-1">
                       <Checkbox checked={on === r.slugs.length} indeterminate={on > 0} onChange={(v) => toggleSel(r.slugs, v)} label={`Select all ${r.label}`} />
                       <button
                         type="button"
@@ -722,6 +722,7 @@ export function AdminApp() {
                 return (
                   <Row
                     key={r.p.slug}
+                    i={idx}
                     p={r.p}
                     thumb={previews.get(productMedia(r.p)[0])}
                     selected={selected.has(r.p.slug)}
@@ -766,10 +767,10 @@ export function AdminApp() {
       {/* actions for the selection */}
       {picked.length > 0 && (
         <div data-admin className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(var(--safe-b)+0.75rem)]">
-          <div className="panel mx-auto flex max-w-4xl flex-col gap-1 rounded-3xl p-2 sm:flex-row sm:items-center sm:gap-2">
+          <div className="adm-rise adm-glass mx-auto flex max-w-4xl flex-col gap-1 rounded-3xl p-2 shadow-[0_24px_60px_-24px_var(--shadow)] ring-1 ring-divider sm:flex-row sm:items-center sm:gap-2">
             <div className="flex min-h-10 items-center justify-between gap-2 pl-2 sm:contents">
               <p className="text-sm text-fg sm:pl-2">
-                <span className="font-semibold tabular-nums">{picked.length.toLocaleString('en-IN')}</span> selected
+                <span key={picked.length} className="adm-pop inline-block font-semibold tabular-nums">{picked.length.toLocaleString('en-IN')}</span> selected
                 {hiddenPicked > 0 && <span className="text-fg-muted"> · {hiddenPicked} hidden by filters, left out</span>}
               </p>
               <button type="button" className="chip !min-h-10 shrink-0 sm:order-last" onClick={() => setSelected(new Set())}>
@@ -884,6 +885,7 @@ export function AdminApp() {
 /* ───────────────────────── pieces ───────────────────────── */
 
 function Row({
+  i,
   p,
   thumb,
   selected,
@@ -894,6 +896,7 @@ function Row({
   onStock,
   onRemove,
 }: {
+  i: number;
   p: Product;
   thumb?: string;
   selected: boolean;
@@ -907,7 +910,7 @@ function Row({
   const color = COLOR_FAMILIES[p.colorFamily]?.hex;
   const src = thumb ?? productMedia(p)[0];
   return (
-    <li className={`admin-row grid border-b border-divider px-3 py-2.5 last:border-b-0 ${selected ? 'bg-surface-2' : ''}`}>
+    <li style={{ ['--i' as string]: i }} className={`adm-rise adm-row admin-row grid border-b border-divider px-3 py-2.5 last:border-b-0 ${selected ? 'bg-surface-2' : ''}`}>
       <span className="grid place-items-center [grid-area:cb]">
         <Checkbox checked={selected} onChange={onSelect} label={`Select ${p.name}`} />
       </span>
@@ -1016,13 +1019,14 @@ function StatusPill({ status, onDismiss, className = '' }: { status: Status; onD
   );
 }
 
-function Stat({ label, value, on, warn, onClick }: { label: string; value: number; on: boolean; warn?: boolean; onClick: () => void }) {
+function Stat({ i, label, value, on, warn, onClick }: { i: number; label: string; value: number; on: boolean; warn?: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={`min-w-[8.5rem] shrink-0 rounded-2xl px-4 py-3 text-left ring-1 transition-colors sm:min-w-0 ${
+      style={{ ['--i' as string]: i }}
+      className={`adm-rise adm-lift min-w-[8.5rem] shrink-0 rounded-2xl px-4 py-3 text-left ring-1 sm:min-w-0 ${
         on ? 'bg-cta-bg text-cta-text ring-cta-bg' : 'bg-surface text-fg ring-divider hover:bg-surface-2'
       }`}
     >
@@ -1124,7 +1128,7 @@ function Login({
   const id = useId();
   return (
     <form
-      className={inDialog ? 'grid gap-4' : 'panel grid gap-4 rounded-3xl p-6'}
+      className={inDialog ? 'grid gap-4' : 'adm-rise panel grid gap-4 rounded-3xl p-6'}
       onSubmit={async (e) => {
         e.preventDefault();
         if (!password || busy) return;

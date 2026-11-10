@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { BADGES, COLOR_FAMILIES, FABRICS, OCCASIONS, OCCASION_LABEL, type Product } from '@/lib/catalog';
 import { discountPct, formatINR } from '@/lib/format';
 import { useModal } from '@/lib/modal';
+import { prefersReducedMotion } from '@/lib/gsap';
 import { IconClose } from '@/components/icons';
 import { needsCrop, preparePhoto, RATIO, type PreparedPhoto } from './photos';
 import { AdminImage, Menu, Modal, Spinner, Switch, type ConfirmOptions } from './ui';
@@ -122,6 +123,7 @@ export function ProductEditor({
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [cropping, setCropping] = useState<string | null>(null);
   const [dropping, setDropping] = useState(false);
+  const [closing, setClosing] = useState(false);
   const dialog = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const downOnScrim = useRef(false);
@@ -141,7 +143,7 @@ export function ProductEditor({
   const cover = photos[0]?.url ?? product?.images[0];
 
   async function requestClose() {
-    if (submitting) return;
+    if (submitting || closing) return;
     if (dirty) {
       const discard = await confirm({
         title: 'Discard your changes?',
@@ -152,7 +154,9 @@ export function ProductEditor({
       });
       if (!discard) return;
     }
-    onClose();
+    // a short exit: the sheet sinks away, the backdrop fades (none with reduced motion)
+    setClosing(true);
+    window.setTimeout(onClose, prefersReducedMotion() ? 0 : 200);
   }
 
   // Tab stays inside, Escape asks before discarding, focus goes back to the button that opened it.
@@ -339,7 +343,8 @@ export function ProductEditor({
     <div
       data-admin
       data-lenis-prevent
-      className="fixed inset-0 z-[200] bg-scrim sm:grid sm:place-items-center sm:p-4"
+      data-closing={closing || undefined}
+      className="adm-backdrop fixed inset-0 z-[200] sm:grid sm:place-items-center sm:p-4"
       onPointerDown={(e) => (downOnScrim.current = e.target === e.currentTarget)}
       onClick={(e) => {
         if (downOnScrim.current && e.target === e.currentTarget) void requestClose();
@@ -358,7 +363,8 @@ export function ProductEditor({
             void submit();
           }
         }}
-        className="flex h-full w-full flex-col bg-bg outline-none sm:h-auto sm:max-h-[calc(100svh-2rem)] sm:w-[min(760px,100%)] sm:rounded-3xl sm:ring-1 sm:ring-divider lg:w-[min(1120px,100%)]"
+        data-closing={closing || undefined}
+        className="adm-sheet flex h-full w-full flex-col bg-bg outline-none sm:h-auto sm:shadow-[0_40px_120px_-30px_var(--shadow)] sm:max-h-[calc(100svh-2rem)] sm:w-[min(760px,100%)] sm:rounded-3xl sm:ring-1 sm:ring-divider lg:w-[min(1120px,100%)]"
       >
         <header className="flex flex-none items-center gap-3 border-b border-divider py-2 pl-4 pr-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] sm:pl-6 sm:pr-3 sm:pt-2">
           <h2 id="editor-title" className="min-w-0 truncate font-editorial text-2xl font-medium text-fg sm:text-3xl">{title}</h2>
@@ -823,7 +829,7 @@ function PhotoTile({
         e.stopPropagation();
         onDropHere();
       }}
-      className="grid min-w-0 gap-1.5 [@media(pointer:fine)]:cursor-grab"
+      className="adm-rise grid min-w-0 gap-1.5 [@media(pointer:fine)]:cursor-grab"
     >
       <div className="relative">
         <AdminImage

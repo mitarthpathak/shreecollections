@@ -50,7 +50,7 @@ export function Modal({
     <div
       data-admin
       data-lenis-prevent
-      className={`fixed inset-0 ${z} grid bg-scrim ${sheet ? 'items-end sm:place-items-center sm:p-4' : 'place-items-center p-4'}`}
+      className={`adm-backdrop fixed inset-0 ${z} grid ${sheet ? 'items-end sm:place-items-center sm:p-4' : 'place-items-center p-4'}`}
       onPointerDown={(e) => (downOnScrim.current = e.target === e.currentTarget)}
       onClick={(e) => {
         if (downOnScrim.current && e.target === e.currentTarget) onClose();
@@ -64,7 +64,7 @@ export function Modal({
         aria-label={label}
         aria-labelledby={labelledBy}
         tabIndex={-1}
-        className={`max-h-[calc(100svh-2rem)] w-full overflow-y-auto overscroll-contain bg-bg p-5 outline-none ring-1 ring-divider sm:p-6 ${
+        className={`adm-sheet max-h-[calc(100svh-2rem)] w-full overflow-y-auto overscroll-contain bg-bg p-5 outline-none ring-1 ring-divider sm:p-6 ${
           sheet ? 'rounded-t-3xl pb-[calc(var(--safe-b)+1.25rem)] sm:max-w-lg sm:rounded-3xl' : 'max-w-md rounded-3xl'
         } ${className}`}
       >
@@ -427,7 +427,7 @@ export function Toasts({ toasts, onDismiss, raised }: { toasts: Toast[]; onDismi
         <div
           key={t.id}
           role={t.tone === 'error' ? 'alert' : undefined}
-          className={`pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl py-2 pl-4 pr-2 text-sm shadow-[0_20px_50px_-20px_var(--shadow)] ${
+          className={`adm-rise pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl py-2 pl-4 pr-2 text-sm shadow-[0_20px_50px_-20px_var(--shadow)] ${
             t.tone === 'error' ? 'bg-badge-bg text-badge-text' : 'bg-cta-bg text-cta-text'
           }`}
         >
